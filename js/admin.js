@@ -61,10 +61,14 @@ async function loadAllMangas() {
          <div class="manga-tile-cover" style="background:${grad};display:none">${story.title}</div>`
       : `<div class="manga-tile-cover" style="background:${grad}">${story.title}</div>`;
 
+    const statusBadge = isPurchased
+      ? `<span class="manga-tile-status status-ordered">✅ Ordered</span>`
+      : `<span class="manga-tile-status status-generated">⚡ Generated</span>`;
+
     const viewBtn = pitchUrl
       ? `<div class="manga-tile-order">
            <button class="manga-tile-view-btn" style="width:100%"
-             onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), ${isPurchased})">👁 View</button>
+             onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), true)">👁 View</button>
          </div>`
       : '';
 
@@ -78,6 +82,7 @@ async function loadAllMangas() {
             <span class="manga-tile-date">${date}</span>
           </div>
           <div class="manga-tile-email" title="${email}">👤 ${email}</div>
+          ${statusBadge}
           ${story.tagline ? `<p style="font-size:.78rem;color:var(--muted);line-height:1.5;margin-top:.25rem">${story.tagline}</p>` : ''}
           ${viewBtn}
         </div>

@@ -870,6 +870,18 @@ footer {
   padding: .18rem .45rem;
 }
 
+.manga-tile-status {
+  display: inline-block;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  border-radius: 5px;
+  padding: .18rem .5rem;
+  margin-top: .3rem;
+}
+.status-ordered   { background: rgba(34,197,94,.12);  color: #16a34a; }
+.status-generated { background: rgba(251,133,0,.12);  color: #c2660a; }
+
 .manga-tile-order {
   margin-top: auto;
   padding-top: .75rem;
