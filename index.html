@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manga World — The Art That Changed Everything!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<!-- AUTH LOADING SCREEN -->
+<div id="auth-loading">
+  <div class="spinner"></div>
+</div>
+
+<!-- LOGIN WALL -->
+<div id="login-wall">
+  <div class="lw-card">
+    <div class="lw-logo">MANGA<span class="accent">世界</span></div>
+    <p class="lw-tagline">The Art That Changed Everything — Sign in to continue</p>
+    <button class="lw-google-btn" onclick="signInWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT (hidden until authenticated) -->
+<div id="main-content">
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">MANGA<span class="accent">世界</span> <span class="star">✦</span></a>
+  <ul class="nav-links">
+    <li><a href="#origin">Origines</a></li>
+    <li><a href="#manga-books">Top Mangas</a></li>
+    <li><a href="#manga-movies">Top Films</a></li>
+    <li><a href="#mes-mangas">📊 My Stories</a></li>
+    <li><a href="#creer" class="nav-create">✏️ Create</a></li>
+  </ul>
+  <div class="nav-auth-area">
+    <!-- not signed in -->
+    <button id="btn-google-signin" class="btn-google-signin" onclick="signInWithGoogle()">
+      <svg width="16" height="16" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        <path fill="none" d="M0 0h48v48H0z"/>
+      </svg>
+      Sign in with Google
+    </button>
+    <!-- signed in -->
+    <div id="nav-user-info" class="nav-user-info">
+      <img id="nav-avatar" class="nav-avatar" src="" alt="avatar">
+      <span id="nav-username" class="nav-username"></span>
+      <button class="btn-signout" onclick="signOutUser()">Sign out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-badge">🎌 Depuis 1814 · La BD Japonaise Qui Déchire !</div>
+  <h1 class="hero-title">MANGA<br /><span class="accent">世界</span></h1>
+  <p class="hero-subtitle">
+    Des anciens rouleaux enluminés à un phénomène planétaire —
+    le manga n'est pas qu'un art. C'est un <strong>langage</strong>,
+    une <strong>philosophie</strong>, et une fenêtre grande ouverte sur l'âme du Japon.
+  </p>
+  <div class="hero-scroll">
+    <span>Défiler ↓</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ORIGIN STORY -->
+<section id="origin">
+  <div class="origin-inner">
+    <p class="section-label">⚡ L'Histoire des Origines</p>
+    <h2 class="section-title">Comment le Manga a<br/><span class="red">Révolutionné</span> le Monde !</h2>
+    <div class="story-grid">
+
+      <div class="story-panel">
+        <span class="panel-era">XIIe siècle</span>
+        <h3 class="panel-title">Les Premiers Rouleaux</h3>
+        <p class="panel-text">
+          Tout commence au Japon de la période Heian. Le moine bouddhiste Toba Sōjō crée les
+          <em>Chōjū-jinbutsu-giga</em> — des rouleaux d'encre représentant des animaux habillés
+          en moines, racontant des histoires satiriques en images séquentielles.
+          Six siècles d'avance sur la BD occidentale ! 🐸
+        </p>
+      </div>
+
+      <div class="story-panel">
+        <span class="panel-era">Début XIXe</span>
+        <h3 class="panel-title">Hokusai Invente un Mot</h3>
+        <p class="panel-text">
+          En 1814, le légendaire maître de l'estampe <strong>Katsushika Hokusai</strong> publie
+          ses <em>Hokusai Manga</em> — des carnets de croquis fous. Il fusionne <em>man</em>
+          (fantaisiste) et <em>ga</em> (images), et invente accidentellement le nom d'un médium
+          qui allait conquérir la planète. Merci Hokusai ! 🎨
+        </p>
+      </div>
+
+      <div class="story-panel">
+        <span class="panel-era">Après-guerre 1945</span>
+        <h3 class="panel-title">Le Dieu du Manga Est Né</h3>
+        <p class="panel-text">
+          Après la Seconde Guerre mondiale, <strong>Osamu Tezuka</strong> révolutionne tout.
+          Inspiré par Disney et le cinéma, il introduit des mises en scène cinématographiques,
+          des personnages attachants et des récits longs. Son chef-d'œuvre <em>Shin Takarajima</em>
+          s'écoule à 400 000 exemplaires. Le manga moderne est né ! 💥
+        </p>
+      </div>
+
+      <div class="story-panel">
+        <span class="panel-era">1960–1980</span>
+        <h3 class="panel-title">Shōnen &amp; Shōjo Débarquent</h3>
+        <p class="panel-text">
+          Le manga se diversifie : <em>shōnen</em> (ados garçons), <em>shōjo</em> (ados filles),
+          <em>seinen</em> (adultes). En 1968, Shueisha lance le <em>Weekly Shōnen Jump</em>,
+          l'anthologie légendaire qui portera Dragon Ball, Naruto et One Piece
+          aux quatre coins du monde. 🔥
+        </p>
+      </div>
+
+      <div class="story-panel">
+        <span class="panel-era">1980–2000</span>
+        <h3 class="panel-title">Le Manga Conquiert le Monde</h3>
+        <p class="panel-text">
+          Le film <em>Akira</em> (1988) fait exploser la cervelle des Occidentaux.
+          Sailor Moon, Dragon Ball Z, puis internet propulsent le manga en Europe,
+          en Amérique, partout. Une vague culturelle qui redessine le paysage
+          de la pop culture mondiale pour toujours. 🌍
+        </p>
+      </div>
+
+      <div class="story-panel">
+        <span class="panel-era">XXIe siècle</span>
+        <h3 class="panel-title">Une Industrie à 15 Milliards €</h3>
+        <p class="panel-text">
+          One Piece seul dépasse les <strong>530 millions d'exemplaires</strong> vendus —
+          plus que n'importe quelle autre série de BD dans l'histoire de l'humanité.
+          Les plateformes de streaming, les éditeurs internationaux et une nouvelle
+          génération de créateurs font du manga un langage universel. 🚀
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FUN ONOMATOPOEIA STRIP -->
+<div class="onoma-strip" aria-hidden="true">
+  <span class="onoma-word">POW!</span>
+  <span class="onoma-word">BOUM!</span>
+  <span class="onoma-word">SLASH!</span>
+  <span class="onoma-word">WOOSH!</span>
+  <span class="onoma-word">ZAP!</span>
+  <span class="onoma-word">CRASH!</span>
+</div>
+
+<!-- TOP 10 MANGA BOOKS -->
+<section id="manga-books" class="top10-section">
+  <div class="top10-header">
+    <p class="section-label">🏆 Les Légendes Absolues</p>
+    <h2 class="section-title">Top 10<br/><span class="yellow">Séries</span> Manga</h2>
+    <p class="section-desc">Les séries qui ont défini des générations, fracassé des records de vente, et transformé des millions de lecteurs en fans à vie. 📚</p>
+  </div>
+  <div class="cards-grid" id="books-grid">
+
+    <a class="card" data-rank="1" href="https://www.viz.com/shonenjump/chapters/one-piece" target="_blank" rel="noopener noreferrer" data-delay="0">
+      <div class="card-rank">1</div>
+      <div class="card-img">
+        <div class="card-img-bg g1">ONE PIECE</div>
+        <img data-wiki="One Piece (manga)" alt="One Piece" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">📖</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Aventure · Shōnen</p>
+        <h3 class="card-title">One Piece</h3>
+        <p class="card-author">Eiichiro Oda · 1997–présent</p>
+        <p class="card-desc">Monkey D. Luffy part à la conquête du trésor ultime et du titre de Roi des Pirates. La série de BD la plus vendue de l'histoire de l'humanité. Chapeau de paille obligatoire ! 🍖</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-viz">VIZ Manga</span>
+          <span class="card-stat">530M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="2" href="https://www.viz.com/dragon-ball" target="_blank" rel="noopener noreferrer" data-delay="60">
+      <div class="card-rank">2</div>
+      <div class="card-img">
+        <div class="card-img-bg g2">DRAGON BALL</div>
+        <img data-wiki="Dragon Ball (manga)" alt="Dragon Ball" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">⚡</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Action · Shōnen</p>
+        <h3 class="card-title">Dragon Ball</h3>
+        <p class="card-author">Akira Toriyama · 1984–1995</p>
+        <p class="card-desc">Son Goku, de petit guerrier à sauveur de l'univers. Le manga qui a posé le modèle de TOUS les mangas de combat qui ont suivi. Un monument absolu. 🐉</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-viz">VIZ Manga</span>
+          <span class="card-stat">260M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="3" href="https://www.viz.com/shonenjump/chapters/naruto" target="_blank" rel="noopener noreferrer" data-delay="120">
+      <div class="card-rank">3</div>
+      <div class="card-img">
+        <div class="card-img-bg g3">NARUTO</div>
+        <img data-wiki="Naruto (manga)" alt="Naruto" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🍥</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Ninja · Shōnen</p>
+        <h3 class="card-title">Naruto</h3>
+        <p class="card-author">Masashi Kishimoto · 1999–2014</p>
+        <p class="card-desc">Le paria du village ninja qui rêve de devenir Hokage. Une saga de l'amitié, de la trahison et du dépassement de soi qui a bercé toute une génération. Dattebayo ! 🍜</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-viz">VIZ Manga</span>
+          <span class="card-stat">250M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="4" href="https://kodansha.us/series/attack-on-titan/" target="_blank" rel="noopener noreferrer" data-delay="0">
+      <div class="card-rank">4</div>
+      <div class="card-img">
+        <div class="card-img-bg g9">ATTACK ON TITAN</div>
+        <img data-wiki="Attack on Titan" alt="Attack on Titan" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">⚔️</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Dark Fantasy · Seinen</p>
+        <h3 class="card-title">L'Attaque des Titans</h3>
+        <p class="card-author">Hajime Isayama · 2009–2021</p>
+        <p class="card-desc">L'humanité recluse derrière des murs. Des géants cannibales. Une vérité si bouleversante qu'elle remet tout en question. Un chef-d'œuvre du manga moderne. 😱</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-kodansha">Kodansha</span>
+          <span class="card-stat">110M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="5" href="https://www.viz.com/shonenjump/chapters/death-note" target="_blank" rel="noopener noreferrer" data-delay="60">
+      <div class="card-rank">5</div>
+      <div class="card-img">
+        <div class="card-img-bg g5">DEATH NOTE</div>
+        <img data-wiki="Death Note" alt="Death Note" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">📓</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Thriller Psychologique</p>
+        <h3 class="card-title">Death Note</h3>
+        <p class="card-author">T. Ohba &amp; T. Obata · 2003–2006</p>
+        <p class="card-desc">Un carnet qui tue quiconque voit son nom écrit. Un génie qui joue à Dieu. Un détective légendaire sur ses traces. Le chat et la souris le plus haletant du manga. 💀</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-viz">VIZ Manga</span>
+          <span class="card-stat">30M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="6" href="https://www.viz.com/fullmetal-alchemist" target="_blank" rel="noopener noreferrer" data-delay="120">
+      <div class="card-rank">6</div>
+      <div class="card-img">
+        <div class="card-img-bg g7">FULLMETAL ALCHEMIST</div>
+        <img data-wiki="Fullmetal Alchemist" alt="Fullmetal Alchemist" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">⚗️</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Alchimie · Shōnen</p>
+        <h3 class="card-title">Fullmetal Alchemist</h3>
+        <p class="card-author">Hiromu Arakawa · 2001–2010</p>
+        <p class="card-desc">Deux frères brisés par un rituel interdit. Une quête pour retrouver ce qui a été perdu. L'une des œuvres les mieux construites de toute l'histoire du manga. 🔩</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-viz">VIZ Manga</span>
+          <span class="card-stat">70M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="7" href="https://www.viz.com/shonenjump/chapters/demon-slayer-kimetsu-no-yaiba" target="_blank" rel="noopener noreferrer" data-delay="0">
+      <div class="card-rank">7</div>
+      <div class="card-img">
+        <div class="card-img-bg g1">DEMON SLAYER</div>
+        <img data-wiki="Demon Slayer: Kimetsu no Yaiba" alt="Demon Slayer" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🗡️</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Surnaturel · Shōnen</p>
+        <h3 class="card-title">Demon Slayer</h3>
+        <p class="card-author">Koyoharu Gotouge · 2016–2020</p>
+        <p class="card-desc">Sa famille massacrée par des démons, sa sœur transformée. Sa quête pour la sauver est devenue le manga le plus vendu en un temps record au Japon. 🌸</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-viz">VIZ Manga</span>
+          <span class="card-stat">150M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="8" href="https://www.darkhorse.com/Comics/Manga/Berserk-Volume-1-TPB" target="_blank" rel="noopener noreferrer" data-delay="60">
+      <div class="card-rank">8</div>
+      <div class="card-img">
+        <div class="card-img-bg g8">BERSERK</div>
+        <img data-wiki="Berserk (manga)" alt="Berserk" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🪓</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Dark Fantasy · Seinen</p>
+        <h3 class="card-title">Berserk</h3>
+        <p class="card-author">Kentaro Miura · 1989–2021</p>
+        <p class="card-desc">L'âme sombre du manga. Guts, le Chevalier Noir, affronte démons et destin dans un monde médiéval brutal. Le grand œuvre de Miura, une œuvre éternelle. 🖤</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-darkhorse">Dark Horse</span>
+          <span class="card-stat">50M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="9" href="https://www.viz.com/shonenjump/chapters/my-hero-academia" target="_blank" rel="noopener noreferrer" data-delay="120">
+      <div class="card-rank">9</div>
+      <div class="card-img">
+        <div class="card-img-bg g2">MY HERO ACADEMIA</div>
+        <img data-wiki="My Hero Academia" alt="My Hero Academia" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">💪</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Super-Héros · Shōnen</p>
+        <h3 class="card-title">My Hero Academia</h3>
+        <p class="card-author">Kōhei Horikoshi · 2014–2024</p>
+        <p class="card-desc">Dans un monde où 80 % des gens ont des super-pouvoirs, un gamin sans pouvoir rêve de devenir le plus grand héros. La réponse japonaise aux comics Marvel ! 🦸</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-viz">VIZ Manga</span>
+          <span class="card-stat">100M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="10" href="https://www.viz.com/shonenjump/chapters/jujutsu-kaisen" target="_blank" rel="noopener noreferrer" data-delay="0">
+      <div class="card-rank">10</div>
+      <div class="card-img">
+        <div class="card-img-bg g6">JUJUTSU KAISEN</div>
+        <img data-wiki="Jujutsu Kaisen" alt="Jujutsu Kaisen" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">👁️</span>
+          <span class="overlay-cta">Lire maintenant →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Surnaturel · Shōnen</p>
+        <h3 class="card-title">Jujutsu Kaisen</h3>
+        <p class="card-author">Gege Akutami · 2018–présent</p>
+        <p class="card-desc">Des esprits maudits nés de la négativité humaine sèment la terreur. Yuji Itadori avale un doigt maudit et plonge dans un monde de sorciers et de mort. 🔮</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-viz">VIZ Manga</span>
+          <span class="card-stat">80M+ ex.</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- SECOND ONOMA STRIP -->
+<div class="onoma-strip" aria-hidden="true">
+  <span class="onoma-word">BANG!</span>
+  <span class="onoma-word">SHOOM!</span>
+  <span class="onoma-word">KAPOW!</span>
+  <span class="onoma-word">ZING!</span>
+  <span class="onoma-word">WHAM!</span>
+  <span class="onoma-word">BOOM!</span>
+</div>
+
+<!-- MES MANGAS — DATA SECTION -->
+<section id="mes-mangas">
+  <div class="data-inner">
+
+    <div class="data-header">
+      <div>
+        <p class="section-label">📊 Base de données</p>
+        <h2 class="section-title">Mes <span class="yellow">Mangas</span></h2>
+      </div>
+      <div class="data-stats" id="data-stats">
+        <div class="data-stat"><div class="data-stat-val" id="stat-total">0</div><div class="data-stat-lbl">Stories</div></div>
+        <div class="data-stat"><div class="data-stat-val" id="stat-ai">0</div><div class="data-stat-lbl">AI-generated</div></div>
+        <div class="data-stat"><div class="data-stat-val" id="stat-genres">0</div><div class="data-stat-lbl">Different genres</div></div>
+      </div>
+    </div>
+
+    <div class="data-toolbar" id="data-toolbar" style="display:none">
+      <input class="data-search" id="data-search" type="text" placeholder="🔍 Rechercher un manga…" oninput="renderStoriesTable()" />
+      <select class="data-filter" id="data-filter" onchange="renderStoriesTable()">
+        <option value="">All genres</option>
+        <option value="shonen">Shōnen</option>
+        <option value="shojo">Shōjo</option>
+        <option value="seinen">Seinen</option>
+        <option value="isekai">Isekai</option>
+        <option value="horreur">Horreur</option>
+        <option value="sf">Science-Fiction</option>
+        <option value="comedie">Comédie</option>
+        <option value="sport">Sport</option>
+      </select>
+      <button class="data-clear-btn" onclick="clearAllStories()">🗑 Clear all</button>
+    </div>
+
+    <div id="stories-container">
+      <!-- rendered by JS -->
+    </div>
+
+  </div>
+</section>
+
+<!-- TOP 10 MANGA MOVIES -->
+<section id="manga-movies" class="top10-section">
+  <div class="top10-header">
+    <p class="section-label">🎬 Sur Grand Écran</p>
+    <h2 class="section-title">Top 10<br/><span class="red">Films</span> Manga</h2>
+    <p class="section-desc">Les films d'animation qui ont prouvé que le manga peut émouvoir, choquer et faire pleurer aussi fort que n'importe quel film en prise de vue réelle. 🎥</p>
+  </div>
+  <div class="cards-grid" id="movies-grid">
+
+    <a class="card" data-rank="1" href="https://www.netflix.com/title/60023642" target="_blank" rel="noopener noreferrer" data-delay="0">
+      <div class="card-rank">1</div>
+      <div class="card-img">
+        <div class="card-img-bg g5">AKIRA</div>
+        <img data-wiki="Akira (1988 film)" alt="Akira 1988" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🏍️</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Cyberpunk · SF</p>
+        <h3 class="card-title">Akira</h3>
+        <p class="card-author">Katsuhiro Otomo · 1988</p>
+        <p class="card-desc">Le film qui a ouvert les yeux de l'Occident sur l'animation japonaise. Un gang de bikers psychiques à Neo-Tokyo démasque un complot gouvernemental apocalyptique. Culte ! 🤯</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-netflix">Netflix</span>
+          <span class="card-stat">1988</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="2" href="https://www.amazon.com/Ghost-Shell-Mamoru-Oshii/dp/B00HVFANFM" target="_blank" rel="noopener noreferrer" data-delay="60">
+      <div class="card-rank">2</div>
+      <div class="card-img">
+        <div class="card-img-bg g3">GHOST IN THE SHELL</div>
+        <img data-wiki="Ghost in the Shell (1995 film)" alt="Ghost in the Shell 1995" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🤖</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Cyberpunk · Philosophique</p>
+        <h3 class="card-title">Ghost in the Shell</h3>
+        <p class="card-author">Mamoru Oshii · 1995</p>
+        <p class="card-desc">Une cyborg questionne sa propre conscience dans un futur hyper-connecté. Sa profondeur philosophique a directement inspiré Matrix. Un pilier de la SF cinématographique mondiale. 🧠</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-amazon">Prime Video</span>
+          <span class="card-stat">1995</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="3" href="https://www.crunchyroll.com/demon-slayer-kimetsu-no-yaiba-the-movie-mugen-train" target="_blank" rel="noopener noreferrer" data-delay="120">
+      <div class="card-rank">3</div>
+      <div class="card-img">
+        <div class="card-img-bg g1">MUGEN TRAIN</div>
+        <img data-wiki="Demon Slayer: Kimetsu no Yaiba – The Movie: Mugen Train" alt="Demon Slayer Mugen Train" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🔥</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Action · Surnaturel</p>
+        <h3 class="card-title">Demon Slayer : Mugen Train</h3>
+        <p class="card-author">Haruo Sotozaki · 2020</p>
+        <p class="card-desc">Le film d'animation le plus rentable de tous les temps. Le dernier combat de Rengoku dans un train hanté par les démons reste l'un des moments les plus épiques du manga. 😭🔥</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-crunchyroll">Crunchyroll</span>
+          <span class="card-stat">500M$+ mondial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="4" href="https://www.netflix.com/title/80206922" target="_blank" rel="noopener noreferrer" data-delay="0">
+      <div class="card-rank">4</div>
+      <div class="card-img">
+        <div class="card-img-bg g10">YOUR NAME</div>
+        <img data-wiki="Your Name" alt="Your Name" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🌠</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Romance · Fantastique</p>
+        <h3 class="card-title">Your Name</h3>
+        <p class="card-author">Makoto Shinkai · 2016</p>
+        <p class="card-desc">Deux inconnus échangent leurs corps à travers le temps, liés par le destin. Des visuels à couper le souffle et un final dévastateur. La love story d'une génération entière. 💫</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-netflix">Netflix</span>
+          <span class="card-stat">380M$+ mondial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="5" href="https://www.crunchyroll.com/jujutsu-kaisen-0" target="_blank" rel="noopener noreferrer" data-delay="60">
+      <div class="card-rank">5</div>
+      <div class="card-img">
+        <div class="card-img-bg g6">JUJUTSU KAISEN 0</div>
+        <img data-wiki="Jujutsu Kaisen 0" alt="Jujutsu Kaisen 0" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">💜</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Dark Fantasy · Action</p>
+        <h3 class="card-title">Jujutsu Kaisen 0</h3>
+        <p class="card-author">Sunghoo Park · 2021</p>
+        <p class="card-desc">Le préquel qui raconte l'histoire de Yuta Okkotsu et l'esprit vengeur de son amie d'enfance. Des combats à la chorégraphie époustouflante et une émotion brute. 🌸</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-crunchyroll">Crunchyroll</span>
+          <span class="card-stat">196M$+ mondial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="6" href="https://www.netflix.com/title/80230327" target="_blank" rel="noopener noreferrer" data-delay="120">
+      <div class="card-rank">6</div>
+      <div class="card-img">
+        <div class="card-img-bg g4">A SILENT VOICE</div>
+        <img data-wiki="A Silent Voice (film)" alt="A Silent Voice" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">💙</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Drame · Tranche de Vie</p>
+        <h3 class="card-title">A Silent Voice</h3>
+        <p class="card-author">Naoko Yamada · 2016</p>
+        <p class="card-desc">Un ancien harceleur cherche à se racheter auprès de la fille malentendante qu'il a torturée. D'une honnêteté désarmante sur le harcèlement, l'isolement et le pardon. Prenez des mouchoirs ! 😭</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-netflix">Netflix</span>
+          <span class="card-stat">2016</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="7" href="https://www.crunchyroll.com/dragon-ball-super-broly" target="_blank" rel="noopener noreferrer" data-delay="0">
+      <div class="card-rank">7</div>
+      <div class="card-img">
+        <div class="card-img-bg g2">DB SUPER: BROLY</div>
+        <img data-wiki="Dragon Ball Super: Broly" alt="Dragon Ball Super Broly" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">💥</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Action · Shōnen</p>
+        <h3 class="card-title">Dragon Ball Super : Broly</h3>
+        <p class="card-author">Tatsuya Nagamine · 2018</p>
+        <p class="card-desc">La meilleure animation d'un combat Dragon Ball. L'introduction canonique officielle de Broly et son clash titanesque contre Goku et Vegeta a repoussé les limites du genre. 🔥</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-crunchyroll">Crunchyroll</span>
+          <span class="card-stat">122M$+ mondial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="8" href="https://www.crunchyroll.com/one-piece-film-red" target="_blank" rel="noopener noreferrer" data-delay="60">
+      <div class="card-rank">8</div>
+      <div class="card-img">
+        <div class="card-img-bg g9">ONE PIECE FILM: RED</div>
+        <img data-wiki="One Piece Film: Red" alt="One Piece Film Red" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🎵</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Aventure · Musique</p>
+        <h3 class="card-title">One Piece Film : Red</h3>
+        <p class="card-author">Gorō Taniguchi · 2022</p>
+        <p class="card-desc">La diva Uta monte sur scène et le monde tremble. Un spectacle visuel époustouflant qui a explosé les records au box-office japonais et révélé le passé mystérieux de Shanks. 🎤</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-crunchyroll">Crunchyroll</span>
+          <span class="card-stat">207M$+ mondial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="9" href="https://www.crunchyroll.com/fullmetal-alchemist-the-movie-conqueror-of-shamballa" target="_blank" rel="noopener noreferrer" data-delay="120">
+      <div class="card-rank">9</div>
+      <div class="card-img">
+        <div class="card-img-bg g7">FMA: CONQUÉRANT</div>
+        <img data-wiki="Fullmetal Alchemist the Movie: Conqueror of Shamballa" alt="FMA Conqueror of Shamballa" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🔮</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Fantaisie · Drame</p>
+        <h3 class="card-title">FMA : Conquérant de Shamballa</h3>
+        <p class="card-author">Seiji Mizushima · 2005</p>
+        <p class="card-desc">Edward Elric coincé dans le Munich des années 1920. Une conclusion douce-amère de la première série qui a laissé des millions de fans en larmes — et les laisse encore aujourd'hui. 💔</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-crunchyroll">Crunchyroll</span>
+          <span class="card-stat">2005</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" data-rank="10" href="https://www.crunchyroll.com/the-last-naruto-the-movie" target="_blank" rel="noopener noreferrer" data-delay="0">
+      <div class="card-rank">10</div>
+      <div class="card-img">
+        <div class="card-img-bg g8">NARUTO: THE LAST</div>
+        <img data-wiki="The Last: Naruto the Movie" alt="Naruto The Last" />
+        <div class="card-img-overlay">
+          <span class="overlay-emoji">🌙</span>
+          <span class="overlay-cta">Regarder →</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-genre">Romance · Action</p>
+        <h3 class="card-title">Naruto : The Last</h3>
+        <p class="card-author">Tsuneo Kobayashi · 2014</p>
+        <p class="card-desc">Deux ans après la Quatrième Guerre Ninja, Naruto et Hinata affrontent la lune elle-même. La romance qui valait quinze ans d'attente. Les adieux d'une génération entière. 🌙</p>
+        <div class="card-footer">
+          <span class="platform-badge badge-crunchyroll">Crunchyroll</span>
+          <span class="card-stat">2014</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- CREATOR SECTION -->
+<section id="creer">
+  <div class="creator-inner">
+
+    <div class="creator-header">
+      <p class="section-label">✏️ Creative Studio</p>
+      <h2 class="section-title">Create your <span class="yellow">Manga</span>!</h2>
+      <p class="section-desc">Got an idea brewing in your head? Describe your universe, your hero, your story — we'll generate a manga sheet worthy of the greatest Japanese publishers. 🖊️</p>
+    </div>
+
+    <!-- FORM -->
+    <div class="creator-form-card" id="creator-form-card">
+      <form id="manga-form" novalidate onsubmit="return false">
+        <div class="form-grid">
+
+          <div class="form-group full">
+            <label class="form-label" for="f-titre">📝 Your manga title</label>
+            <input class="form-input" id="f-titre" type="text" placeholder="e.g. Shadow of the Last Samurai, Neon Butterfly…" maxlength="80" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-genre">🎭 Genre</label>
+            <select class="form-select" id="f-genre">
+              <option value="shonen">Shōnen (Action / Adventure)</option>
+              <option value="shojo">Shōjo (Romance / Emotions)</option>
+              <option value="seinen">Seinen (Adult / Complex)</option>
+              <option value="isekai">Isekai (Another world)</option>
+              <option value="horreur">Horror (Thrills)</option>
+              <option value="sf">Science-Fiction</option>
+              <option value="comedie">Comedy</option>
+              <option value="sport">Sport</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-style">🎨 Art style</label>
+            <select class="form-select" id="f-style">
+              <option value="dynamique">Dynamic &amp; explosive</option>
+              <option value="elegant">Elegant &amp; detailed</option>
+              <option value="sombre">Dark &amp; atmospheric</option>
+              <option value="doux">Soft &amp; poetic</option>
+              <option value="retro">90s retro</option>
+              <option value="moderne">Modern &amp; minimalist</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-heros">🦸 Hero / heroine name</label>
+            <input class="form-input" id="f-heros" type="text" placeholder="e.g. Ryō, Sakura, Jin, Akemi…" maxlength="50" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-univers">🌍 Universe &amp; setting</label>
+            <input class="form-input" id="f-univers" type="text" placeholder="e.g. Dystopian Tokyo, medieval kingdom, high school…" maxlength="80" />
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label" for="f-hero-desc">✨ Describe your hero / heroine</label>
+            <textarea class="form-textarea" id="f-hero-desc" rows="3" placeholder="e.g. A brilliant but lonely high school girl who hides a power she doesn't yet understand…"></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">📸 Hero face — reference photo <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+            <input type="file" id="f-hero-img" accept="image/*" onchange="handleHeroImage(event)" style="display:none" />
+            <div class="hero-upload-area" id="hero-upload-area" onclick="triggerHeroUpload()">
+              <div class="hero-upload-label" id="hero-upload-label">
+                <span class="upload-icon">🖼️</span>
+                <span>Click to upload a photo of your hero's face</span>
+              </div>
+              <div class="hero-upload-preview" id="hero-upload-preview" style="display:none">
+                <img class="hero-upload-thumb" id="hero-upload-thumb" src="" alt="Hero face" />
+                <div class="hero-upload-info">
+                  <div class="hero-upload-name" id="hero-upload-name">photo.jpg</div>
+                  <button type="button" class="hero-upload-clear" onclick="clearHeroImage(event)">✕ Remove</button>
+                </div>
+              </div>
+            </div>
+            <span class="form-hint">ChatGPT will analyse the face and reproduce it in the generated manga illustrations.</span>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label" for="f-premise">💡 Your pitch — the starting idea!</label>
+            <textarea class="form-textarea tall" id="f-premise" rows="4" placeholder="e.g. When her brother is captured by a secret organisation, she discovers that her recurring nightmares are actually visions of the future…"></textarea>
+            <span class="form-hint">The more detail you add, the more epic the result! Describe the stakes, twists, atmosphere…</span>
+            <span class="field-error-msg" id="err-premise">⚠ Please describe your starting pitch.</span>
+          </div>
+
+          <div class="form-group full">
+            <div class="chapters-header">
+              <label class="form-label">📚 Chapters <span class="chapter-count" id="chapter-count">(0 / 20)</span></label>
+              <button type="button" class="add-chapter-btn" id="add-chapter-btn" onclick="addChapter()">＋ Add a chapter</button>
+            </div>
+            <div id="chapters-list" class="chapters-list"></div>
+            <span class="field-error-msg" id="err-chapters">⚠ Please add at least one chapter.</span>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label" for="f-fin">🏁 Ending — how does it finish?</label>
+            <textarea class="form-textarea" id="f-fin" rows="3" placeholder="e.g. After defeating the organisation, she discovers her brother was the mastermind all along… but she chooses to forgive him."></textarea>
+            <span class="form-hint">Describe how the story ends — this shapes the generated illustrations.</span>
+            <span class="field-error-msg" id="err-fin">⚠ Please describe the ending.</span>
+          </div>
+
+        </div>
+
+          <div class="api-error-msg" id="api-error-msg" style="grid-column:1/-1"></div>
+
+        </div>
+
+        <button type="button" class="generate-btn" id="gen-btn" onclick="handleGenerate()">
+          🎨 Generate my Manga!
+        </button>
+      </form>
+    </div>
+
+    <!-- LOADING -->
+    <div id="creator-loading" style="display:none;" class="creator-loading">
+      <div class="loading-panels">
+        <div class="loading-panel"></div>
+        <div class="loading-panel"></div>
+        <div class="loading-panel"></div>
+        <div class="loading-panel"></div>
+        <div class="loading-panel"></div>
+      </div>
+      <p class="loading-text" id="loading-msg">✍️ Your inner mangaka is awakening…</p>
+    </div>
+
+    <!-- RESULT -->
+    <div id="creator-result" style="display:none;" class="creator-result">
+      <!-- injected by JS -->
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">MANGA<span class="accent">世界</span></div>
+  <p class="footer-tagline">The Art That Changed the World <span class="footer-heart">♥</span> From 1814 to Infinity</p>
+</footer>
+
+</div><!-- /#main-content -->
+
+<!-- PAYMENT MODAL -->
+<div id="payment-modal" class="payment-overlay" style="display:none" onclick="handleOverlayClick(event)">
+  <div class="payment-card">
+    <button class="payment-close" onclick="closePayment()" aria-label="Close">✕</button>
+
+    <div class="payment-header">
+      <p class="payment-header-label">⚡ Powered by Stripe</p>
+      <h3>Order your Manga!</h3>
+    </div>
+
+    <div class="payment-body">
+
+      <!-- Order Summary -->
+      <div class="payment-summary">
+        <div class="payment-mini-cover" id="modal-cover">
+          <div class="cover-title" id="modal-title">My Manga</div>
+          <div class="cover-vol">VOLUME 1</div>
+        </div>
+
+        <div class="order-line">
+          <div>
+            <div class="order-line-name" id="modal-product-name">My Manga</div>
+            <div class="order-line-desc">📱 Digital edition · High-resolution book</div>
+          </div>
+        </div>
+
+        <div class="order-total">
+        </div>
+      </div>
+
+      <!-- Stripe Payment -->
+      <div class="payment-stripe">
+        <p class="payment-stripe-label">Secure payment</p>
+
+        <div id="stripe-container">
+          <!-- Stripe Buy Button injected here -->
+        </div>
+
+        <div class="payment-security-badges">
+          <span class="security-badge">🔒 SSL / TLS</span>
+          <span class="security-badge">🛡️ 3D Secure</span>
+          <span class="security-badge">⚡ Stripe</span>
+        </div>
+
+        <p class="payment-stripe-footer">
+          100% secure payment by <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>.
+          Your card details are never stored on this site.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/generator-data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/chapters.js"></script>
+<script src="js/database.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/openai.js"></script>
+<script src="js/generator.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/stripe.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
