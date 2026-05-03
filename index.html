@@ -76,6 +76,7 @@
     <li><a href="#mes-mangas">📊 My Stories</a></li>
     <li><a href="#creer" class="nav-create">✏️ Create</a></li>
     <li><a href="#my-mangas" class="nav-my-mangas">🎌 My Mangas</a></li>
+    <li id="nav-admin-link" style="display:none"><a href="#all-mangas" class="nav-admin">🛡️ All Mangas</a></li>
   </ul>
   <div class="nav-auth-area">
     <div class="lang-switcher">
@@ -756,6 +757,10 @@
 
     <!-- FORM -->
     <div class="creator-form-card" id="creator-form-card">
+      <div class="surprise-bar">
+        <span class="surprise-bar-text">✨ No idea yet? Let fate decide.</span>
+        <button type="button" class="surprise-btn" onclick="surpriseMe()">🎲 Surprise Me!</button>
+      </div>
       <form id="manga-form" novalidate onsubmit="return false">
         <div class="form-grid">
 
@@ -891,6 +896,16 @@
         <p>No mangas yet — <a href="#creer">create your first one!</a></p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ALL MANGAS (admin only) -->
+<section id="all-mangas" style="display:none">
+  <div class="my-mangas-inner">
+    <p class="section-label">🛡️ Admin Panel</p>
+    <h2 class="section-title">All <span class="red">Mangas</span></h2>
+    <p class="section-desc">Every manga story generated across all users.</p>
+    <div id="all-mangas-grid" class="my-mangas-grid"></div>
   </div>
 </section>
 
@@ -1051,14 +1066,15 @@
 <script src="js/ui.js?v=2"></script>
 <script src="js/chapters.js?v=2"></script>
 <script src="js/database.js?v=2"></script>
-<script src="js/auth.js?v=3"></script>
+<script src="js/auth.js?v=4"></script>
 <script src="js/openai.js?v=2"></script>
-<script src="js/generator.js?v=2"></script>
+<script src="js/generator.js?v=3"></script>
 <script src="js/storage.js?v=2"></script>
 <script src="js/stripe.js?v=2"></script>
 <script src="js/my-mangas.js?v=7"></script>
 <script src="js/export.js?v=2"></script>
 <script src="js/profile.js"></script>
+<script src="js/admin.js?v=1"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

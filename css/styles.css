@@ -714,6 +714,30 @@ footer {
   box-shadow: 3px 4px 0 rgba(0,0,0,.2) !important;
 }
 
+.nav-admin {
+  background: #1a1a2e !important;
+  color: #a78bfa !important;
+  border-radius: 100px !important;
+  padding: .3rem .85rem !important;
+  font-weight: 800 !important;
+  border: 1.5px solid rgba(167,139,250,.35) !important;
+  transition: background .15s, color .15s !important;
+}
+.nav-admin:hover {
+  background: #2d1f6b !important;
+  color: #c4b5fd !important;
+}
+
+/* ── ALL MANGAS (admin) SECTION ───────────────────────── */
+#all-mangas {
+  background: #0d0d1a;
+  padding: 7rem 2rem 8rem;
+}
+#all-mangas .my-mangas-inner { max-width: 1280px; margin: 0 auto; }
+#all-mangas .section-label { color: #a78bfa; }
+#all-mangas .section-title { color: #fff; }
+#all-mangas .section-desc  { color: rgba(255,255,255,.55); }
+
 /* ── MY MANGAS SECTION ────────────────────────────────── */
 #my-mangas {
   background: var(--bg-alt);
@@ -834,6 +858,18 @@ footer {
   color: var(--light);
 }
 
+.manga-tile-email {
+  font-size: .7rem;
+  color: var(--muted);
+  margin-top: .35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgba(0,0,0,.04);
+  border-radius: 5px;
+  padding: .18rem .45rem;
+}
+
 .manga-tile-order {
   margin-top: auto;
   padding-top: .75rem;
@@ -948,6 +984,48 @@ footer {
   padding: 2.5rem 2.5rem 2rem;
   box-shadow: 0 32px 80px rgba(0,0,0,.4);
 }
+
+.surprise-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .7rem 1rem;
+  background: linear-gradient(135deg, rgba(123,47,247,.07) 0%, rgba(17,138,178,.07) 100%);
+  border: 1.5px dashed rgba(123,47,247,.3);
+  border-radius: 10px;
+  margin-bottom: 1.75rem;
+}
+.surprise-bar-text {
+  font-size: .78rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.surprise-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .45rem 1.1rem;
+  background: linear-gradient(135deg, #7b2ff7, #118ab2);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity .15s, transform .15s;
+}
+.surprise-btn:hover { opacity: .88; transform: scale(1.04); }
+
+@keyframes surprise-flash {
+  0%   { box-shadow: 0 32px 80px rgba(0,0,0,.4), 0 0 0 0 rgba(123,47,247,.45); }
+  60%  { box-shadow: 0 32px 80px rgba(0,0,0,.4), 0 0 0 16px rgba(123,47,247,0); }
+  100% { box-shadow: 0 32px 80px rgba(0,0,0,.4); }
+}
+.surprise-flash { animation: surprise-flash .7s ease-out; }
 
 .form-grid {
   display: grid;

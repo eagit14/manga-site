@@ -1,5 +1,7 @@
 // ── Auth: updateAuthUI, initAuth, signInWithGoogle, signOutUser, upsertUser, trackConnection, closeConnection ──
 
+window._isAdmin = false;
+
 function updateAuthUI(session) {
   const loginWall   = document.getElementById('login-wall');
   const mainContent = document.getElementById('main-content');
@@ -70,6 +72,21 @@ async function closeConnection() {
   _connectionId = null;
 }
 
+async function checkAdminStatus(userId) {
+  if (!_supabase || !userId) return;
+  const { data } = await _supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', userId)
+    .single();
+  window._isAdmin = data?.is_admin === true;
+  const adminLink    = document.getElementById('nav-admin-link');
+  const adminSection = document.getElementById('all-mangas');
+  if (adminLink)    adminLink.style.display    = window._isAdmin ? '' : 'none';
+  if (adminSection) adminSection.style.display = window._isAdmin ? '' : 'none';
+  if (window._isAdmin && typeof loadAllMangas === 'function') loadAllMangas();
+}
+
 async function _processPendingPayment() {
   const storyId = window._pendingPaymentStoryId;
   if (storyId) {
@@ -94,12 +111,19 @@ function initAuth() {
     if (event === 'SIGNED_IN') {
       upsertUser(session.user);
       trackConnection(session.user.id);
+      checkAdminStatus(session.user.id);
       _processPendingPayment();
     }
     if (event === 'INITIAL_SESSION' && session?.user) {
+      checkAdminStatus(session.user.id);
       _processPendingPayment();
     }
     if (event === 'SIGNED_OUT') {
+      window._isAdmin = false;
+      const adminLink    = document.getElementById('nav-admin-link');
+      const adminSection = document.getElementById('all-mangas');
+      if (adminLink)    adminLink.style.display    = 'none';
+      if (adminSection) adminSection.style.display = 'none';
       closeConnection();
       loadMyMangas();
     }

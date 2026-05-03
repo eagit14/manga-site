@@ -234,3 +234,114 @@ function copySynopsis(text) {
     setTimeout(() => btn.textContent = orig, 2000);
   });
 }
+
+// ── Surprise Me ───────────────────────────────────────────
+
+const SURPRISE_SEEDS = [
+  {
+    title: "The Cartographer's Curse",
+    hero: 'Sora', universe: 'Feudal Japan with hidden supernatural layers',
+    genre: 'seinen', style: 'sombre',
+    heroDesc: "A solitary cartographer haunted by insomnia and an obsession with borders between worlds. Methodical and cold — until the maps begin drawing themselves.",
+    pitch: "Every map Sora draws of a place she has never visited materialises into reality within a week. When she accidentally draws a village full of people who should have died a century ago, they begin asking her to come find them — scrawling messages directly onto her parchment at night.",
+    chapter: { title: 'The First Territory', desc: "Sora discovers the first map she drew as a child — a place she invented — has existed for decades. Residents have been waiting for their creator." },
+    ending: "Sora must erase the most beautiful map she ever drew — the one containing everyone she ever lost — to seal the boundary between creation and reality forever.",
+  },
+  {
+    title: 'Last Signal',
+    hero: 'Kaito', universe: 'Deep space research station, year 2187',
+    genre: 'sf', style: 'sombre',
+    heroDesc: "A communications officer aboard a long-range survey vessel — rational, precise, and deeply alone. He volunteered for this mission to escape something on Earth he refuses to name.",
+    pitch: "While monitoring routine frequencies, Kaito intercepts a distress signal encoded in his own voice, timestamped twenty-three years from now. The message contains coordinates, a single warning — \"don't land\" — and then silence. The ship is already descending.",
+    chapter: { title: 'Frequency Zero', desc: "Kaito decrypts the full message. It's not just a warning — it's a confession. His future self describes committing a crime that hasn't happened yet, and blaming the planet below." },
+    ending: "Kaito lands anyway. What he finds on the planet is not a monster — it is a version of humanity that chose to stop. He must decide whether to warn Earth or protect their silence.",
+  },
+  {
+    title: 'The Pale Garden',
+    hero: 'Ren', universe: 'Victorian-era coastal city shrouded in perpetual fog',
+    genre: 'horreur', style: 'elegant',
+    heroDesc: "A young botanist who inherited a sealed greenhouse from a grandmother she never met. Quiet and deeply observant, with the unsettling ability to understand what plants need before they wilt.",
+    pitch: "The greenhouse grows flowers of impossible beauty — each one tied to a stolen memory. When Ren touches a bloom, she relives its donor's most precious moment. As more townsfolk begin forgetting their loved ones, Ren realises the garden is still feeding.",
+    chapter: { title: 'What the Roses Remember', desc: "Ren traces the oldest flower to a woman who has been alive for two hundred years and remembers absolutely nothing. She smiles at Ren like a blank page." },
+    ending: "To kill the garden Ren must sacrifice her own memories — including the only ones she has of her mother. She does it. Somewhere, a flower blooms white and dissolves to ash.",
+  },
+  {
+    title: 'Echo of the Forgotten',
+    hero: 'Mizuki', universe: 'A library existing between discarded stories',
+    genre: 'isekai', style: 'elegant',
+    heroDesc: "An archivist in her forties — pragmatic, ink-stained, and quietly grief-stricken since her daughter disappeared inside a book that was later declared impossible to find.",
+    pitch: "Mizuki is pulled into a world built entirely from stories abandoned mid-sentence by their authors. Its inhabitants are unfinished characters — alive, aware, and desperate for someone to complete their arcs before they fade. Her daughter is here. She chose to stay.",
+    chapter: { title: 'The Unwritten Chapter', desc: "Mizuki meets the antagonist of an abandoned horror story whose author died before revealing his motive. He has spent thirty years becoming kind, with no one left to notice." },
+    ending: "Mizuki writes the final sentence of every story she can find — including her daughter's. The last line she writes is one her daughter left for her, hidden on page one.",
+  },
+  {
+    title: 'Seventeen Seconds',
+    hero: 'Hayate', universe: 'Modern Tokyo layered over an invisible warzone',
+    genre: 'shonen', style: 'dynamique',
+    heroDesc: "A teenager who has been dying — and rewinding exactly 17 seconds — for over 200 years, trapped in the same afternoon. He remembers everything. He has tried every possible escape. None of them work.",
+    pitch: "Hayate has rewound over forty thousand times. Today, for the first time, a girl named Aoi does something he has never seen — she looks directly at him the moment he resets and whispers: \"Again?\" She can see the loop. She may be the only one who can break it.",
+    chapter: { title: 'Loop 40,301', desc: "Hayate maps every conversation with Aoi across fifty resets. She changes her answer each time — as if she remembers too. That should be impossible." },
+    ending: "The loop breaks not through strategy but because Hayate, for the first time in 200 years, chooses not to run. The 17 seconds pass. Nothing resets. He has no idea what comes next.",
+  },
+  {
+    title: 'The Mirror Rooms',
+    hero: 'Shion', universe: 'Neo-Kyoto, a city where mirrors are regulated by law',
+    genre: 'seinen', style: 'sombre',
+    heroDesc: "A forensic detective who can enter the last memory preserved inside any mirror at a crime scene. She solves every case. She has never once spoken about what she actually sees inside.",
+    pitch: "A series of murders leaves no trace — except every victim's mirror has been turned to face the wall beforehand. When Shion enters the first mirror, she finds not a memory but a door. Someone has been living on the reflection side. And they have been watching her for years.",
+    chapter: { title: 'The Inverted Room', desc: "Shion discovers the killer's mirror-space contains perfect replicas of her own apartment, updated in real time. Her most recent reflection is missing its eyes." },
+    ending: "Shion must shatter every mirror in the city to destroy the mirror-world — including the one containing the only preserved memory of her dead partner. She hesitates one second. Then swings.",
+  },
+  {
+    title: 'Salt and Ash',
+    hero: 'Yuki', universe: 'A quiet seaside town where everyone seems peacefully content',
+    genre: 'shojo', style: 'doux',
+    heroDesc: "A teenage girl with synesthesia — she experiences emotions as flavours on her tongue. Once a comfort, the ability has become an alarm: the food in her town has started tasting like grey.",
+    pitch: "Someone has been lacing the town's water supply with a compound that gradually erodes grief, anger, and longing — leaving only a gentle tasteless contentment. Most residents prefer it. Yuki is the only one who can tell what they have lost.",
+    chapter: { title: 'The Grey Taste', desc: "Yuki traces the compound to the town's most beloved chef — an old man who lost his family to depression. He is not a villain. He is a father who never wants anyone to feel what he felt." },
+    ending: "Yuki gives the town back its grief. Half of them hate her for it. The other half, weeks later, begin to taste things again — including joy, which requires the other half to mean anything.",
+  },
+  {
+    title: 'The Hollow Crown',
+    hero: 'Rei', universe: 'A medieval kingdom where every law and war is decided by chess',
+    genre: 'isekai', style: 'elegant',
+    heroDesc: "A chess prodigy expelled from every tournament on Earth for being too aggressive. In the kingdom of Echoria, aggressiveness is a royal virtue. He is terrifying here. He is also sixteen years old.",
+    pitch: "Rei is summoned to Echoria as the kingdom's champion — but discovers that every piece sacrificed on the board reflects a real death somewhere in the realm. He has already played three moves before anyone tells him this.",
+    chapter: { title: 'Gambit Declined', desc: "Rei is forced to play the kingdom's most brutal general. He wins in six moves. Somewhere in the southern province, six soldiers do not come home. The general applauds." },
+    ending: "Rei deliberately loses the final match — sacrificing only the king, his own piece, triggering his erasure from Echoria. The kingdom must govern without a champion for the first time in history. He considers this his greatest victory.",
+  },
+];
+
+function surpriseMe() {
+  const seed = SURPRISE_SEEDS[Math.floor(Math.random() * SURPRISE_SEEDS.length)];
+
+  document.getElementById('f-titre').value     = seed.title;
+  document.getElementById('f-heros').value     = seed.hero;
+  document.getElementById('f-univers').value   = seed.universe;
+  document.getElementById('f-hero-desc').value = seed.heroDesc;
+  document.getElementById('f-premise').value   = seed.pitch;
+  document.getElementById('f-fin').value       = seed.ending;
+  document.getElementById('f-genre').value     = seed.genre;
+  document.getElementById('f-style').value     = seed.style;
+
+  // Clear existing chapters and add the seed chapter
+  document.querySelectorAll('.chapter-entry').forEach(el => el.remove());
+  updateChapterUI();
+  addChapter();
+  const titleInput = document.querySelector('.chapter-title-input');
+  const descInput  = document.querySelector('.chapter-desc-input');
+  if (titleInput) titleInput.value = seed.chapter.title;
+  if (descInput)  descInput.value  = seed.chapter.desc;
+
+  // Clear error states
+  ['err-premise', 'err-chapters', 'err-fin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Flash the card and scroll to it
+  const card = document.getElementById('creator-form-card');
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.classList.add('surprise-flash');
+  setTimeout(() => card.classList.remove('surprise-flash'), 700);
+}
