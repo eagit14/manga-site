@@ -106,11 +106,59 @@ function initAuth() {
   });
 }
 
+function lwShowTab(tab) {
+  const signin = tab === 'signin';
+  document.getElementById('lw-signin-form').style.display = signin ? 'flex' : 'none';
+  document.getElementById('lw-signup-form').style.display = signin ? 'none' : 'flex';
+  document.getElementById('lw-tab-signin').classList.toggle('active', signin);
+  document.getElementById('lw-tab-signup').classList.toggle('active', !signin);
+}
+
+async function signInWithEmail() {
+  const email    = (document.getElementById('lw-email').value    || '').trim();
+  const password =  document.getElementById('lw-password').value || '';
+  const msgEl    =  document.getElementById('lw-signin-msg');
+  const btn      =  document.getElementById('lw-signin-btn');
+  msgEl.className = 'lw-form-msg';
+  msgEl.textContent = '';
+  if (!email || !password) { msgEl.textContent = 'Please enter your email and password.'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const { error } = await _supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    msgEl.textContent = error.message;
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+async function signUpWithEmail() {
+  const email    = (document.getElementById('lw-reg-email').value    || '').trim();
+  const password =  document.getElementById('lw-reg-password').value || '';
+  const confirm  =  document.getElementById('lw-reg-confirm').value  || '';
+  const msgEl    =  document.getElementById('lw-signup-msg');
+  const btn      =  document.getElementById('lw-signup-btn');
+  msgEl.className = 'lw-form-msg';
+  msgEl.textContent = '';
+  if (!email || !password) { msgEl.textContent = 'Please fill in all fields.'; return; }
+  if (password.length < 6) { msgEl.textContent = 'Password must be at least 6 characters.'; return; }
+  if (password !== confirm) { msgEl.textContent = 'Passwords do not match.'; return; }
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  const { data, error } = await _supabase.auth.signUp({ email, password });
+  if (error) {
+    msgEl.textContent = error.message;
+    btn.disabled = false; btn.textContent = 'Create Account';
+  } else if (!data.session) {
+    msgEl.className = 'lw-form-msg success';
+    msgEl.textContent = '✅ Check your email to confirm your account!';
+    btn.disabled = false; btn.textContent = 'Create Account';
+  }
+  // if data.session exists, onAuthStateChange handles the sign-in automatically
+}
+
 async function signInWithGoogle() {
   if (!_supabase) { alert('Supabase is not configured.'); return; }
   await _supabase.auth.signInWithOAuth({
     provider: 'google',
-    options:  { redirectTo: window.location.origin + '/' },
+    options:  { redirectTo: window.location.origin },
   });
 }
 

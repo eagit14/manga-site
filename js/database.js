@@ -73,6 +73,28 @@ async function markMangaPurchased(storyId) {
   else console.log('[DB] Story marked as purchased ✓', storyId);
 }
 
+async function deleteManga(storyId) {
+  if (!_supabase || !storyId) return false;
+  try {
+    // Delete storage files for this story
+    const { data: files } = await _supabase.storage.from('manga-images').list(storyId);
+    if (files && files.length > 0) {
+      const paths = files.map(f => `${storyId}/${f.name}`);
+      await _supabase.storage.from('manga-images').remove(paths);
+    }
+    // Delete DB rows in dependency order
+    await _supabase.from('manga_images').delete().eq('story_id', storyId);
+    await _supabase.from('manga_chapters').delete().eq('story_id', storyId);
+    const { error } = await _supabase.from('manga_stories').delete().eq('id', storyId);
+    if (error) { console.error('[DB] deleteManga error:', error.message); return false; }
+    console.log('[DB] Manga deleted ✓', storyId);
+    return true;
+  } catch (err) {
+    console.error('[DB] deleteManga unexpected error:', err);
+    return false;
+  }
+}
+
 async function saveImageToSupabase(storyId, imageType, chapterNum, imageUrl, promptUsed) {
   if (!_supabase || !storyId) return;
   try {

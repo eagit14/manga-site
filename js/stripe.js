@@ -69,10 +69,74 @@ async function _openModal(title, grad, imgs, storyId) {
 }
 
 function _updateModalPurchaseState(purchased) {
-  const exportBtn  = document.getElementById('modal-export-btn');
-  const stripeWrap = document.getElementById('stripe-container');
-  if (exportBtn)  exportBtn.style.display  = purchased ? 'flex' : 'none';
-  if (stripeWrap) stripeWrap.style.display = purchased ? 'none' : '';
+  const exportBtn   = document.getElementById('modal-export-btn');
+  const stripeWrap  = document.getElementById('stripe-container');
+  const promoSec    = document.getElementById('promo-section');
+  const stripeLabel = document.querySelector('.payment-header-label');
+  const stripeBadge = document.querySelector('.payment-security-badges');
+  const stripeFooter= document.querySelector('.payment-stripe-footer');
+  if (exportBtn)    exportBtn.style.display    = purchased ? 'flex' : 'none';
+  if (stripeWrap)   stripeWrap.style.display   = purchased ? 'none' : '';
+  if (promoSec)     promoSec.style.display     = purchased ? 'none' : '';
+  if (stripeLabel)  stripeLabel.style.display  = purchased ? 'none' : '';
+  if (stripeBadge)  stripeBadge.style.display  = purchased ? 'none' : '';
+  if (stripeFooter) stripeFooter.style.display = purchased ? 'none' : '';
+}
+
+function togglePromoInput() {
+  const area   = document.getElementById('promo-input-area');
+  const toggle = document.getElementById('promo-toggle');
+  if (!area) return;
+  const open = area.classList.toggle('open');
+  if (toggle) toggle.classList.toggle('active', open);
+  if (open) document.getElementById('promo-code-input')?.focus();
+}
+
+async function applyPromoCode() {
+  const input   = document.getElementById('promo-code-input');
+  const msg     = document.getElementById('promo-message');
+  const applyBtn= document.getElementById('promo-apply-btn');
+  if (!input || !msg) return;
+
+  const code    = input.value.trim().toUpperCase();
+  const storyId = window._currentStoryId;
+
+  if (!code)    { _promoMsg(msg, 'Please enter a code.', 'error'); return; }
+  if (!storyId) { _promoMsg(msg, 'No manga selected.',   'error'); return; }
+
+  applyBtn.disabled = true;
+  applyBtn.textContent = '…';
+  msg.textContent = '';
+  msg.className = 'promo-message';
+
+  try {
+    const { data, error } = await _supabase.rpc('redeem_promo_code', {
+      code_input:     code,
+      story_id_input: storyId,
+    });
+    if (error) throw error;
+
+    if (data?.success) {
+      _promoMsg(msg, '🎉 Code applied! Your manga is unlocked.', 'success');
+      setTimeout(() => {
+        _updateModalPurchaseState(true);
+        loadMyMangas();
+      }, 900);
+    } else {
+      _promoMsg(msg, data?.error || 'Invalid code.', 'error');
+    }
+  } catch (err) {
+    console.error('[Promo] error:', err);
+    _promoMsg(msg, 'Error checking code — please try again.', 'error');
+  } finally {
+    applyBtn.disabled = false;
+    applyBtn.textContent = 'Apply';
+  }
+}
+
+function _promoMsg(el, text, type) {
+  el.textContent = text;
+  el.className = `promo-message ${type}`;
 }
 
 function openPayment(title, grad) {

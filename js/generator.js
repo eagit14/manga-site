@@ -94,9 +94,6 @@ function buildAndShowResult(data, aiContent) {
         ${imagePanel}
         <div class="result-actions">
           <button class="action-btn order-btn" onclick="openPayment('${data.titre.replace(/'/g, "\\'")}', '${grad}')">🛒 Order your Manga!</button>
-          <button class="action-btn primary" onclick="regenerate()">🔄 Regenerate</button>
-          <button class="action-btn" onclick="copySynopsis('${synopsisSafe}')">📋 Copy</button>
-          <button class="action-btn" onclick="resetForm()">✏️ New</button>
         </div>
       </div>
     </div>`;
@@ -114,6 +111,8 @@ function buildAndShowResult(data, aiContent) {
 
 async function handleGenerate() {
   const apiKey = OPENAI_API_KEY;
+  const genBtn = document.getElementById('gen-btn');
+  if (genBtn) genBtn.style.display = 'none';
 
   // ── Clear previous errors ──
   const errEl = document.getElementById('api-error-msg');
@@ -146,6 +145,7 @@ async function handleGenerate() {
     firstInvalid = firstInvalid || document.getElementById('f-fin');
   }
   if (firstInvalid) {
+    if (genBtn) genBtn.style.display = '';
     firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
@@ -179,6 +179,7 @@ async function handleGenerate() {
     } catch (err) {
       document.getElementById('creator-loading').style.display = 'none';
       document.getElementById('creator-form-card').style.display = 'block';
+      if (genBtn) genBtn.style.display = '';
       errEl.textContent = `❌ ${err.message}`;
       errEl.classList.add('show');
       errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -194,16 +195,14 @@ async function handleGenerate() {
   const grad = coverGrads[data.genre] || coverGrads.shonen;
   const storyId = await saveStoryToSupabase(data, aiContent, grad);
   window._lastStoryId = storyId || null;
+  loadMyMangas();
 
   // Kick off DALL-E image generation asynchronously (non-blocking)
-  if (apiKey && aiContent?.image_prompt_pitch) {
-    generateImages(
-      apiKey,
-      aiContent.image_prompt_pitch,
-      aiContent.image_prompt_chapter1 || aiContent.image_prompt_pitch,
-      aiContent.image_prompt_ending   || aiContent.image_prompt_pitch,
-      storyId,
-    );
+  if (apiKey && aiContent) {
+    const _styleLabel = styleLabels[data.style] || data.style;
+    const _genreLabel = genreProfiles[data.genre]?.label || data.genre;
+    const prompts = buildImagePrompts(data, aiContent, _styleLabel, _genreLabel);
+    generateImages(apiKey, prompts.pitch, prompts.chapter1, prompts.ending, storyId);
   }
 }
 

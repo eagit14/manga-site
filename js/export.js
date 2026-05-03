@@ -73,9 +73,11 @@ ${ordered.map(img => `  <div class="page"><img src="${img.image_url}" /></div>`)
 <script>
   var images = document.querySelectorAll('img');
   var loaded = 0;
+  var fallback = setTimeout(function() { window.print(); }, 5000);
   function onLoad() {
     loaded++;
     if (loaded >= images.length) {
+      clearTimeout(fallback);
       setTimeout(function() { window.print(); }, 300);
     }
   }
@@ -83,8 +85,6 @@ ${ordered.map(img => `  <div class="page"><img src="${img.image_url}" /></div>`)
     if (img.complete) { onLoad(); }
     else { img.onload = onLoad; img.onerror = onLoad; }
   });
-  // Fallback: print after 5 s even if some images fail
-  setTimeout(function() { window.print(); }, 5000);
 <\/script>
 </body>
 </html>`);

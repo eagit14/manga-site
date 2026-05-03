@@ -11,7 +11,11 @@ async function callOpenAI(apiKey, data) {
     : '';
 
   const faceNote = _heroImageBase64
-    ? '\n\nA reference photo of the hero\'s face is attached. Analyse the facial features carefully and reproduce them precisely in ALL three image_prompt_* fields so DALL-E draws the same face consistently.'
+    ? '\n\nA reference photo of the hero\'s face is attached. Examine it closely and fill the "hero_face_desc" field with a precise physical description suitable for an illustrator: face shape, skin tone, eye color and shape, eyebrow style, nose shape, lip shape, hair color, hair texture and style, any distinctive features (scars, freckles, jawline, cheekbones, etc.). Be as specific as possible so an artist can reproduce this exact face.'
+    : '';
+
+  const faceField = _heroImageBase64
+    ? '\n  "hero_face_desc": "Precise physical description of the hero\'s face extracted from the reference photo: face shape, skin tone, eye color/shape, eyebrow style, nose, lips, hair color/texture/style, distinctive features. Enough detail for consistent illustration across all panels.",'
     : '';
 
   const userPrompt = `Create a complete narrative sheet for this manga:
@@ -26,15 +30,12 @@ ${data.premise  ? `Starting pitch: ${data.premise}`       : ''}
 ${data.fin      ? `Desired ending: ${data.fin}`           : ''}${chaptersText}${faceNote}
 
 Reply ONLY with a valid JSON object containing these fields:
-{
+{${faceField}
   "synopsis": "Compelling 4–6 sentence synopsis in English. Present the world, the hero, the inciting incident, the stakes. Editorial style, vivid and gripping.",
   "tagline": "Hard-hitting single sentence (15 words max) — manga cover style.",
   "hero_description": "2–3 sentence description of the main character: personality, special power or strength, what makes them unique.",
   "chapter_titles": ["Chapter title 1", "Chapter title 2", "Chapter title 3"],
-  "universe_desc": "One short immersive sentence describing the universe.",
-  "image_prompt_pitch": "A full manga page layout with 4 to 6 distinct black-and-white ink panels separated by white gutters, depicting the opening scene of this manga (the inciting incident). Each panel shows a different moment: establishing shot of the setting, introduction of the hero, a dramatic event, a reaction close-up. Authentic Japanese manga page style inspired by Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama — black and white ink only, no colour, sharp clean linework, screen tones (hatching, crosshatching), expressive large eyes, speed lines, bold panel borders, speech-bubble placeholders. Art style: ${styleLabel}. The page must look like a real printed manga chapter page.",
-  "image_prompt_chapter1": "A full manga page layout with 4 to 6 distinct black-and-white ink panels separated by white gutters, depicting the key action scene of the first chapter. Each panel advances the story: wide action shot, character reaction, dramatic confrontation, emotional close-up. Authentic Japanese manga page style inspired by Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama — black and white ink only, no colour, sharp clean linework, screen tones, dynamic speed lines, bold panel borders, varied panel sizes for pacing. Art style: ${styleLabel}. The page must look like a real printed manga chapter page.",
-  "image_prompt_ending": "A full manga page layout with 4 to 6 distinct black-and-white ink panels separated by white gutters, depicting the emotional resolution and final scene of this manga. Panels show: climax moment, emotional reaction, quiet aftermath, final symbolic image. Authentic Japanese manga page style inspired by Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama — black and white ink only, no colour, sharp clean linework, screen tones, emotionally expressive characters, a large dramatic final panel. Art style: ${styleLabel}. The page must look like a real printed manga chapter page."
+  "universe_desc": "One short immersive sentence describing the universe."
 }`;
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -79,23 +80,87 @@ Reply ONLY with a valid JSON object containing these fields:
   return JSON.parse(json.choices[0].message.content);
 }
 
-async function _uploadImageToStorage(dalleUrl, storyId, imageType) {
-  if (!_supabase || !storyId) return dalleUrl;
+function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
+  const hero     = data.heros     || 'the protagonist';
+  const heroDesc = aiContent?.hero_description || data.heroDesc || '';
+  const setting  = data.univers   || 'an unknown world';
+  const premise  = data.premise   || '';
+  const fin      = data.fin       || '';
+  const title    = data.titre     || 'Untitled';
+  const synopsis = aiContent?.synopsis ? aiContent.synopsis.split('.').slice(0, 2).join('.') + '.' : '';
+  const faceRef  = _heroImageBase64 && aiContent?.hero_face_desc
+    ? ` IMPORTANT — Hero face must be reproduced exactly in every panel: ${aiContent.hero_face_desc}`
+    : _heroImageBase64
+      ? ' A reference face photo was provided — reproduce the hero\'s facial features precisely in every panel.'
+      : '';
+
+  // Build chapter arc context from user-defined chapters
+  const chapters = data.chapters || [];
+  const ch1 = chapters[0];
+  const chArc = chapters.length
+    ? 'Story arc: ' + chapters.map(ch =>
+        `Ch.${ch.num}${ch.title ? ' "' + ch.title + '"' : ''}${ch.description ? ' (' + ch.description + ')' : ''}`
+      ).join(' → ') + '.'
+    : '';
+
+  const storyCtx = [
+    synopsis && `Story: ${synopsis}`,
+    premise  && `Opening: ${premise}`,
+    fin      && `Ending: ${fin}`,
+    chArc,
+  ].filter(Boolean).join(' ');
+
+  const base = `Full manga chapter page layout, 4 to 6 distinct black-and-white ink panels separated by white gutters. Art style: ${styleLabel}. Genre: ${genreLabel}. Title: "${title}". Hero: ${hero}${heroDesc ? ' — ' + heroDesc : ''}. Setting: ${setting}. ${storyCtx}${faceRef} Draw the hero with a consistent face across all panels. Authentic Japanese manga style — B&W ink only, no colour, screen tones, hatching, expressive characters, speed lines, bold panel borders, varied panel sizes for pacing. The page must look like a real printed manga chapter page.`;
+
+  const pitch = `${base}
+Illustrate the OPENING SCENE / Inciting Incident: ${premise || 'the hero\'s world is disrupted by an unexpected event'}.
+Panels: (1) wide establishing shot of ${setting}, (2) ${hero} introduced in their normal life, (3) the inciting event unfolds dramatically, (4) close-up reaction shot of ${hero}'s face showing shock or determination.`;
+
+  const ch1Desc = ch1
+    ? `${ch1.title ? '"' + ch1.title + '"' : 'Chapter 1'}${ch1.description ? ': ' + ch1.description : ''}`
+    : premise || 'the hero faces their first major challenge';
+
+  const chapter1 = `${base}
+Illustrate the FIRST CHAPTER key action scene — ${ch1Desc}.
+Panels: (1) wide action shot of ${hero} in motion in ${setting}, (2) a dramatic confrontation or obstacle specific to this chapter, (3) ${hero}'s reaction and decision, (4) cliffhanger panel that pushes the story forward.`;
+
+  const lastCh = chapters.length > 1 ? chapters[chapters.length - 1] : null;
+  const endingCtx = fin
+    ? fin
+    : lastCh
+      ? `${lastCh.title ? '"' + lastCh.title + '"' : 'final chapter'}${lastCh.description ? ': ' + lastCh.description : ''}`
+      : 'the hero completes their journey';
+
+  const ending = `${base}
+Illustrate the FINAL RESOLUTION: ${endingCtx}.
+Panels: (1) climax moment — ${hero} at the peak of the final confrontation, (2) emotional reaction close-up, (3) quiet aftermath in ${setting}, (4) large final symbolic panel showing the new status quo or a lingering question.`;
+
+  return { pitch, chapter1, ending };
+}
+
+async function _uploadBase64ToStorage(b64, storyId, imageType) {
+  if (!_supabase || !storyId) return null;
   try {
-    const blob = await fetch(dalleUrl).then(r => r.blob());
+    // Decode base64 → Uint8Array — no fetch(), no CORS
+    const binary = atob(b64);
+    const bytes  = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'image/png' });
+
     const path = `${storyId}/${imageType}-${Date.now()}.png`;
     const { error } = await _supabase.storage
       .from('manga-images')
       .upload(path, blob, { contentType: 'image/png', upsert: true });
-    if (error) { console.error('[Storage] upload error:', error.message); return dalleUrl; }
+    if (error) { console.error('[Storage] upload error:', error.message); return null; }
+
     const { data: signData, error: signError } = await _supabase.storage
       .from('manga-images')
       .createSignedUrl(path, 315360000); // ~10 years
-    if (signError) { console.error('[Storage] sign error:', signError.message); return dalleUrl; }
+    if (signError) { console.error('[Storage] sign error:', signError.message); return null; }
     return signData.signedUrl;
   } catch (err) {
     console.error('[Storage] upload failed:', err);
-    return dalleUrl;
+    return null;
   }
 }
 
@@ -110,23 +175,38 @@ async function generateImages(apiKey, promptPitch, promptChapter1, promptEnding,
       const res = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', response_format: 'url' }),
+        // b64_json returns image data directly — no cross-origin fetch needed
+        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', response_format: 'b64_json' }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json    = await res.json();
-      const dalleUrl = json.data[0].url;
+      const json   = await res.json();
+      const b64    = json.data[0].b64_json;
+      const dataUrl = `data:image/png;base64,${b64}`;
 
-      // Upload to Supabase Storage for a permanent URL
-      const permanentUrl = await _uploadImageToStorage(dalleUrl, storyId, meta[idx].type);
-
+      // Show immediately from base64 while storage upload runs
       const img      = document.getElementById(`carousel-img-${idx}`);
       const skeleton = document.getElementById(`carousel-skeleton-${idx}`);
       if (img) {
-        img.src   = permanentUrl;
+        img.src = dataUrl;
         img.style.display = 'block';
         img.onload = () => { if (skeleton) skeleton.style.display = 'none'; };
       }
-      await saveImageToSupabase(storyId, meta[idx].type, meta[idx].chapterNum, permanentUrl, prompt);
+
+      // Upload base64 → Supabase Storage (no CORS, no expiry)
+      const permanentUrl = await _uploadBase64ToStorage(b64, storyId, meta[idx].type);
+
+      if (permanentUrl) {
+        // Swap to the permanent signed URL and persist to DB
+        if (img) img.src = permanentUrl;
+        await saveImageToSupabase(storyId, meta[idx].type, meta[idx].chapterNum, permanentUrl, prompt);
+      } else {
+        // Storage not set up — image visible this session only, not saved to DB
+        if (skeleton) {
+          skeleton.innerHTML = '<span>⚠️</span><span>Storage not configured — image won\'t persist</span>';
+          skeleton.style.display = 'flex';
+        }
+        console.error('[IMG] Storage upload failed for idx=' + idx + '. Create the manga-images bucket in Supabase Storage and add the auth upload/read policies.');
+      }
     } catch (err) {
       console.error('[IMG] generate error idx=' + idx, err);
       const skeleton = document.getElementById(`carousel-skeleton-${idx}`);
