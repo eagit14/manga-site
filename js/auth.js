@@ -14,8 +14,15 @@ function updateAuthUI(session) {
     const meta = session.user.user_metadata || {};
     const avatar = document.getElementById('nav-avatar');
     const nameEl = document.getElementById('nav-username');
+    const displayName = meta.full_name || meta.name || session.user.email || '';
     if (avatar) { avatar.src = meta.avatar_url || ''; avatar.style.display = meta.avatar_url ? '' : 'none'; }
-    if (nameEl) nameEl.textContent = meta.full_name || meta.name || session.user.email || '';
+    if (nameEl) nameEl.textContent = displayName;
+    const dropAvatar = document.getElementById('dropdown-avatar');
+    const dropName   = document.getElementById('dropdown-name');
+    const dropEmail  = document.getElementById('dropdown-email');
+    if (dropAvatar) { dropAvatar.src = meta.avatar_url || ''; dropAvatar.style.display = meta.avatar_url ? '' : 'none'; }
+    if (dropName)  dropName.textContent  = meta.full_name || meta.name || '';
+    if (dropEmail) dropEmail.textContent = session.user.email || '';
   } else {
     if (loginWall)   loginWall.style.display   = 'flex';
     if (mainContent) mainContent.style.display = 'none';
@@ -63,6 +70,15 @@ async function closeConnection() {
   _connectionId = null;
 }
 
+async function _processPendingPayment() {
+  const storyId = window._pendingPaymentStoryId;
+  if (storyId) {
+    window._pendingPaymentStoryId = null;
+    await markMangaPurchased(storyId);
+  }
+  loadMyMangas();
+}
+
 function initAuth() {
   const loadingEl = document.getElementById('auth-loading');
   if (!_supabase) {
@@ -78,9 +94,14 @@ function initAuth() {
     if (event === 'SIGNED_IN') {
       upsertUser(session.user);
       trackConnection(session.user.id);
+      _processPendingPayment();
+    }
+    if (event === 'INITIAL_SESSION' && session?.user) {
+      _processPendingPayment();
     }
     if (event === 'SIGNED_OUT') {
       closeConnection();
+      loadMyMangas();
     }
   });
 }
@@ -89,8 +110,27 @@ async function signInWithGoogle() {
   if (!_supabase) { alert('Supabase is not configured.'); return; }
   await _supabase.auth.signInWithOAuth({
     provider: 'google',
-    options:  { redirectTo: window.location.href },
+    options:  { redirectTo: window.location.origin + '/' },
   });
+}
+
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  const dropdown = document.getElementById('user-dropdown');
+  const userInfo = document.getElementById('nav-user-info');
+  if (!dropdown) return;
+  const isOpen = dropdown.classList.toggle('open');
+  if (userInfo) userInfo.classList.toggle('menu-open', isOpen);
+  if (isOpen) {
+    const close = (ev) => {
+      if (!userInfo.contains(ev.target)) {
+        dropdown.classList.remove('open');
+        userInfo.classList.remove('menu-open');
+        document.removeEventListener('click', close);
+      }
+    };
+    document.addEventListener('click', close);
+  }
 }
 
 async function signOutUser() {

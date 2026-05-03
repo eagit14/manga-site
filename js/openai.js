@@ -32,9 +32,9 @@ Reply ONLY with a valid JSON object containing these fields:
   "hero_description": "2–3 sentence description of the main character: personality, special power or strength, what makes them unique.",
   "chapter_titles": ["Chapter title 1", "Chapter title 2", "Chapter title 3"],
   "universe_desc": "One short immersive sentence describing the universe.",
-  "image_prompt_pitch": "Detailed English DALL-E 3 prompt depicting the opening situation of this manga (the pitch / inciting incident). Authentic Japanese manga illustration style — black and white ink only, no colour, inspired by legendary mangaka such as Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama. Sharp clean linework, dramatic screen tones (hatching, crosshatching), expressive large eyes, speed lines, cinematic panel composition. Include: key characters, setting, mood. Art style: ${styleLabel}. Under 180 words.",
-  "image_prompt_chapter1": "Detailed English DALL-E 3 prompt for the first chapter scene of this manga. Authentic Japanese manga illustration style — black and white ink only, no colour, inspired by legendary mangaka such as Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama. Sharp clean linework, dramatic screen tones, expressive character faces, dynamic action lines, panel-style framing. Include: action or tension from chapter 1, characters, environment. Art style: ${styleLabel}. Under 180 words.",
-  "image_prompt_ending": "Detailed English DALL-E 3 prompt depicting the emotional conclusion / ending scene of this manga. Authentic Japanese manga illustration style — black and white ink only, no colour, inspired by legendary mangaka such as Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama. Sharp clean linework, dramatic screen tones, emotionally expressive characters, impactful composition. Include: resolution moment, characters, atmosphere. Art style: ${styleLabel}. Under 180 words."
+  "image_prompt_pitch": "A full manga page layout with 4 to 6 distinct black-and-white ink panels separated by white gutters, depicting the opening scene of this manga (the inciting incident). Each panel shows a different moment: establishing shot of the setting, introduction of the hero, a dramatic event, a reaction close-up. Authentic Japanese manga page style inspired by Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama — black and white ink only, no colour, sharp clean linework, screen tones (hatching, crosshatching), expressive large eyes, speed lines, bold panel borders, speech-bubble placeholders. Art style: ${styleLabel}. The page must look like a real printed manga chapter page.",
+  "image_prompt_chapter1": "A full manga page layout with 4 to 6 distinct black-and-white ink panels separated by white gutters, depicting the key action scene of the first chapter. Each panel advances the story: wide action shot, character reaction, dramatic confrontation, emotional close-up. Authentic Japanese manga page style inspired by Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama — black and white ink only, no colour, sharp clean linework, screen tones, dynamic speed lines, bold panel borders, varied panel sizes for pacing. Art style: ${styleLabel}. The page must look like a real printed manga chapter page.",
+  "image_prompt_ending": "A full manga page layout with 4 to 6 distinct black-and-white ink panels separated by white gutters, depicting the emotional resolution and final scene of this manga. Panels show: climax moment, emotional reaction, quiet aftermath, final symbolic image. Authentic Japanese manga page style inspired by Akira Toriyama, Naoki Urasawa, Kentaro Miura and Hajime Isayama — black and white ink only, no colour, sharp clean linework, screen tones, emotionally expressive characters, a large dramatic final panel. Art style: ${styleLabel}. The page must look like a real printed manga chapter page."
 }`;
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -79,8 +79,27 @@ Reply ONLY with a valid JSON object containing these fields:
   return JSON.parse(json.choices[0].message.content);
 }
 
+async function _uploadImageToStorage(dalleUrl, storyId, imageType) {
+  if (!_supabase || !storyId) return dalleUrl;
+  try {
+    const blob = await fetch(dalleUrl).then(r => r.blob());
+    const path = `${storyId}/${imageType}-${Date.now()}.png`;
+    const { error } = await _supabase.storage
+      .from('manga-images')
+      .upload(path, blob, { contentType: 'image/png', upsert: true });
+    if (error) { console.error('[Storage] upload error:', error.message); return dalleUrl; }
+    const { data: signData, error: signError } = await _supabase.storage
+      .from('manga-images')
+      .createSignedUrl(path, 315360000); // ~10 years
+    if (signError) { console.error('[Storage] sign error:', signError.message); return dalleUrl; }
+    return signData.signedUrl;
+  } catch (err) {
+    console.error('[Storage] upload failed:', err);
+    return dalleUrl;
+  }
+}
+
 async function generateImages(apiKey, promptPitch, promptChapter1, promptEnding, storyId) {
-  // imageType and chapterNum for each slot: pitch, chapter 1, ending
   const meta = [
     { type: 'pitch',   chapterNum: null },
     { type: 'chapter', chapterNum: 1    },
@@ -94,17 +113,22 @@ async function generateImages(apiKey, promptPitch, promptChapter1, promptEnding,
         body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', response_format: 'url' }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const url  = json.data[0].url;
+      const json    = await res.json();
+      const dalleUrl = json.data[0].url;
+
+      // Upload to Supabase Storage for a permanent URL
+      const permanentUrl = await _uploadImageToStorage(dalleUrl, storyId, meta[idx].type);
+
       const img      = document.getElementById(`carousel-img-${idx}`);
       const skeleton = document.getElementById(`carousel-skeleton-${idx}`);
       if (img) {
-        img.src   = url;
+        img.src   = permanentUrl;
         img.style.display = 'block';
         img.onload = () => { if (skeleton) skeleton.style.display = 'none'; };
       }
-      saveImageToSupabase(storyId, meta[idx].type, meta[idx].chapterNum, url, prompt);
-    } catch (_) {
+      await saveImageToSupabase(storyId, meta[idx].type, meta[idx].chapterNum, permanentUrl, prompt);
+    } catch (err) {
+      console.error('[IMG] generate error idx=' + idx, err);
       const skeleton = document.getElementById(`carousel-skeleton-${idx}`);
       if (skeleton) skeleton.innerHTML = '<span>❌</span><span>Image unavailable</span>';
     }

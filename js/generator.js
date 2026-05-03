@@ -193,6 +193,7 @@ async function handleGenerate() {
   // Save story + chapters to Supabase, then kick off image generation with the story ID
   const grad = coverGrads[data.genre] || coverGrads.shonen;
   const storyId = await saveStoryToSupabase(data, aiContent, grad);
+  window._lastStoryId = storyId || null;
 
   // Kick off DALL-E image generation asynchronously (non-blocking)
   if (apiKey && aiContent?.image_prompt_pitch) {

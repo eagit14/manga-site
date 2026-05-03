@@ -44,6 +44,7 @@
     <li><a href="#manga-movies">Top Films</a></li>
     <li><a href="#mes-mangas">📊 My Stories</a></li>
     <li><a href="#creer" class="nav-create">✏️ Create</a></li>
+    <li><a href="#my-mangas" class="nav-my-mangas">🎌 My Mangas</a></li>
   </ul>
   <div class="nav-auth-area">
     <!-- not signed in -->
@@ -58,10 +59,28 @@
       Sign in with Google
     </button>
     <!-- signed in -->
-    <div id="nav-user-info" class="nav-user-info">
+    <div id="nav-user-info" class="nav-user-info" onclick="toggleUserMenu(event)">
       <img id="nav-avatar" class="nav-avatar" src="" alt="avatar">
       <span id="nav-username" class="nav-username"></span>
-      <button class="btn-signout" onclick="signOutUser()">Sign out</button>
+      <svg class="nav-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div id="user-dropdown" class="user-dropdown">
+        <div class="user-dropdown-header">
+          <img id="dropdown-avatar" class="dropdown-avatar" src="" alt="">
+          <div class="dropdown-user-info">
+            <span id="dropdown-name" class="dropdown-name"></span>
+            <span id="dropdown-email" class="dropdown-email"></span>
+          </div>
+        </div>
+        <div class="user-dropdown-divider"></div>
+        <button class="user-dropdown-item signout-item" onclick="signOutUser()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign out
+        </button>
+      </div>
     </div>
   </div>
 </nav>
@@ -816,6 +835,21 @@
   </div>
 </section>
 
+<!-- MY MANGAS -->
+<section id="my-mangas">
+  <div class="my-mangas-inner">
+    <p class="section-label">🎌 Your Collection</p>
+    <h2 class="section-title">My <span class="red">Mangas</span></h2>
+    <p class="section-desc">All the manga stories you've created — order any of them as a printed volume.</p>
+    <div id="my-mangas-grid" class="my-mangas-grid">
+      <div class="my-mangas-empty" id="my-mangas-empty">
+        <div class="my-mangas-empty-icon">🎌</div>
+        <p>No mangas yet — <a href="#creer">create your first one!</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-logo">MANGA<span class="accent">世界</span></div>
@@ -830,37 +864,32 @@
     <button class="payment-close" onclick="closePayment()" aria-label="Close">✕</button>
 
     <div class="payment-header">
-      <p class="payment-header-label">⚡ Powered by Stripe</p>
-      <h3>Order your Manga!</h3>
+      <h3 id="modal-title">Order your Manga!</h3>
     </div>
 
     <div class="payment-body">
-
-      <!-- Order Summary -->
-      <div class="payment-summary">
-        <div class="payment-mini-cover" id="modal-cover">
-          <div class="cover-title" id="modal-title">My Manga</div>
-          <div class="cover-vol">VOLUME 1</div>
+      <!-- Manga image carousel -->
+      <div class="modal-carousel" id="modal-carousel">
+        <div class="modal-carousel-track" id="modal-carousel-track">
+          <!-- slides injected by JS -->
         </div>
-
-        <div class="order-line">
-          <div>
-            <div class="order-line-name" id="modal-product-name">My Manga</div>
-            <div class="order-line-desc">📱 Digital edition · High-resolution book</div>
-          </div>
-        </div>
-
-        <div class="order-total">
-        </div>
+        <button class="modal-carousel-arrow modal-carousel-prev" onclick="modalCarouselNav(-1)">&#8249;</button>
+        <button class="modal-carousel-arrow modal-carousel-next" onclick="modalCarouselNav(1)">&#8250;</button>
+        <div class="modal-carousel-dots" id="modal-carousel-dots"></div>
       </div>
 
       <!-- Stripe Payment -->
       <div class="payment-stripe">
-        <p class="payment-stripe-label">Secure payment</p>
+        <!-- Export button — shown only after purchase -->
+        <button id="modal-export-btn" class="modal-export-btn" onclick="exportMangaPDF()" style="display:none">
+          📄 Export PDF
+        </button>
 
         <div id="stripe-container">
           <!-- Stripe Buy Button injected here -->
         </div>
+
+        <p class="payment-header-label" style="text-align:center;margin-top:.75rem">⚡ Powered by Stripe</p>
 
         <div class="payment-security-badges">
           <span class="security-badge">🔒 SSL / TLS</span>
@@ -887,6 +916,8 @@
 <script src="js/generator.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/stripe.js"></script>
+<script src="js/my-mangas.js"></script>
+<script src="js/export.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
