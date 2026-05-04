@@ -77,6 +77,23 @@ function _showCreditMsg(text) {
   if (_credits > 0) _creditMsgTimer = setTimeout(() => { el.style.display = 'none'; }, 4000);
 }
 
+// ── Credits refill after payment ──────────────────────
+
+async function _processPendingCreditsRefill() {
+  if (!window._pendingCreditsRefill) return;
+  window._pendingCreditsRefill = false;
+  await refillUserCredits();
+}
+
+async function refillUserCredits() {
+  if (!_supabase) return;
+  const { data, error } = await _supabase.rpc('add_credits', { p_amount: 50 });
+  if (error) { console.error('[Credits] refill error:', error.message); return; }
+  _credits = data;
+  _updateCreditDisplay();
+  _showCreditMsg('Credits refilled! You now have ' + data + ' credits.');
+}
+
 // ── Credits refill modal ───────────────────────────────
 
 function openCreditsModal() {
