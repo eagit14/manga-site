@@ -1,6 +1,6 @@
 // ── OpenAI: callOpenAI, generateImages ───────────────────
 
-async function callOpenAI(apiKey, data) {
+async function callOpenAI(apiKey, data, _attempt = 1) {
   const genreLabel  = genreProfiles[data.genre]?.label  || data.genre;
   const styleLabel  = styleLabels[data.style]           || data.style;
 
@@ -77,11 +77,19 @@ Reply ONLY with a valid JSON object containing these fields:
     }),
   });
 
+  if (res.status === 429 && _attempt < 4) {
+    const wait = _attempt * 8000; // 8s, 16s, 24s
+    const msgEl = document.getElementById('loading-msg');
+    if (msgEl) msgEl.textContent = `⏳ Rate limit — retrying in ${wait / 1000}s… (attempt ${_attempt}/3)`;
+    await new Promise(r => setTimeout(r, wait));
+    return callOpenAI(apiKey, data, _attempt + 1);
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const msg = err.error?.message || `Error ${res.status}`;
     if (res.status === 401) throw new Error('Invalid API key. Check your key at platform.openai.com.');
-    if (res.status === 429) throw new Error('Rate limit reached. Wait a few seconds and try again — or reduce the number of chapters to generate fewer images at once.');
+    if (res.status === 429) throw new Error('Rate limit reached after 3 retries. Please wait a minute then try again.');
     if (res.status === 400) throw new Error('Bad request: ' + msg);
     throw new Error(msg);
   }
