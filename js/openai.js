@@ -90,7 +90,7 @@ Reply ONLY with a valid JSON object containing these fields:
     const err = await res.json().catch(() => ({}));
     const msg = err.error?.message || `Error ${res.status}`;
     if (res.status === 401) throw new Error('Invalid API key. Check your key at platform.openai.com.');
-    if (res.status === 429) throw new Error('Rate limit reached after 3 retries. Please wait a minute then try again.');
+    if (res.status === 429) throw new Error('Rate limit after 3 retries: ' + msg);
     if (res.status === 400) throw new Error('Bad request: ' + msg);
     throw new Error(msg);
   }
