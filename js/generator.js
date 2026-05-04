@@ -244,12 +244,21 @@ async function saveMangaDraft() {
     }
   }
 
+  console.log('[Save] storyId:', storyId, '| _heroImageBase64 set:', !!_heroImageBase64);
   if (storyId && _heroImageBase64) {
-    // Remove any previous hero image rows before inserting to avoid duplicates
-    if (_supabase) await _supabase.from('manga_images').delete()
-      .eq('story_id', storyId).eq('image_type', 'hero');
+    if (_supabase) {
+      const { error: delErr } = await _supabase.from('manga_images').delete()
+        .eq('story_id', storyId).eq('image_type', 'hero');
+      if (delErr) console.warn('[Save] hero delete error:', delErr.message);
+    }
     const heroUrl = await _uploadBase64ToStorage(_heroImageBase64, storyId, 'hero-face');
-    if (heroUrl) await saveImageToSupabase(storyId, 'hero', null, heroUrl, null);
+    console.log('[Save] hero upload url:', heroUrl);
+    if (heroUrl) {
+      await saveImageToSupabase(storyId, 'hero', null, heroUrl, null);
+      console.log('[Save] hero image saved ✓');
+    }
+  } else {
+    console.log('[Save] skipping hero save — storyId or _heroImageBase64 missing');
   }
 
   saveBtn.disabled = false;
@@ -335,17 +344,19 @@ async function openEditForm(storyId) {
 
     // Restore hero face image if saved
     clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
-    const { data: heroRows } = await _supabase
+    const { data: heroRows, error: heroErr } = await _supabase
       .from('manga_images')
       .select('image_url')
       .eq('story_id', storyId)
       .eq('image_type', 'hero')
-      .order('created_at', { ascending: false })
       .limit(1);
-    const heroImg = heroRows?.[0] ?? null;
-    if (heroImg?.image_url) {
+    if (heroErr) console.warn('[Edit] hero query error:', heroErr.message);
+    const heroUrl = heroRows?.[0]?.image_url ?? null;
+    console.log('[Edit] hero image url:', heroUrl);
+    if (heroUrl) {
       try {
-        const res  = await fetch(heroImg.image_url);
+        const res  = await fetch(heroUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
         _heroImageMime = blob.type || 'image/png';
         await new Promise(resolve => {
@@ -353,7 +364,7 @@ async function openEditForm(storyId) {
           reader.onload = e => {
             const dataUrl = e.target.result;
             _heroImageBase64 = dataUrl.split(',')[1];
-            document.getElementById('hero-upload-thumb').src   = dataUrl;
+            document.getElementById('hero-upload-thumb').src        = dataUrl;
             document.getElementById('hero-upload-name').textContent = 'Saved hero image';
             document.getElementById('hero-upload-preview').style.display = 'flex';
             document.getElementById('hero-upload-label').style.display   = 'none';
@@ -362,8 +373,9 @@ async function openEditForm(storyId) {
           reader.onerror = resolve;
           reader.readAsDataURL(blob);
         });
+        console.log('[Edit] hero image restored ✓');
       } catch (e) {
-        console.warn('[Edit] hero image load failed:', e);
+        console.warn('[Edit] hero image fetch failed:', e.message);
       }
     }
 
