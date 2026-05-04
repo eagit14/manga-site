@@ -139,17 +139,6 @@ function _promoMsg(el, text, type) {
   el.className = `promo-message ${type}`;
 }
 
-function openPayment(title, grad) {
-  const imgs = [];
-  for (let i = 0; ; i++) {
-    const el = document.getElementById(`carousel-img-${i}`);
-    if (!el) break;
-    imgs.push((el.src && el.src !== window.location.href) ? el.src : null);
-  }
-  if (!imgs.length) imgs.push(null);
-  _openModal(title, grad, imgs, window._lastStoryId || null);
-}
-
 function openPaymentFromTile(title, grad, imgUrls, storyId) {
   const imgs = imgUrls
     ? imgUrls.split('|').map(u => u.trim() || null)

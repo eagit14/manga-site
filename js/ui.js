@@ -53,23 +53,6 @@ function initNavShadow() {
   }, { passive: true });
 }
 
-// ── Image carousel ─────────────────────────────────────
-let _carouselIdx = 0;
-
-function imgGoTo(idx) {
-  const slides  = document.querySelectorAll('.img-carousel-slide');
-  const dots    = document.querySelectorAll('.img-dot');
-  const caption = document.getElementById('img-caption');
-  if (!slides.length) return;
-  const n = slides.length;
-  _carouselIdx = ((idx % n) + n) % n;
-  slides.forEach((s, i) => s.classList.toggle('active', i === _carouselIdx));
-  dots.forEach((d, i)   => d.classList.toggle('active', i === _carouselIdx));
-  if (caption) caption.textContent = `Scene ${_carouselIdx + 1}`;
-}
-
-function imgNav(dir) { imgGoTo(_carouselIdx + dir); }
-
 // ── Hero face upload ──────────────────────────────────
 let _heroImageBase64 = null;
 let _heroImageMime   = 'image/jpeg';

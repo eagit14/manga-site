@@ -163,15 +163,6 @@ async function generateSceneImage(cid) {
 
       await saveImageToSupabase(storyId, 'chapter', sceneNum, permanentUrl, promptObj.prompt);
 
-      // Update the carousel slide if result section is visible
-      const carouselImg = document.getElementById(`carousel-img-${sceneNum - 1}`);
-      if (carouselImg) {
-        carouselImg.src = permanentUrl;
-        carouselImg.style.display = 'block';
-        const carouselSkeleton = document.getElementById(`carousel-skeleton-${sceneNum - 1}`);
-        if (carouselSkeleton) carouselSkeleton.style.display = 'none';
-      }
-
       // Update tile thumbnail for scene 1
       if (sceneNum === 1) {
         const tile = document.getElementById(`manga-tile-${storyId}`);

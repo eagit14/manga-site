@@ -194,11 +194,8 @@ async function generateImages(apiKey, prompts, storyId, quality = 'medium') {
       body: JSON.stringify({ model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality }),
     });
     if (res.status === 429 && attempt < 3) {
-      // Rate limited — wait and retry (12s, then 24s)
       const wait = attempt * 12000;
       console.warn(`[IMG] 429 rate limit — retrying in ${wait / 1000}s (attempt ${attempt})`);
-      const skeleton = document.getElementById(`carousel-skeleton-current`);
-      if (skeleton) skeleton.querySelector('span:last-child').textContent = `Rate limited — retrying in ${wait / 1000}s…`;
       await _sleep(wait);
       return _fetchImage(prompt, attempt + 1);
     }
@@ -212,32 +209,13 @@ async function generateImages(apiKey, prompts, storyId, quality = 'medium') {
   // Generate sequentially to stay within gpt-image-1 rate limits
   for (let idx = 0; idx < prompts.length; idx++) {
     const promptObj = prompts[idx];
-    const skeleton  = document.getElementById(`carousel-skeleton-${idx}`);
-    const img       = document.getElementById(`carousel-img-${idx}`);
-
-    // Mark this one as in-progress, queue the rest
-    if (skeleton) skeleton.innerHTML = '<span>⏳</span><span>Generating…</span>';
-    for (let j = idx + 1; j < prompts.length; j++) {
-      const s = document.getElementById(`carousel-skeleton-${j}`);
-      if (s) s.innerHTML = '<span>🕐</span><span>In queue…</span>';
-    }
 
     try {
-      const json    = await _fetchImage(promptObj.prompt);
-      const b64     = json.data[0].b64_json;
-      const dataUrl = `data:image/png;base64,${b64}`;
-
-      if (img) {
-        img.src = dataUrl;
-        img.style.display = 'block';
-        img.onload = () => { if (skeleton) skeleton.style.display = 'none'; };
-      }
-
+      const json         = await _fetchImage(promptObj.prompt);
+      const b64          = json.data[0].b64_json;
       const permanentUrl = await _uploadBase64ToStorage(b64, storyId, promptObj.storageKey);
       if (permanentUrl) {
-        if (img) img.src = permanentUrl;
         await saveImageToSupabase(storyId, promptObj.type, promptObj.chapterNum, permanentUrl, promptObj.prompt);
-        // Update the My Mangas tile as soon as the first scene image is ready
         if (idx === 0) {
           const tile = document.getElementById(`manga-tile-${storyId}`);
           if (tile) {
@@ -254,18 +232,11 @@ async function generateImages(apiKey, prompts, storyId, quality = 'medium') {
             if (cover) cover.style.display = 'none';
           }
         }
-      } else {
-        if (skeleton) {
-          skeleton.innerHTML = '<span>⚠️</span><span>Storage not configured — image won\'t persist</span>';
-          skeleton.style.display = 'flex';
-        }
       }
     } catch (err) {
       console.error('[IMG] generate error idx=' + idx, err);
-      if (skeleton) skeleton.innerHTML = `<span>❌</span><span>${err.message || 'Image unavailable'}</span>`;
     }
 
-    // Small pause between requests to respect rate limits
     if (idx < prompts.length - 1) await _sleep(1500);
   }
 }

@@ -158,12 +158,10 @@ async function openPhysicalOrder(opts = {}) {
 
   document.getElementById('physical-modal-title').textContent = title;
 
-  // Cover preview — tile thumb, first carousel image, or gradient fallback
+  // Cover preview — tile thumb or gradient fallback
   const previewImg  = document.getElementById('physical-cover-preview-img');
   const previewGrad = document.getElementById('physical-cover-preview-grad');
-  const firstScene  = document.getElementById('carousel-img-0');
-  const imgSrc      = thumbUrl
-    || (firstScene?.src && firstScene.src !== window.location.href ? firstScene.src : null);
+  const imgSrc      = thumbUrl || null;
 
   if (imgSrc) {
     previewImg.src            = imgSrc;

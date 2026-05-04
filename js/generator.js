@@ -1,113 +1,4 @@
-// ── Generator: buildAndShowResult, handleGenerate, regenerate, resetForm, copySynopsis ──
-
-function buildAndShowResult(data, aiContent) {
-  const profile    = genreProfiles[data.genre] || genreProfiles.shonen;
-  const synopsis   = aiContent?.synopsis   || buildSynopsis(data, profile);
-  const tagline    = aiContent?.tagline    || pick(profile.taglines);
-  const heroDesc   = aiContent?.hero_description || buildHeroDesc(data, profile);
-  const chapters   = aiContent?.scene_titles || aiContent?.chapter_titles || [];
-  const volumes    = rnd(1, 3);
-  const chapterCnt = rnd(12, 60);
-  const rating     = (rnd(42, 50) / 10).toFixed(1);
-  const grad       = coverGrads[data.genre] || coverGrads.shonen;
-  const heroName   = data.heros || 'Protagonist';
-  const styleLabel = styleLabels[data.style] || data.style;
-  const isAI       = !!aiContent;
-
-  const chapterHTML = chapters.length ? `
-    <div>
-      <p class="result-section-label">🎬 Scene preview</p>
-      <div class="chapter-list">
-        ${chapters.map((t, i) => `
-          <div class="chapter-item">
-            <span class="chapter-num">CH. ${String(i + 1).padStart(2, '0')}</span>
-            <span class="chapter-title-text">${t}</span>
-          </div>`).join('')}
-      </div>
-    </div>` : '';
-
-  const synopsisSafe = synopsis.replace(/'/g, "\\'").replace(/`/g, "'");
-
-  const numChapters  = data.chapters?.length || 1;
-  const totalSlides  = numChapters;
-  const slideLabels  = data.chapters?.length ? data.chapters.map((_, i) => `Scene ${i + 1}`) : ['Scene 1'];
-
-  const orderBtn    = `<button class="action-btn order-btn" onclick="openPayment('${data.titre.replace(/'/g, "\\'")}', '${grad}')">🛒 Order Digital Copy</button>`;
-  const physicalBtn = `<button class="action-btn physical-btn" onclick="openPhysicalOrder()">🖨️ Order Physical Copy</button>`;
-
-  const skeletonMsg = isAI
-    ? (i) => `Generating ${slideLabels[i]}…`
-    : ()  => `Click 🎨 Generate to create this scene`;
-
-  const imagePanel = totalSlides > 0 ? `
-    <div class="img-panel">
-      <p class="img-panel-label">🎨 Illustrations — ${totalSlides} pages</p>
-      <div class="img-carousel" id="result-carousel">
-        ${Array.from({ length: totalSlides }, (_, i) => `
-        <div class="img-carousel-slide${i === 0 ? ' active' : ''}" id="carousel-slide-${i}">
-          <div class="img-skeleton" id="carousel-skeleton-${i}">
-            <span>${isAI ? '⏳' : '🎨'}</span><span>${skeletonMsg(i)}</span>
-          </div>
-          <img class="carousel-img" id="carousel-img-${i}" alt="${slideLabels[i]}" style="display:none" />
-        </div>`).join('')}
-        <button class="img-arrow img-arrow-left"  onclick="imgNav(-1)">&#8249;</button>
-        <button class="img-arrow img-arrow-right" onclick="imgNav(1)">&#8250;</button>
-        <div class="img-carousel-dots">
-          ${Array.from({ length: totalSlides }, (_, i) => `<button class="img-dot${i === 0 ? ' active' : ''}" onclick="imgGoTo(${i})"></button>`).join('')}
-        </div>
-        <div class="img-caption-badge" id="img-caption">Scene 1</div>
-      </div>
-      <div class="img-panel-order">
-        ${orderBtn}
-        ${physicalBtn}
-      </div>
-    </div>` : '';
-
-  const html = `
-    <div class="result-card">
-      <div class="result-cover" style="background:${grad}">
-        <span class="result-cover-vol">VOLUME 1</span>
-        <div class="result-cover-title">${data.titre}</div>
-        <div class="result-cover-author">by You ✦ ${new Date().getFullYear()}</div>
-      </div>
-      <div class="result-content">
-        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
-          <div class="result-title">${data.titre}</div>
-          ${isAI ? '<span class="ai-badge">✦ ChatGPT</span>' : ''}
-        </div>
-        <div class="result-badges">
-          <span class="result-badge" style="background:${profile.badgeColor}">${profile.label}</span>
-          <span class="result-badge" style="background:#888">${styleLabel}</span>
-          <span class="result-badge" style="background:#f4c430;color:#111">⭐ ${rating}</span>
-          <span class="result-badge" style="background:#22c55e">● Ongoing</span>
-        </div>
-        <div>
-          <p class="result-tagline">${tagline}</p>
-        </div>
-        <div>
-          <p class="result-section-label">Story</p>
-          <p class="result-synopsis">${synopsis}</p>
-        </div>
-        <div class="result-hero">
-          <div class="result-hero-name">🦸 ${heroName}</div>
-          <div class="result-hero-desc">${heroDesc}</div>
-        </div>
-        ${chapterHTML}
-        ${imagePanel}
-      </div>
-    </div>`;
-
-  document.getElementById('creator-loading').style.display = 'none';
-  const resultEl = document.getElementById('creator-result');
-  resultEl.innerHTML = html;
-  resultEl.style.display = 'block';
-  window._lastMangaData = data;
-  window._lastAIContent = aiContent;
-  window._lastGrad      = grad;
-
-  // Persist to manga_story table (skip on regenerate replays)
-  if (!data._isReplay) saveStory(data, aiContent, grad);
-}
+// ── Generator: handleGenerate, saveMangaDraft, resetForm, copySynopsis ──
 
 async function handleGenerate() {
   const apiKey = OPENAI_API_KEY;
@@ -143,7 +34,6 @@ async function handleGenerate() {
   };
 
   document.getElementById('creator-form-card').style.display = 'none';
-  document.getElementById('creator-result').style.display = 'none';
   document.getElementById('creator-loading').style.display = 'block';
   document.getElementById('loading-msg').textContent = apiKey
     ? '🤖 ChatGPT is writing your manga…'
@@ -166,9 +56,9 @@ async function handleGenerate() {
     await new Promise(r => setTimeout(r, 2000));
   }
 
-  buildAndShowResult(data, aiContent);
+  window._lastAIContent = aiContent;
 
-  // Save story + chapters to Supabase, then kick off image generation with the story ID
+  // Save story + chapters to Supabase
   const grad = coverGrads[data.genre] || coverGrads.shonen;
   let storyId;
   if (window._editingStoryId) {
@@ -177,26 +67,20 @@ async function handleGenerate() {
   } else {
     storyId = await saveStoryToSupabase(data, aiContent, grad);
   }
-  window._lastStoryId = storyId || null;
+  window._lastStoryId  = storyId || null;
+  window._lastMangaData = data;
 
-  // Save hero face image (always re-upload so it survives updates that wipe manga_images)
+  // Save hero face image
   if (_heroImageBase64 && storyId) {
     const heroUrl = await _uploadBase64ToStorage(_heroImageBase64, storyId, 'hero-face');
     if (heroUrl) await saveImageToSupabase(storyId, 'hero', null, heroUrl, null);
   }
 
-  // Wait for My Mangas DOM update to settle before scrolling to avoid
-  // browser scroll-anchoring hijacking the scroll to the My Mangas section.
-  await loadMyMangas();
-  document.getElementById('creator-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('creator-loading').style.display = 'none';
+  document.getElementById('creator-form-card').style.display = 'block';
 
-  // Kick off DALL-E image generation asynchronously (non-blocking)
-  if (apiKey && aiContent) {
-    const _styleLabel = styleLabels[data.style] || data.style;
-    const _genreLabel = genreProfiles[data.genre]?.label || data.genre;
-    const prompts = buildImagePrompts(data, aiContent, _styleLabel, _genreLabel);
-    generateImages(apiKey, prompts, storyId, data.imgQuality || 'medium');
-  }
+  await loadMyMangas();
+  document.getElementById('my-mangas').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function saveMangaDraft() {
@@ -251,11 +135,9 @@ async function saveMangaDraft() {
   saveBtn.disabled = false;
   if (storyId) {
     saveBtn.textContent = '✅ Saved!';
-    window._lastStoryId = storyId;
-    const grad = coverGrads[data.genre] || coverGrads.shonen;
-    buildAndShowResult(data, window._lastAIContent || null, grad);
+    window._lastStoryId   = storyId;
+    window._lastMangaData = data;
     loadMyMangas();
-    setTimeout(() => document.getElementById('creator-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
   } else {
     saveBtn.textContent = '❌ Error';
   }
@@ -266,7 +148,6 @@ async function saveMangaDraft() {
 function resetForm() {
   clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
   cancelEdit();
-  document.getElementById('creator-result').style.display = 'none';
   document.getElementById('creator-form-card').style.display = 'block';
   document.getElementById('creator-form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -377,8 +258,6 @@ async function openEditForm(storyId) {
     document.getElementById('edit-mode-title').textContent = story.title || 'Untitled';
     document.getElementById('edit-mode-banner').style.display = 'flex';
 
-    // Ensure form is visible
-    document.getElementById('creator-result').style.display = 'none';
     card.style.display = 'block';
 
   } finally {
