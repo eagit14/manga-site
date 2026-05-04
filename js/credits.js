@@ -80,7 +80,6 @@ function _showCreditMsg(text) {
 // ── Credits refill after payment ──────────────────────
 
 async function _processPendingCreditsRefill() {
-  console.log('[Credits] _processPendingCreditsRefill, flag=', window._pendingCreditsRefill);
   if (!window._pendingCreditsRefill) return;
   window._pendingCreditsRefill = false;
   await refillUserCredits();
@@ -115,6 +114,7 @@ async function refillUserCredits() {
 // ── Credits refill modal ───────────────────────────────
 
 function openCreditsModal() {
+  localStorage.setItem('_pendingCreditsRefill', '1');
   _injectCreditsStripe();
   document.getElementById('credits-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
