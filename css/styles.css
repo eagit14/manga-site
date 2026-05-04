@@ -2618,17 +2618,23 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 .chapter-count { font-size: .8rem; color: var(--muted); font-weight: 400; }
 
 .credits-badge {
-  font-size: .75rem;
-  font-weight: 600;
-  padding: .18rem .55rem;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,.15);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.6);
+  display: flex;
+  align-items: baseline;
+  gap: .25rem;
   margin-left: auto;
+  color: rgba(255,255,255,.5);
+  font-size: .78rem;
 }
-.credits-badge.credits-low   { color: #f0a500; border-color: rgba(240,165,0,.4); background: rgba(240,165,0,.08); }
-.credits-badge.credits-empty { color: #e74c3c; border-color: rgba(231,76,60,.4); background: rgba(231,76,60,.08); }
+.credits-badge #credits-count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.85);
+  line-height: 1;
+}
+.credits-badge.credits-low            { color: rgba(240,165,0,.7); }
+.credits-badge.credits-low #credits-count  { color: #f0a500; }
+.credits-badge.credits-empty          { color: rgba(231,76,60,.7); }
+.credits-badge.credits-empty #credits-count { color: #e74c3c; }
 
 .credit-msg {
   font-size: .78rem;
