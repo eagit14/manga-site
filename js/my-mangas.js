@@ -59,19 +59,18 @@ async function loadMyMangas() {
     const genreLabel = genreProfiles[story.genre]?.label      || story.genre;
     const date       = new Date(story.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const storyImgs   = imgMap[story.id] || { chapters: {} };
-    const pitchUrl    = storyImgs.pitch  || '';
-    const endingUrl   = storyImgs.ending || '';
-    const chapterUrls = Object.keys(storyImgs.chapters || {})
+    const sceneUrls   = Object.keys(storyImgs.chapters || {})
       .sort((a, b) => Number(a) - Number(b))
       .map(k => storyImgs.chapters[k]);
-    const allUrls        = [pitchUrl, ...chapterUrls, endingUrl].filter(Boolean);
+    const allUrls        = sceneUrls.filter(Boolean);
     const imgUrlsEncoded = encodeURIComponent(allUrls.join('|'));
     const titleSafe   = (story.title || 'Untitled').replace(/'/g, "\\'");
     const storyIdSafe = story.id;
     const isPurchased = !!story.purchased_at;
 
-    const visual = pitchUrl
-      ? `<img class="manga-tile-img" src="${pitchUrl}" alt="${story.title}" loading="lazy"
+    const thumbUrl = sceneUrls[0] || '';
+    const visual = thumbUrl
+      ? `<img class="manga-tile-img" src="${thumbUrl}" alt="${story.title}" loading="lazy"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
          <div class="manga-tile-cover" style="background:${grad};display:none">${story.title}</div>`
       : `<div class="manga-tile-cover" style="background:${grad}">${story.title}</div>`;

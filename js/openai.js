@@ -5,8 +5,8 @@ async function callOpenAI(apiKey, data, _attempt = 1) {
   const styleLabel  = styleLabels[data.style]           || data.style;
 
   const chaptersText = (data.chapters && data.chapters.length > 0)
-    ? '\n\nChapters defined by the author:\n' + data.chapters.map(ch =>
-        `  Chapter ${ch.num}${ch.title ? ': ' + ch.title : ''}${ch.description ? '\n    ' + ch.description : ''}`
+    ? '\n\nScenes defined by the author:\n' + data.chapters.map(ch =>
+        `  Scene ${ch.num}${ch.title ? ': ' + ch.title : ''}${ch.description ? '\n    ' + ch.description : ''}`
       ).join('\n')
     : '';
 
@@ -18,9 +18,9 @@ async function callOpenAI(apiKey, data, _attempt = 1) {
     ? '\n  "hero_face_desc": "Precise physical description of the hero\'s face extracted from the reference photo: face shape, skin tone, eye color/shape, eyebrow style, nose, lips, hair color/texture/style, distinctive features. Enough detail for consistent illustration across all panels.",'
     : '';
 
-  const numChapters = (data.chapters && data.chapters.length > 0) ? data.chapters.length : 1;
-  const chapterDialogueFields = Array.from({ length: numChapters }, (_, i) =>
-    `["punchy line 1 for chapter ${i + 1} (≤8 words)", "punchy line 2 for chapter ${i + 1} (≤8 words)"]`
+  const numScenes = (data.chapters && data.chapters.length > 0) ? data.chapters.length : 1;
+  const sceneDialogueFields = Array.from({ length: numScenes }, (_, i) =>
+    `["punchy line 1 for scene ${i + 1} (≤8 words)", "punchy line 2 for scene ${i + 1} (≤8 words)"]`
   ).join(', ');
 
   const userPrompt = `Create a complete narrative sheet for this manga:
@@ -30,21 +30,17 @@ Genre: ${genreLabel}
 Art style: ${styleLabel}
 ${data.heros    ? `Hero / Heroine: ${data.heros}`         : ''}
 ${data.heroDesc ? `Hero description: ${data.heroDesc}`    : ''}
-${data.univers  ? `Universe / Setting: ${data.univers}`   : ''}
-${data.premise  ? `Starting pitch: ${data.premise}`       : ''}
-${data.fin      ? `Desired ending: ${data.fin}`           : ''}${chaptersText}${faceNote}
+${data.univers  ? `Universe / Setting: ${data.univers}`   : ''}${chaptersText}${faceNote}
 
 Reply ONLY with a valid JSON object containing these fields:
 {${faceField}
   "synopsis": "Compelling 4–6 sentence synopsis in English. Present the world, the hero, the inciting incident, the stakes. Editorial style, vivid and gripping.",
   "tagline": "Hard-hitting single sentence (15 words max) — manga cover style.",
   "hero_description": "2–3 sentence description of the main character: personality, special power or strength, what makes them unique.",
-  "chapter_titles": ["Chapter title 1", "Chapter title 2", "Chapter title 3"],
+  "scene_titles": ["Scene title 1", "Scene title 2", "Scene title 3"],
   "universe_desc": "One short immersive sentence describing the universe.",
   "panel_lines": {
-    "pitch": ["punchy narration/dialogue line 1 for opening scene (≤8 words)", "punchy line 2 (≤8 words)"],
-    "chapters": [${chapterDialogueFields}],
-    "ending": ["punchy line 1 for final scene (≤8 words)", "punchy emotional closing line (≤8 words)"]
+    "scenes": [${sceneDialogueFields}]
   }
 }`;
 
@@ -106,9 +102,6 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   const hero       = data.heros     || 'the protagonist';
   const heroDesc   = aiContent?.hero_description || data.heroDesc || '';
   const setting    = data.univers   || 'an unknown world';
-  const premise    = data.premise   || '';
-  const fin        = data.fin       || '';
-  const title      = data.titre     || 'Untitled';
   const synopsis   = aiContent?.synopsis ? aiContent.synopsis.split('.').slice(0, 2).join('.') + '.' : '';
   const isColor    = data.colorStyle === 'color';
   const hasBubbles = data.bubbles !== false;
@@ -119,19 +112,14 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
       ? ' A reference photo was provided — reproduce the hero\'s exact facial features consistently in every panel.'
       : '';
 
-  const chapters = data.chapters || [];
-  const chArc = chapters.length
-    ? 'Story arc: ' + chapters.map(ch =>
-        `Ch.${ch.num}${ch.title ? ' "' + ch.title + '"' : ''}${ch.description ? ' (' + ch.description + ')' : ''}`
+  const scenes = data.chapters || [];
+  const sceneArc = scenes.length
+    ? 'Story arc: ' + scenes.map(ch =>
+        `Sc.${ch.num}${ch.title ? ' "' + ch.title + '"' : ''}${ch.description ? ' (' + ch.description + ')' : ''}`
       ).join(' → ') + '.'
     : '';
 
-  const storyCtx = [
-    synopsis && `Story: ${synopsis}`,
-    premise  && `Opening: ${premise}`,
-    fin      && `Ending: ${fin}`,
-    chArc,
-  ].filter(Boolean).join(' ');
+  const storyCtx = [synopsis && `Story: ${synopsis}`, sceneArc].filter(Boolean).join(' ');
 
   const visualStyle = isColor
     ? `Full-color professional anime/manga art. Vibrant saturated colors, smooth cel-shading with highlights and shadows, crisp clean linework, richly detailed and fully rendered backgrounds with dramatic lighting. Character designs consistent and polished like a published manga volume.`
@@ -153,38 +141,18 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
 
   const results = [];
 
-  // Pitch image
-  results.push({
-    type: 'pitch', chapterNum: null, storageKey: 'pitch',
-    prompt: `${base}
-Scene flow across 8 panels — OPENING / INCITING INCIDENT: panels 1–2 establish ${setting} with ${hero} in daily life; panels 3–4 show ${premise || 'an unexpected event disrupts everything'}; panels 5–6 show ${hero}'s shocked reaction and first response; panels 7–8 close on ${hero} with fierce determination, ready to act.${dialogueHint(aiContent?.panel_lines?.pitch)}`,
-  });
-
-  // One image per chapter
-  const chapterList = chapters.length > 0 ? chapters : [{ num: 1, title: '', description: '' }];
-  chapterList.forEach((ch, i) => {
-    const num    = ch.num || i + 1;
-    const chDesc = ch.title
+  // One image per scene
+  const sceneList = scenes.length > 0 ? scenes : [{ num: 1, title: '', description: '' }];
+  sceneList.forEach((ch, i) => {
+    const num      = ch.num || i + 1;
+    const sceneDesc = ch.title
       ? `"${ch.title}"${ch.description ? ': ' + ch.description : ''}`
-      : `Chapter ${num}${ch.description ? ': ' + ch.description : ''}`;
+      : `Scene ${num}${ch.description ? ': ' + ch.description : ''}`;
     results.push({
       type: 'chapter', chapterNum: num, storageKey: `chapter-${num}`,
       prompt: `${base}
-Scene flow across 8 panels — CHAPTER ${num} ${chDesc}: panels 1–2 show ${hero} entering the challenge with confidence; panels 3–4 depict the key conflict or obstacle at its peak intensity; panels 5–6 show ${hero}'s struggle, setback, and inner resolve; panels 7–8 deliver the turning point — ${hero} overcomes or adapts, ending on a dramatic cliffhanger.${dialogueHint(aiContent?.panel_lines?.chapters?.[i])}`,
+Scene flow across 8 panels — SCENE ${num} ${sceneDesc}: panels 1–2 show ${hero} entering the situation; panels 3–4 depict the key conflict or dramatic moment at its peak intensity; panels 5–6 show ${hero}'s reaction, struggle, and inner resolve; panels 7–8 deliver the turning point or emotional climax, leaving a strong impression.${dialogueHint(aiContent?.panel_lines?.scenes?.[i])}`,
     });
-  });
-
-  // Ending image
-  const lastCh    = chapters.length > 1 ? chapters[chapters.length - 1] : null;
-  const endingCtx = fin
-    ? fin
-    : lastCh
-      ? `${lastCh.title ? '"' + lastCh.title + '"' : 'final chapter'}${lastCh.description ? ': ' + lastCh.description : ''}`
-      : 'the hero completes their journey';
-  results.push({
-    type: 'ending', chapterNum: null, storageKey: 'ending',
-    prompt: `${base}
-Scene flow across 8 panels — FINAL RESOLUTION — ${endingCtx}: panels 1–2 show the ultimate climax — ${hero} at maximum intensity; panels 3–4 deliver the decisive moment and its immediate aftermath; panels 5–6 show the emotional payoff — celebration, relief, or grief; panels 7–8 form a large symbolic closing — ${hero} in a new status quo, a final powerful image that lingers.${dialogueHint(aiContent?.panel_lines?.ending)}`,
   });
 
   return results;
@@ -269,6 +237,23 @@ async function generateImages(apiKey, prompts, storyId, quality = 'medium') {
       if (permanentUrl) {
         if (img) img.src = permanentUrl;
         await saveImageToSupabase(storyId, promptObj.type, promptObj.chapterNum, permanentUrl, promptObj.prompt);
+        // Update the My Mangas tile as soon as the first scene image is ready
+        if (idx === 0) {
+          const tile = document.getElementById(`manga-tile-${storyId}`);
+          if (tile) {
+            let tileImg = tile.querySelector('.manga-tile-img');
+            if (!tileImg) {
+              tileImg = document.createElement('img');
+              tileImg.className = 'manga-tile-img';
+              tileImg.alt = '';
+              tileImg.setAttribute('onerror', "this.style.display='none';this.nextElementSibling.style.display='flex'");
+              tile.insertBefore(tileImg, tile.firstChild);
+            }
+            tileImg.src = permanentUrl;
+            const cover = tile.querySelector('.manga-tile-cover');
+            if (cover) cover.style.display = 'none';
+          }
+        }
       } else {
         if (skeleton) {
           skeleton.innerHTML = '<span>⚠️</span><span>Storage not configured — image won\'t persist</span>';

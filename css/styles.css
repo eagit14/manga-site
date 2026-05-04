@@ -998,7 +998,7 @@ footer {
 .creator-form-card {
   background: #fff;
   border-radius: 16px;
-  padding: 2.5rem 2.5rem 2rem;
+  padding: 2rem 2rem 1.75rem;
   box-shadow: 0 32px 80px rgba(0,0,0,.4);
 }
 
@@ -1035,11 +1035,11 @@ footer {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: .7rem 1rem;
+  padding: .5rem .9rem;
   background: linear-gradient(135deg, rgba(123,47,247,.07) 0%, rgba(17,138,178,.07) 100%);
   border: 1.5px dashed rgba(123,47,247,.3);
   border-radius: 10px;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1rem;
 }
 .surprise-bar-text {
   font-size: .78rem;
@@ -1075,16 +1075,16 @@ footer {
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.25rem 1.5rem;
+  gap: .85rem 1.1rem;
 }
 
-.form-group { display: flex; flex-direction: column; gap: .45rem; }
+.form-group { display: flex; flex-direction: column; gap: .28rem; }
 .form-group.full { grid-column: 1 / -1; }
 
 .form-label {
-  font-size: .72rem;
+  font-size: .7rem;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -1093,12 +1093,12 @@ footer {
 .form-select,
 .form-textarea {
   font-family: 'Inter', sans-serif;
-  font-size: .9rem;
+  font-size: .875rem;
   color: var(--black);
   background: #fafafa;
   border: 2px solid var(--border);
   border-radius: 8px;
-  padding: .65rem .9rem;
+  padding: .52rem .8rem;
   outline: none;
   transition: border-color .2s, box-shadow .2s;
   width: 100%;
@@ -1112,8 +1112,8 @@ footer {
   background: #fff;
 }
 
-.form-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
-.form-textarea.tall { min-height: 120px; }
+.form-textarea { resize: vertical; min-height: 68px; line-height: 1.5; }
+.form-textarea.tall { min-height: 85px; }
 
 .form-hint {
   font-size: .7rem;
@@ -1125,8 +1125,8 @@ footer {
 .form-actions {
   display: flex;
   flex-direction: column;
-  gap: .6rem;
-  margin-top: 1.75rem;
+  gap: .5rem;
+  margin-top: 1rem;
 }
 
 .save-draft-btn {
@@ -1416,10 +1416,20 @@ footer {
   margin-top: .25rem;
 }
 
+.img-panel-order {
+  display: flex;
+  justify-content: center;
+  margin-top: .9rem;
+}
+.img-panel-order .action-btn.order-btn {
+  width: 100%;
+  max-width: 480px;
+}
 .result-actions {
   display: flex;
   gap: .75rem;
   flex-wrap: wrap;
+  justify-content: center;
   padding-top: .25rem;
   border-top: 1px solid var(--border);
 }
@@ -2469,46 +2479,81 @@ footer {
 .field-error-msg.show { display: block; }
 
 /* ── HERO FACE UPLOAD ──────────────────────────────── */
+.hero-desc-row {
+  display: flex;
+  flex-direction: row;
+  gap: .9rem;
+  align-items: stretch;
+}
+.hero-photo-col {
+  display: flex;
+  flex-direction: column;
+  gap: .28rem;
+  flex-shrink: 0;
+  width: 150px;
+}
+.hero-photo-col .form-label {
+  white-space: nowrap;
+}
+.hero-photo-col .hero-upload-area {
+  flex: 1;
+}
+.hero-desc-col {
+  display: flex;
+  flex-direction: column;
+  gap: .28rem;
+  flex: 1;
+}
+.hero-desc-textarea {
+  flex: 1;
+  resize: none;
+  min-height: unset;
+}
 .hero-upload-area {
   border: 2px dashed var(--border);
   border-radius: var(--radius);
-  padding: 1.1rem 1.25rem;
+  padding: .6rem .5rem;
   cursor: pointer;
   transition: border-color .2s, background .2s;
   user-select: none;
+  text-align: center;
+  flex: 1;
 }
 .hero-upload-area:hover { border-color: var(--red); background: #fff8f8; }
 .hero-upload-label {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: .6rem;
-  font-size: .85rem;
+  gap: .3rem;
+  font-size: .72rem;
   color: var(--muted);
+  line-height: 1.3;
 }
-.hero-upload-label .upload-icon { font-size: 1.4rem; }
+.hero-upload-label .upload-icon { font-size: 1.6rem; }
 .hero-upload-preview {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: .85rem;
+  gap: .4rem;
 }
 .hero-upload-thumb {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   object-fit: cover;
   border: 2.5px solid var(--border);
   flex-shrink: 0;
 }
-.hero-upload-info { flex: 1; }
+.hero-upload-info { width: 100%; text-align: center; }
 .hero-upload-name {
-  font-size: .8rem;
+  font-size: .68rem;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: .25rem;
+  margin-bottom: .2rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  max-width: 100px;
 }
 .hero-upload-clear {
   background: none;
@@ -2610,8 +2655,8 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   border-radius: 10px;
   overflow: hidden;
   background: #1a1a1a;
-  aspect-ratio: 1 / 1;
-  max-width: 380px;
+  aspect-ratio: 2 / 3;
+  max-width: 480px;
   margin: 0 auto;
 }
 .img-carousel-slide {

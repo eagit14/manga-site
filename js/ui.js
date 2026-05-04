@@ -65,11 +65,7 @@ function imgGoTo(idx) {
   _carouselIdx = ((idx % n) + n) % n;
   slides.forEach((s, i) => s.classList.toggle('active', i === _carouselIdx));
   dots.forEach((d, i)   => d.classList.toggle('active', i === _carouselIdx));
-  if (caption) {
-    if (_carouselIdx === 0) caption.textContent = 'Pitch';
-    else if (_carouselIdx === n - 1) caption.textContent = 'Ending';
-    else caption.textContent = `Chapter ${_carouselIdx}`;
-  }
+  if (caption) caption.textContent = `Scene ${_carouselIdx + 1}`;
 }
 
 function imgNav(dir) { imgGoTo(_carouselIdx + dir); }

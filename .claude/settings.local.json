@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"http.server 8080\")",
+      "Bash(python3 -m http.server 8080)",
+      "Bash(gh --version)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(gh repo *)",
+      "Bash(node --check /Users/elie.abdelnour/claude/manga_site/js/config.js)",
+      "Bash(node --check /Users/elie.abdelnour/claude/manga_site/js/generator-data.js)",
+      "Bash(node --check /Users/elie.abdelnour/claude/manga_site/js/chapters.js)",
+      "Bash(node --check /Users/elie.abdelnour/claude/manga_site/js/database.js)",
+      "Bash(node --check /Users/elie.abdelnour/claude/manga_site/js/auth.js)",
+      "Bash(git push *)",
+      "Bash(ipconfig getifaddr *)",
+      "Bash(brew install *)",
+      "Bash(ngrok config *)",
+      "Bash(ngrok http *)",
+      "Bash(curl -s http://localhost:4040/api/tunnels)",
+      "Bash(python3 -c \"import sys,json; t=json.load\\(sys.stdin\\)['tunnels']; print\\(t[0]['public_url'] if t else 'not ready yet'\\)\")",
+      "Bash(python3 -c \"import sys,json; t=json.load\\(sys.stdin\\)['tunnels']; print\\(t[0]['public_url'] if t else 'tunnel dead'\\)\")",
+      "Bash(curl -s http://localhost:8080/index.html)",
+      "Bash(curl *)"
+    ]
+  }
+}

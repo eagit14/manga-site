@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manga World — The Art That Changed Everything!</title>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=2" />
+  <link rel="stylesheet" href="css/styles.css?v=9" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -833,63 +833,52 @@
             <input class="form-input" id="f-univers" type="text" placeholder="e.g. Dystopian Tokyo, medieval kingdom, high school…" maxlength="80" />
           </div>
 
-          <div class="form-group full">
-            <label class="form-label" for="f-hero-desc">✨ Describe your hero / heroine</label>
-            <textarea class="form-textarea" id="f-hero-desc" rows="3" placeholder="e.g. A brilliant but lonely high school girl who hides a power she doesn't yet understand…"></textarea>
-          </div>
-
-          <div class="form-group full">
-            <label class="form-label">📸 Hero face — reference photo <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-            <input type="file" id="f-hero-img" accept="image/*" onchange="handleHeroImage(event)" style="display:none" />
-            <div class="hero-upload-area" id="hero-upload-area" onclick="triggerHeroUpload()">
-              <div class="hero-upload-label" id="hero-upload-label">
-                <span class="upload-icon">🖼️</span>
-                <span>Click to upload a photo of your hero's face</span>
-              </div>
-              <div class="hero-upload-preview" id="hero-upload-preview" style="display:none">
-                <img class="hero-upload-thumb" id="hero-upload-thumb" src="" alt="Hero face" />
-                <div class="hero-upload-info">
-                  <div class="hero-upload-name" id="hero-upload-name">photo.jpg</div>
-                  <button type="button" class="hero-upload-clear" onclick="clearHeroImage(event)">✕ Remove</button>
+          <div class="form-group full hero-desc-row">
+            <div class="hero-photo-col">
+              <label class="form-label">📸 Hero photo</label>
+              <input type="file" id="f-hero-img" accept="image/*" onchange="handleHeroImage(event)" style="display:none" />
+              <div class="hero-upload-area" id="hero-upload-area" onclick="triggerHeroUpload()">
+                <div class="hero-upload-label" id="hero-upload-label">
+                  <span class="upload-icon">🖼️</span>
+                  <span>Click to upload</span>
+                </div>
+                <div class="hero-upload-preview" id="hero-upload-preview" style="display:none">
+                  <img class="hero-upload-thumb" id="hero-upload-thumb" src="" alt="Hero face" />
+                  <div class="hero-upload-info">
+                    <div class="hero-upload-name" id="hero-upload-name">photo.jpg</div>
+                    <button type="button" class="hero-upload-clear" onclick="clearHeroImage(event)">✕ Remove</button>
+                  </div>
                 </div>
               </div>
             </div>
-            <span class="form-hint">ChatGPT will analyse the face and reproduce it in the generated manga illustrations.</span>
-          </div>
-
-          <div class="form-group full">
-            <label class="form-label" for="f-premise">💡 Your pitch — the starting idea!</label>
-            <textarea class="form-textarea tall" id="f-premise" rows="4" placeholder="e.g. When her brother is captured by a secret organisation, she discovers that her recurring nightmares are actually visions of the future…"></textarea>
-            <span class="form-hint">The more detail you add, the more epic the result! Describe the stakes, twists, atmosphere…</span>
-            <span class="field-error-msg" id="err-premise">⚠ Please describe your starting pitch.</span>
+            <div class="hero-desc-col">
+              <label class="form-label" for="f-hero-desc">✨ Describe your hero / heroine</label>
+              <textarea class="form-textarea hero-desc-textarea" id="f-hero-desc" placeholder="e.g. A brilliant but lonely high school girl who hides a power she doesn't yet understand…"></textarea>
+            </div>
           </div>
 
           <div class="form-group full">
             <div class="chapters-header">
-              <label class="form-label">📚 Chapters <span class="chapter-count" id="chapter-count">(0 / 20)</span></label>
-              <button type="button" class="add-chapter-btn" id="add-chapter-btn" onclick="addChapter()">＋ Add a chapter</button>
+              <label class="form-label">🎬 Scenes <span class="chapter-count" id="chapter-count">(0 / 20)</span></label>
+              <button type="button" class="add-chapter-btn" id="add-chapter-btn" onclick="addChapter()">＋ Add a scene</button>
             </div>
             <div id="chapters-list" class="chapters-list"></div>
-            <span class="field-error-msg" id="err-chapters">⚠ Please add at least one chapter.</span>
+            <span class="field-error-msg" id="err-chapters">⚠ Please add at least one scene.</span>
           </div>
 
           <div class="form-group full">
-            <label class="form-label" for="f-fin">🏁 Ending — how does it finish?</label>
-            <textarea class="form-textarea" id="f-fin" rows="3" placeholder="e.g. After defeating the organisation, she discovers her brother was the mastermind all along… but she chooses to forgive him."></textarea>
-            <span class="form-hint">Describe how the story ends — this shapes the generated illustrations.</span>
-            <span class="field-error-msg" id="err-fin">⚠ Please describe the ending.</span>
+            <button type="button" class="save-draft-btn" id="save-draft-btn" onclick="saveMangaDraft()">
+              💾 Save
+            </button>
           </div>
-
-        </div>
 
           <div class="api-error-msg" id="api-error-msg" style="grid-column:1/-1"></div>
 
         </div>
 
+        </div>
+
         <div class="form-actions">
-          <button type="button" class="save-draft-btn" id="save-draft-btn" onclick="saveMangaDraft()">
-            💾 Save
-          </button>
           <button type="button" class="generate-btn" id="gen-btn" onclick="handleGenerate()">
             🎨 Generate my Manga!
           </button>
@@ -1093,22 +1082,22 @@
   </div>
 </div>
 
-<script src="js/i18n.js?v=1"></script>
+<script src="js/i18n.js?v=2"></script>
 <script src="js/config.js?v=2"></script>
 <script src="js/generator-data.js?v=2"></script>
-<script src="js/ui.js?v=3"></script>
-<script src="js/chapters.js?v=2"></script>
+<script src="js/ui.js?v=4"></script>
+<script src="js/chapters.js?v=3"></script>
 <script src="js/database.js?v=4"></script>
 <script src="js/auth.js?v=5"></script>
-<script src="js/openai.js?v=12"></script>
-<script src="js/generator.js?v=12"></script>
+<script src="js/openai.js?v=14"></script>
+<script src="js/generator.js?v=17"></script>
 <script src="js/storage.js?v=2"></script>
 <script src="js/stripe.js?v=2"></script>
-<script src="js/my-mangas.js?v=10"></script>
+<script src="js/my-mangas.js?v=11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="js/export.js?v=5"></script>
+<script src="js/export.js?v=6"></script>
 <script src="js/profile.js"></script>
-<script src="js/admin.js?v=3"></script>
+<script src="js/admin.js?v=4"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

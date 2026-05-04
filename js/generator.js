@@ -5,7 +5,7 @@ function buildAndShowResult(data, aiContent) {
   const synopsis   = aiContent?.synopsis   || buildSynopsis(data, profile);
   const tagline    = aiContent?.tagline    || pick(profile.taglines);
   const heroDesc   = aiContent?.hero_description || buildHeroDesc(data, profile);
-  const chapters   = aiContent?.chapter_titles || [];
+  const chapters   = aiContent?.scene_titles || aiContent?.chapter_titles || [];
   const volumes    = rnd(1, 3);
   const chapterCnt = rnd(12, 60);
   const rating     = (rnd(42, 50) / 10).toFixed(1);
@@ -16,7 +16,7 @@ function buildAndShowResult(data, aiContent) {
 
   const chapterHTML = chapters.length ? `
     <div>
-      <p class="result-section-label">📖 Chapter preview</p>
+      <p class="result-section-label">🎬 Scene preview</p>
       <div class="chapter-list">
         ${chapters.map((t, i) => `
           <div class="chapter-item">
@@ -29,12 +29,14 @@ function buildAndShowResult(data, aiContent) {
   const synopsisSafe = synopsis.replace(/'/g, "\\'").replace(/`/g, "'");
 
   const numChapters  = data.chapters?.length || 1;
-  const totalSlides  = numChapters + 2; // pitch + chapters + ending
-  const slideLabels  = ['Pitch', ...(data.chapters?.length ? data.chapters.map((_, i) => `Chapter ${i + 1}`) : ['Chapter 1']), 'Ending'];
+  const totalSlides  = numChapters;
+  const slideLabels  = data.chapters?.length ? data.chapters.map((_, i) => `Scene ${i + 1}`) : ['Scene 1'];
+
+  const orderBtn = `<button class="action-btn order-btn" onclick="openPayment('${data.titre.replace(/'/g, "\\'")}', '${grad}')">🛒 Order your Manga!</button>`;
 
   const imagePanel = isAI ? `
     <div class="img-panel">
-      <p class="img-panel-label">🎨 DALL-E Illustrations — B&amp;W Manga Style (${totalSlides} pages)</p>
+      <p class="img-panel-label">🎨 Illustrations — ${totalSlides} pages</p>
       <div class="img-carousel" id="result-carousel">
         ${Array.from({ length: totalSlides }, (_, i) => `
         <div class="img-carousel-slide${i === 0 ? ' active' : ''}" id="carousel-slide-${i}">
@@ -48,8 +50,9 @@ function buildAndShowResult(data, aiContent) {
         <div class="img-carousel-dots">
           ${Array.from({ length: totalSlides }, (_, i) => `<button class="img-dot${i === 0 ? ' active' : ''}" onclick="imgGoTo(${i})"></button>`).join('')}
         </div>
-        <div class="img-caption-badge" id="img-caption">Pitch</div>
+        <div class="img-caption-badge" id="img-caption">Scene 1</div>
       </div>
+      <div class="img-panel-order">${orderBtn}</div>
     </div>` : '';
 
   const html = `
@@ -83,9 +86,7 @@ function buildAndShowResult(data, aiContent) {
         </div>
         ${chapterHTML}
         ${imagePanel}
-        <div class="result-actions">
-          <button class="action-btn order-btn" onclick="openPayment('${data.titre.replace(/'/g, "\\'")}', '${grad}')">🛒 Order your Manga!</button>
-        </div>
+        ${!isAI ? `<div class="result-actions">${orderBtn}</div>` : ''}
       </div>
     </div>`;
 
@@ -107,36 +108,16 @@ async function handleGenerate() {
   // ── Clear previous errors ──
   const errEl = document.getElementById('api-error-msg');
   errEl.classList.remove('show');
-  ['f-premise', 'f-fin'].forEach(id =>
-    document.getElementById(id).classList.remove('field-error'));
   document.getElementById('chapters-list').classList.remove('field-error');
-  ['err-premise', 'err-chapters', 'err-fin'].forEach(id =>
-    document.getElementById(id).classList.remove('show'));
+  document.getElementById('err-chapters').classList.remove('show');
 
   // ── Validation ──
-  const premiseVal  = document.getElementById('f-premise').value.trim();
-  const finVal      = document.getElementById('f-fin').value.trim();
   const chaptersVal = getChaptersData();
-  let firstInvalid  = null;
-
-  if (!premiseVal) {
-    document.getElementById('f-premise').classList.add('field-error');
-    document.getElementById('err-premise').classList.add('show');
-    firstInvalid = firstInvalid || document.getElementById('f-premise');
-  }
   if (chaptersVal.length === 0) {
     document.getElementById('chapters-list').classList.add('field-error');
     document.getElementById('err-chapters').classList.add('show');
-    firstInvalid = firstInvalid || document.getElementById('add-chapter-btn');
-  }
-  if (!finVal) {
-    document.getElementById('f-fin').classList.add('field-error');
-    document.getElementById('err-fin').classList.add('show');
-    firstInvalid = firstInvalid || document.getElementById('f-fin');
-  }
-  if (firstInvalid) {
     if (genBtn) genBtn.style.display = '';
-    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('add-chapter-btn').scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
@@ -149,8 +130,6 @@ async function handleGenerate() {
     heros:      document.getElementById('f-heros').value.trim(),
     heroDesc:   document.getElementById('f-hero-desc').value.trim(),
     univers:    document.getElementById('f-univers').value.trim(),
-    premise:    premiseVal,
-    fin:        finVal,
     chapters:   chaptersVal,
     colorStyle:  document.getElementById('f-color-style').value,
     bubbles:     document.getElementById('f-bubbles').value !== 'no',
@@ -228,8 +207,6 @@ async function saveMangaDraft() {
     heros:      document.getElementById('f-heros').value.trim(),
     heroDesc:   document.getElementById('f-hero-desc').value.trim(),
     univers:    document.getElementById('f-univers').value.trim(),
-    premise:    document.getElementById('f-premise').value.trim(),
-    fin:        document.getElementById('f-fin').value.trim(),
     chapters:   getChaptersData(),
     colorStyle:  document.getElementById('f-color-style').value,
     bubbles:     document.getElementById('f-bubbles').value !== 'no',
@@ -332,8 +309,6 @@ async function openEditForm(storyId) {
     document.getElementById('f-heros').value     = story.hero_name || '';
     document.getElementById('f-hero-desc').value = story.hero_desc || '';
     document.getElementById('f-univers').value   = story.universe  || '';
-    document.getElementById('f-premise').value   = story.pitch     || '';
-    document.getElementById('f-fin').value       = story.ending    || '';
 
     // Replace chapters
     document.querySelectorAll('.chapter-entry').forEach(el => el.remove());

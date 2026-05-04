@@ -14,11 +14,11 @@ function addChapter() {
   div.id = `chapter-entry-${cid}`;
   div.innerHTML = `
     <div class="chapter-entry-hdr">
-      <span class="chapter-entry-num">Ch. ${num}</span>
-      <input class="form-input chapter-title-input" id="ch-title-${cid}" type="text" placeholder="Chapter title…" maxlength="80" />
+      <span class="chapter-entry-num">Sc. ${num}</span>
+      <input class="form-input chapter-title-input" id="ch-title-${cid}" type="text" placeholder="Scene title…" maxlength="80" />
       <button type="button" class="chapter-remove-btn" onclick="removeChapter(${cid})" title="Remove">✕</button>
     </div>
-    <textarea class="form-textarea chapter-desc-input" id="ch-desc-${cid}" rows="2" placeholder="Chapter description…"></textarea>`;
+    <textarea class="form-textarea chapter-desc-input" id="ch-desc-${cid}" rows="2" placeholder="Scene description…"></textarea>`;
   list.appendChild(div);
   updateChapterUI();
 }
@@ -33,7 +33,7 @@ function removeChapter(cid) {
 function renumberChapters() {
   document.querySelectorAll('.chapter-entry').forEach((el, i) => {
     const badge = el.querySelector('.chapter-entry-num');
-    if (badge) badge.textContent = `Ch. ${i + 1}`;
+    if (badge) badge.textContent = `Sc. ${i + 1}`;
   });
 }
 

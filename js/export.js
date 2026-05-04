@@ -24,12 +24,9 @@ async function exportMangaPDF(storyId, title, callerBtn) {
     const genre      = genreProfiles[story?.genre]?.label || story?.genre || '';
     const tagline    = story?.tagline || '';
 
-    const ordered = [
-      ...images.filter(i => i.image_type === 'pitch'),
-      ...images.filter(i => i.image_type === 'chapter')
-               .sort((a, b) => (a.chapter_num || 0) - (b.chapter_num || 0)),
-      ...images.filter(i => i.image_type === 'ending'),
-    ];
+    const ordered = images
+      .filter(i => i.image_type === 'chapter')
+      .sort((a, b) => (a.chapter_num || 0) - (b.chapter_num || 0));
 
     // 6" × 9" — Lulu standard trade paperback
     const W = 152.4, H = 228.6;
@@ -94,12 +91,9 @@ async function exportMangaPDF(storyId, title, callerBtn) {
         doc.text('Image unavailable', W / 2, H / 2, { align: 'center' });
       }
 
-      // Page label — computed from image type
+      // Page label
       const img = ordered[i];
-      let pageLabel;
-      if (img.image_type === 'pitch')   pageLabel = 'Opening Scene';
-      else if (img.image_type === 'ending') pageLabel = 'Ending';
-      else pageLabel = `Chapter ${img.chapter_num || i}`;
+      const pageLabel = `Scene ${img.chapter_num || i + 1}`;
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
