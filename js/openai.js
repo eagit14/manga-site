@@ -77,20 +77,23 @@ Reply ONLY with a valid JSON object containing these fields:
     }),
   });
 
-  if (res.status === 429 && _attempt < 4) {
-    const waits = [30000, 65000, 90000]; // 30s, 65s, 90s — ensure we cross the 60s rate-limit window
-    const wait = waits[_attempt - 1] || 65000;
-    const msgEl = document.getElementById('loading-msg');
-    if (msgEl) msgEl.textContent = `⏳ Rate limit — retrying in ${wait / 1000}s… (attempt ${_attempt}/3)`;
-    await new Promise(r => setTimeout(r, wait));
-    return callOpenAI(apiKey, data, _attempt + 1);
-  }
-
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const msg = err.error?.message || `Error ${res.status}`;
     if (res.status === 401) throw new Error('Invalid API key. Check your key at platform.openai.com.');
-    if (res.status === 429) throw new Error('Rate limit after 3 retries: ' + msg);
+    if (res.status === 429) {
+      const isQuota = msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('billing');
+      if (isQuota) throw new Error('OpenAI quota exceeded — please add credits at platform.openai.com/billing.');
+      if (_attempt < 4) {
+        const waits = [30000, 65000, 90000];
+        const wait = waits[_attempt - 1] || 65000;
+        const msgEl = document.getElementById('loading-msg');
+        if (msgEl) msgEl.textContent = `⏳ Rate limit — retrying in ${wait / 1000}s… (attempt ${_attempt}/3)`;
+        await new Promise(r => setTimeout(r, wait));
+        return callOpenAI(apiKey, data, _attempt + 1);
+      }
+      throw new Error('Rate limit reached after 3 retries. Please wait a minute then try again.');
+    }
     if (res.status === 400) throw new Error('Bad request: ' + msg);
     throw new Error(msg);
   }
