@@ -2729,6 +2729,24 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 }
 .support-submit-btn:hover    { background: #ff6a00; }
 .support-submit-btn:disabled { opacity: .55; cursor: default; }
+.support-form-actions {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+.support-cancel-btn {
+  background: none;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  padding: .65rem 1.2rem;
+  font-size: .92rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #666;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+.support-cancel-btn:hover { border-color: #bbb; color: #333; }
 .support-success {
   flex-direction: column;
   align-items: center;

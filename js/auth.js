@@ -88,6 +88,8 @@ async function checkAdminStatus(userId) {
   const surpriseBar  = document.getElementById('surprise-bar');
   if (adminLink)    adminLink.style.display    = window._isAdmin ? '' : 'none';
   if (ticketsLink)  ticketsLink.style.display  = window._isAdmin ? '' : 'none';
+  const supportLink2 = document.getElementById('nav-support-link');
+  if (supportLink2) supportLink2.style.display = window._isAdmin ? 'none' : '';
   if (adminSection) adminSection.style.display = window._isAdmin ? '' : 'none';
   if (surpriseBar)  surpriseBar.style.display  = window._isAdmin ? '' : 'none';
   if (window._isAdmin && typeof loadAllMangas === 'function') loadAllMangas();
