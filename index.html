@@ -815,6 +815,15 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label" for="f-img-quality">⚡ Image quality</label>
+            <select class="form-select" id="f-img-quality">
+              <option value="low">Draft — fastest &amp; cheapest (~€0.01/image)</option>
+              <option value="medium" selected>Standard — good quality (~€0.04/image)</option>
+              <option value="high">Premium — best quality (~€0.17/image)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label class="form-label" for="f-heros">🦸 Hero / heroine name</label>
             <input class="form-input" id="f-heros" type="text" placeholder="e.g. Ryō, Sakura, Jin, Akemi…" maxlength="50" />
           </div>
@@ -1091,8 +1100,8 @@
 <script src="js/chapters.js?v=2"></script>
 <script src="js/database.js?v=4"></script>
 <script src="js/auth.js?v=5"></script>
-<script src="js/openai.js?v=11"></script>
-<script src="js/generator.js?v=11"></script>
+<script src="js/openai.js?v=12"></script>
+<script src="js/generator.js?v=12"></script>
 <script src="js/storage.js?v=2"></script>
 <script src="js/stripe.js?v=2"></script>
 <script src="js/my-mangas.js?v=10"></script>

@@ -216,14 +216,14 @@ async function _uploadBase64ToStorage(b64, storyId, imageType) {
   }
 }
 
-async function generateImages(apiKey, prompts, storyId) {
+async function generateImages(apiKey, prompts, storyId, quality = 'medium') {
   const _sleep = ms => new Promise(r => setTimeout(r, ms));
 
   const _fetchImage = async (prompt, attempt = 1) => {
     const res = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality: 'high' }),
+      body: JSON.stringify({ model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality }),
     });
     if (res.status === 429 && attempt < 3) {
       // Rate limited — wait and retry (12s, then 24s)

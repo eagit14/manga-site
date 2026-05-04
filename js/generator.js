@@ -152,8 +152,9 @@ async function handleGenerate() {
     premise:    premiseVal,
     fin:        finVal,
     chapters:   chaptersVal,
-    colorStyle: document.getElementById('f-color-style').value,
-    bubbles:    document.getElementById('f-bubbles').value !== 'no',
+    colorStyle:  document.getElementById('f-color-style').value,
+    bubbles:     document.getElementById('f-bubbles').value !== 'no',
+    imgQuality:  document.getElementById('f-img-quality').value,
   };
 
   document.getElementById('creator-form-card').style.display = 'none';
@@ -210,7 +211,7 @@ async function handleGenerate() {
     const _styleLabel = styleLabels[data.style] || data.style;
     const _genreLabel = genreProfiles[data.genre]?.label || data.genre;
     const prompts = buildImagePrompts(data, aiContent, _styleLabel, _genreLabel);
-    generateImages(apiKey, prompts, storyId);
+    generateImages(apiKey, prompts, storyId, data.imgQuality || 'medium');
   }
 }
 
@@ -230,8 +231,9 @@ async function saveMangaDraft() {
     premise:    document.getElementById('f-premise').value.trim(),
     fin:        document.getElementById('f-fin').value.trim(),
     chapters:   getChaptersData(),
-    colorStyle: document.getElementById('f-color-style').value,
-    bubbles:    document.getElementById('f-bubbles').value !== 'no',
+    colorStyle:  document.getElementById('f-color-style').value,
+    bubbles:     document.getElementById('f-bubbles').value !== 'no',
+    imgQuality:  document.getElementById('f-img-quality').value,
   };
   const grad = coverGrads[data.genre] || coverGrads.shonen;
 
