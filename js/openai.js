@@ -18,6 +18,11 @@ async function callOpenAI(apiKey, data) {
     ? '\n  "hero_face_desc": "Precise physical description of the hero\'s face extracted from the reference photo: face shape, skin tone, eye color/shape, eyebrow style, nose, lips, hair color/texture/style, distinctive features. Enough detail for consistent illustration across all panels.",'
     : '';
 
+  const numChapters = (data.chapters && data.chapters.length > 0) ? data.chapters.length : 1;
+  const chapterDialogueFields = Array.from({ length: numChapters }, (_, i) =>
+    `["punchy line 1 for chapter ${i + 1} (≤8 words)", "punchy line 2 for chapter ${i + 1} (≤8 words)"]`
+  ).join(', ');
+
   const userPrompt = `Create a complete narrative sheet for this manga:
 
 Title: "${data.titre}"
@@ -35,7 +40,12 @@ Reply ONLY with a valid JSON object containing these fields:
   "tagline": "Hard-hitting single sentence (15 words max) — manga cover style.",
   "hero_description": "2–3 sentence description of the main character: personality, special power or strength, what makes them unique.",
   "chapter_titles": ["Chapter title 1", "Chapter title 2", "Chapter title 3"],
-  "universe_desc": "One short immersive sentence describing the universe."
+  "universe_desc": "One short immersive sentence describing the universe.",
+  "panel_lines": {
+    "pitch": ["punchy narration/dialogue line 1 for opening scene (≤8 words)", "punchy line 2 (≤8 words)"],
+    "chapters": [${chapterDialogueFields}],
+    "ending": ["punchy line 1 for final scene (≤8 words)", "punchy emotional closing line (≤8 words)"]
+  }
 }`;
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -81,17 +91,20 @@ Reply ONLY with a valid JSON object containing these fields:
 }
 
 function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
-  const hero     = data.heros     || 'the protagonist';
-  const heroDesc = aiContent?.hero_description || data.heroDesc || '';
-  const setting  = data.univers   || 'an unknown world';
-  const premise  = data.premise   || '';
-  const fin      = data.fin       || '';
-  const title    = data.titre     || 'Untitled';
-  const synopsis = aiContent?.synopsis ? aiContent.synopsis.split('.').slice(0, 2).join('.') + '.' : '';
-  const faceRef  = _heroImageBase64 && aiContent?.hero_face_desc
-    ? ` IMPORTANT — Hero face must be reproduced exactly in every panel: ${aiContent.hero_face_desc}`
+  const hero       = data.heros     || 'the protagonist';
+  const heroDesc   = aiContent?.hero_description || data.heroDesc || '';
+  const setting    = data.univers   || 'an unknown world';
+  const premise    = data.premise   || '';
+  const fin        = data.fin       || '';
+  const title      = data.titre     || 'Untitled';
+  const synopsis   = aiContent?.synopsis ? aiContent.synopsis.split('.').slice(0, 2).join('.') + '.' : '';
+  const isColor    = data.colorStyle === 'color';
+  const hasBubbles = data.bubbles !== false;
+
+  const faceRef = _heroImageBase64 && aiContent?.hero_face_desc
+    ? ` CRITICAL — reproduce this hero's exact face in every single panel: ${aiContent.hero_face_desc}.`
     : _heroImageBase64
-      ? ' A reference face photo was provided — reproduce the hero\'s facial features precisely in every panel.'
+      ? ' A reference photo was provided — reproduce the hero\'s exact facial features consistently in every panel.'
       : '';
 
   const chapters = data.chapters || [];
@@ -108,7 +121,21 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
     chArc,
   ].filter(Boolean).join(' ');
 
-  const base = `Full manga chapter page layout, 4 to 6 distinct black-and-white ink panels separated by white gutters. Art style: ${styleLabel}. Genre: ${genreLabel}. Title: "${title}". Hero: ${hero}${heroDesc ? ' — ' + heroDesc : ''}. Setting: ${setting}. ${storyCtx}${faceRef} Draw the hero with a consistent face across all panels. Authentic Japanese manga style — B&W ink only, no colour, screen tones, hatching, expressive characters, speed lines, bold panel borders, varied panel sizes for pacing. The page must look like a real printed manga chapter page.`;
+  const visualStyle = isColor
+    ? `Full-color manga/anime art style. Vibrant colors, cel shading, clean anime linework, richly colored backgrounds, dynamic lighting. Consistent color palette across all panels.`
+    : `Authentic black-and-white manga ink art. Bold ink outlines, screen tones for shading, hatching, pure B&W — absolutely no color.`;
+
+  const textStyle = hasBubbles
+    ? `Include manga-style text directly in the panels: white speech bubbles with black text and thick outlines for dialogue, rectangular caption boxes for narration. All text in English, clearly legible, maximum 8 words per bubble or caption.`
+    : `No text, no speech bubbles, no captions, no lettering anywhere. Pure visual storytelling only.`;
+
+  const base = `Manga chapter page with 4–6 panels in a grid layout, white gutters between panels. Art style: ${styleLabel}. Genre: ${genreLabel}. Title: "${title}". Hero: ${hero}${heroDesc ? ' — ' + heroDesc : ''}. Setting: ${setting}. ${storyCtx}${faceRef} ${visualStyle} Hero must have a consistent, recognizable face and costume in every panel. Expressive characters, dynamic poses, speed lines, varied panel sizes for pacing. This must look like a real printed manga chapter page. ${textStyle}`;
+
+  const dialogueHint = (lines) => {
+    if (!hasBubbles || !lines || !lines.length) return '';
+    const clean = lines.filter(Boolean);
+    return clean.length ? `\nPanel text to include: ${clean.map(l => `"${l}"`).join(' | ')}` : '';
+  };
 
   const results = [];
 
@@ -116,27 +143,27 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   results.push({
     type: 'pitch', chapterNum: null, storageKey: 'pitch',
     prompt: `${base}
-Illustrate the OPENING SCENE / Inciting Incident: ${premise || 'the hero\'s world is disrupted by an unexpected event'}.
-Panels: (1) wide establishing shot of ${setting}, (2) ${hero} introduced in their normal life, (3) the inciting event unfolds dramatically, (4) close-up reaction shot of ${hero}'s face showing shock or determination.`,
+Scene: OPENING / INCITING INCIDENT — ${premise || 'the hero\'s world is disrupted by an unexpected event'}.
+Panel sequence: (1) wide establishing shot of ${setting}; (2) ${hero} in their everyday life; (3) the inciting event erupts dramatically; (4) close-up of ${hero}'s face — shock or fierce determination.${dialogueHint(aiContent?.panel_lines?.pitch)}`,
   });
 
   // One image per chapter
   const chapterList = chapters.length > 0 ? chapters : [{ num: 1, title: '', description: '' }];
   chapterList.forEach((ch, i) => {
-    const num = ch.num || i + 1;
+    const num    = ch.num || i + 1;
     const chDesc = ch.title
       ? `"${ch.title}"${ch.description ? ': ' + ch.description : ''}`
       : `Chapter ${num}${ch.description ? ': ' + ch.description : ''}`;
     results.push({
       type: 'chapter', chapterNum: num, storageKey: `chapter-${num}`,
       prompt: `${base}
-Illustrate CHAPTER ${num} key action scene — ${chDesc}.
-Panels: (1) wide action shot of ${hero} in motion in ${setting}, (2) a dramatic confrontation or obstacle specific to this chapter, (3) ${hero}'s reaction and decision, (4) cliffhanger panel that pushes the story forward.`,
+Scene: CHAPTER ${num} KEY ACTION — ${chDesc}.
+Panel sequence: (1) wide action shot of ${hero} in motion; (2) dramatic confrontation or major obstacle; (3) ${hero}'s reaction and decision moment; (4) cliffhanger panel that drives the story forward.${dialogueHint(aiContent?.panel_lines?.chapters?.[i])}`,
     });
   });
 
   // Ending image
-  const lastCh = chapters.length > 1 ? chapters[chapters.length - 1] : null;
+  const lastCh    = chapters.length > 1 ? chapters[chapters.length - 1] : null;
   const endingCtx = fin
     ? fin
     : lastCh
@@ -145,8 +172,8 @@ Panels: (1) wide action shot of ${hero} in motion in ${setting}, (2) a dramatic 
   results.push({
     type: 'ending', chapterNum: null, storageKey: 'ending',
     prompt: `${base}
-Illustrate the FINAL RESOLUTION: ${endingCtx}.
-Panels: (1) climax moment — ${hero} at the peak of the final confrontation, (2) emotional reaction close-up, (3) quiet aftermath in ${setting}, (4) large final symbolic panel showing the new status quo or a lingering question.`,
+Scene: FINAL RESOLUTION — ${endingCtx}.
+Panel sequence: (1) climax — ${hero} at peak confrontation; (2) emotional close-up reaction; (3) quiet aftermath in ${setting}; (4) large symbolic final panel — new status quo or haunting unresolved question.${dialogueHint(aiContent?.panel_lines?.ending)}`,
   });
 
   return results;
@@ -184,9 +211,12 @@ async function generateImages(apiKey, prompts, storyId) {
       const res = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: 'dall-e-3', prompt: promptObj.prompt, n: 1, size: '1024x1792', quality: 'hd', response_format: 'b64_json' }),
+        body: JSON.stringify({ model: 'gpt-image-1', prompt: promptObj.prompt, n: 1, size: '1024x1536', quality: 'high' }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || `HTTP ${res.status}`);
+      }
       const json    = await res.json();
       const b64     = json.data[0].b64_json;
       const dataUrl = `data:image/png;base64,${b64}`;
@@ -213,7 +243,7 @@ async function generateImages(apiKey, prompts, storyId) {
     } catch (err) {
       console.error('[IMG] generate error idx=' + idx, err);
       const skeleton = document.getElementById(`carousel-skeleton-${idx}`);
-      if (skeleton) skeleton.innerHTML = '<span>❌</span><span>Image unavailable</span>';
+      if (skeleton) skeleton.innerHTML = `<span>❌</span><span>${err.message || 'Image unavailable'}</span>`;
     }
   };
   await Promise.allSettled(prompts.map((p, i) => generate(p, i)));

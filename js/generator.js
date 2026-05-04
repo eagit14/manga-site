@@ -143,15 +143,17 @@ async function handleGenerate() {
   if (apiKey) localStorage.setItem('openai_key', apiKey);
 
   const data = {
-    titre:    document.getElementById('f-titre').value.trim()     || 'Untitled',
-    genre:    document.getElementById('f-genre').value,
-    style:    document.getElementById('f-style').value,
-    heros:    document.getElementById('f-heros').value.trim(),
-    heroDesc: document.getElementById('f-hero-desc').value.trim(),
-    univers:  document.getElementById('f-univers').value.trim(),
-    premise:  premiseVal,
-    fin:      finVal,
-    chapters: chaptersVal,
+    titre:      document.getElementById('f-titre').value.trim()     || 'Untitled',
+    genre:      document.getElementById('f-genre').value,
+    style:      document.getElementById('f-style').value,
+    heros:      document.getElementById('f-heros').value.trim(),
+    heroDesc:   document.getElementById('f-hero-desc').value.trim(),
+    univers:    document.getElementById('f-univers').value.trim(),
+    premise:    premiseVal,
+    fin:        finVal,
+    chapters:   chaptersVal,
+    colorStyle: document.getElementById('f-color-style').value,
+    bubbles:    document.getElementById('f-bubbles').value !== 'no',
   };
 
   document.getElementById('creator-form-card').style.display = 'none';
@@ -219,15 +221,17 @@ async function saveMangaDraft() {
   saveBtn.textContent = '⏳ Saving…';
 
   const data = {
-    titre:    document.getElementById('f-titre').value.trim()     || 'Untitled',
-    genre:    document.getElementById('f-genre').value,
-    style:    document.getElementById('f-style').value,
-    heros:    document.getElementById('f-heros').value.trim(),
-    heroDesc: document.getElementById('f-hero-desc').value.trim(),
-    univers:  document.getElementById('f-univers').value.trim(),
-    premise:  document.getElementById('f-premise').value.trim(),
-    fin:      document.getElementById('f-fin').value.trim(),
-    chapters: getChaptersData(),
+    titre:      document.getElementById('f-titre').value.trim()     || 'Untitled',
+    genre:      document.getElementById('f-genre').value,
+    style:      document.getElementById('f-style').value,
+    heros:      document.getElementById('f-heros').value.trim(),
+    heroDesc:   document.getElementById('f-hero-desc').value.trim(),
+    univers:    document.getElementById('f-univers').value.trim(),
+    premise:    document.getElementById('f-premise').value.trim(),
+    fin:        document.getElementById('f-fin').value.trim(),
+    chapters:   getChaptersData(),
+    colorStyle: document.getElementById('f-color-style').value,
+    bubbles:    document.getElementById('f-bubbles').value !== 'no',
   };
   const grad = coverGrads[data.genre] || coverGrads.shonen;
 
