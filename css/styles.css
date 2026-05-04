@@ -2638,14 +2638,53 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 
 .credit-msg {
   font-size: .78rem;
-  color: rgba(255,255,255,.55);
+  color: rgba(0,0,0,.45);
   margin-top: .35rem;
   padding: .25rem .5rem;
   border-radius: 6px;
-  background: rgba(255,255,255,.05);
+  background: rgba(0,0,0,.04);
 }
-.credit-msg.low   { color: #f0a500; background: rgba(240,165,0,.08); }
-.credit-msg.empty { color: #e74c3c; background: rgba(231,76,60,.08); }
+.credit-msg.low   { color: #c97a00; background: rgba(200,120,0,.07); }
+.credit-msg.empty { color: #c0392b; background: rgba(192,57,43,.07); }
+
+.credit-refill-prompt {
+  display: none;
+  align-items: center;
+  gap: .4rem;
+  margin-top: .4rem;
+  font-size: .82rem;
+  color: rgba(0,0,0,.5);
+}
+.refill-link {
+  color: #e65c00;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.refill-link:hover { color: #ff6a00; }
+
+.scene-gen-img-btn.credits-depleted {
+  background: #bbb !important;
+  cursor: not-allowed !important;
+  opacity: .6;
+}
+
+/* ── Credits refill modal ───────────────────────────── */
+.credits-modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem 2rem 1.5rem;
+  width: min(420px, 92vw);
+  position: relative;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.credits-modal-header { margin-bottom: 1.5rem; }
+.credits-modal-icon   { font-size: 2.8rem; margin-bottom: .5rem; }
+.credits-modal-title  { font-size: 1.3rem; font-weight: 800; color: #111; margin: 0 0 .5rem; }
+.credits-modal-desc   { font-size: .9rem; color: #555; margin: 0; line-height: 1.5; }
+.credits-stripe-wrap  { display: flex; justify-content: center; }
+.credits-modal-soon   { color: #888; font-size: .9rem; padding: 1rem 0; }
 
 .add-chapter-btn {
   background: var(--yellow);

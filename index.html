@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manga World — The Art That Changed Everything!</title>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=22" />
+  <link rel="stylesheet" href="css/styles.css?v=23" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -864,6 +864,10 @@
               <button type="button" class="add-chapter-btn" id="add-chapter-btn" onclick="addChapter()">＋ Add a scene</button>
             </div>
             <div class="credit-msg" id="credit-msg" style="display:none"></div>
+            <div class="credit-refill-prompt" id="credit-refill-prompt" style="display:none">
+              <span>No credits left —</span>
+              <a href="#" class="refill-link" onclick="openCreditsModal();return false;">Refill credits</a>
+            </div>
             <div id="chapters-list" class="chapters-list"></div>
             <span class="field-error-msg" id="err-chapters">⚠ Please add at least one scene.</span>
           </div>
@@ -947,6 +951,19 @@
       <button class="viewer-arrow viewer-next" onclick="viewerNav(1)">&#8250;</button>
       <div class="viewer-dots" id="viewer-dots"></div>
     </div>
+  </div>
+</div>
+
+<!-- CREDITS REFILL MODAL -->
+<div id="credits-modal" class="payment-overlay" style="display:none" onclick="handleCreditsOverlayClick(event)">
+  <div class="credits-modal-box">
+    <button class="modal-close-btn" onclick="closeCreditsModal()">✕</button>
+    <div class="credits-modal-header">
+      <div class="credits-modal-icon">🎨</div>
+      <h2 class="credits-modal-title">Refill Image Credits</h2>
+      <p class="credits-modal-desc">Get <strong>50 more image generations</strong> to keep building your manga.</p>
+    </div>
+    <div id="credits-stripe-container" class="credits-stripe-wrap"></div>
   </div>
 </div>
 
@@ -1146,7 +1163,7 @@
 <script src="js/ui.js?v=5"></script>
 <script src="js/chapters.js?v=9"></script>
 <script src="js/database.js?v=4"></script>
-<script src="js/credits.js?v=3"></script>
+<script src="js/credits.js?v=4"></script>
 <script src="js/auth.js?v=6"></script>
 <script src="js/openai.js?v=15"></script>
 <script src="js/generator.js?v=21"></script>
