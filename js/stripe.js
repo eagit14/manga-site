@@ -18,7 +18,7 @@ function _buildModalCarousel(images, grad, title, purchased) {
 
   _modalCarouselIdx = 0;
 
-  const labels = ['Pitch', 'Chapter 1', 'Ending'];
+  const labels = images.map((_, i) => `Scene ${i + 1}`);
   const draft  = purchased ? '' : '<div class="draft-watermark">DRAFT</div>';
 
   track.innerHTML = images.map((src, i) => {
@@ -140,10 +140,13 @@ function _promoMsg(el, text, type) {
 }
 
 function openPayment(title, grad) {
-  const imgs = [0, 1, 2].map(i => {
+  const imgs = [];
+  for (let i = 0; ; i++) {
     const el = document.getElementById(`carousel-img-${i}`);
-    return (el?.src && el.src !== window.location.href) ? el.src : null;
-  });
+    if (!el) break;
+    imgs.push((el.src && el.src !== window.location.href) ? el.src : null);
+  }
+  if (!imgs.length) imgs.push(null);
   _openModal(title, grad, imgs, window._lastStoryId || null);
 }
 

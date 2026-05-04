@@ -32,16 +32,21 @@ function buildAndShowResult(data, aiContent) {
   const totalSlides  = numChapters;
   const slideLabels  = data.chapters?.length ? data.chapters.map((_, i) => `Scene ${i + 1}`) : ['Scene 1'];
 
-  const orderBtn = `<button class="action-btn order-btn" onclick="openPayment('${data.titre.replace(/'/g, "\\'")}', '${grad}')">🛒 Order your Manga!</button>`;
+  const orderBtn    = `<button class="action-btn order-btn" onclick="openPayment('${data.titre.replace(/'/g, "\\'")}', '${grad}')">🛒 Order Digital Copy</button>`;
+  const physicalBtn = `<button class="action-btn physical-btn" onclick="openPhysicalOrder()">🖨️ Order Physical Copy</button>`;
 
-  const imagePanel = isAI ? `
+  const skeletonMsg = isAI
+    ? (i) => `Generating ${slideLabels[i]}…`
+    : ()  => `Click 🎨 Generate to create this scene`;
+
+  const imagePanel = totalSlides > 0 ? `
     <div class="img-panel">
       <p class="img-panel-label">🎨 Illustrations — ${totalSlides} pages</p>
       <div class="img-carousel" id="result-carousel">
         ${Array.from({ length: totalSlides }, (_, i) => `
         <div class="img-carousel-slide${i === 0 ? ' active' : ''}" id="carousel-slide-${i}">
           <div class="img-skeleton" id="carousel-skeleton-${i}">
-            <span>⏳</span><span>Generating ${slideLabels[i]}…</span>
+            <span>${isAI ? '⏳' : '🎨'}</span><span>${skeletonMsg(i)}</span>
           </div>
           <img class="carousel-img" id="carousel-img-${i}" alt="${slideLabels[i]}" style="display:none" />
         </div>`).join('')}
@@ -52,7 +57,10 @@ function buildAndShowResult(data, aiContent) {
         </div>
         <div class="img-caption-badge" id="img-caption">Scene 1</div>
       </div>
-      <div class="img-panel-order">${orderBtn}</div>
+      <div class="img-panel-order">
+        ${orderBtn}
+        ${physicalBtn}
+      </div>
     </div>` : '';
 
   const html = `
@@ -86,7 +94,6 @@ function buildAndShowResult(data, aiContent) {
         </div>
         ${chapterHTML}
         ${imagePanel}
-        ${!isAI ? `<div class="result-actions">${orderBtn}</div>` : ''}
       </div>
     </div>`;
 
@@ -95,6 +102,8 @@ function buildAndShowResult(data, aiContent) {
   resultEl.innerHTML = html;
   resultEl.style.display = 'block';
   window._lastMangaData = data;
+  window._lastAIContent = aiContent;
+  window._lastGrad      = grad;
 
   // Persist to manga_story table (skip on regenerate replays)
   if (!data._isReplay) saveStory(data, aiContent, grad);
@@ -102,8 +111,6 @@ function buildAndShowResult(data, aiContent) {
 
 async function handleGenerate() {
   const apiKey = OPENAI_API_KEY;
-  const genBtn = document.getElementById('gen-btn');
-  if (genBtn) genBtn.style.display = 'none';
 
   // ── Clear previous errors ──
   const errEl = document.getElementById('api-error-msg');
@@ -116,7 +123,6 @@ async function handleGenerate() {
   if (chaptersVal.length === 0) {
     document.getElementById('chapters-list').classList.add('field-error');
     document.getElementById('err-chapters').classList.add('show');
-    if (genBtn) genBtn.style.display = '';
     document.getElementById('add-chapter-btn').scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
@@ -151,8 +157,7 @@ async function handleGenerate() {
     } catch (err) {
       document.getElementById('creator-loading').style.display = 'none';
       document.getElementById('creator-form-card').style.display = 'block';
-      if (genBtn) genBtn.style.display = '';
-      errEl.textContent = `❌ ${err.message}`;
+        errEl.textContent = `❌ ${err.message}`;
       errEl.classList.add('show');
       errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
@@ -221,7 +226,6 @@ async function saveMangaDraft() {
     storyId = await saveStoryToSupabase(data, null, grad);
     if (storyId) {
       window._editingStoryId = storyId;
-      document.getElementById('gen-btn').textContent = '🔄 Update my Manga!';
       document.getElementById('edit-mode-title').textContent = data.titre;
       document.getElementById('edit-mode-banner').style.display = 'flex';
     }
@@ -247,25 +251,17 @@ async function saveMangaDraft() {
   saveBtn.disabled = false;
   if (storyId) {
     saveBtn.textContent = '✅ Saved!';
+    window._lastStoryId = storyId;
+    const grad = coverGrads[data.genre] || coverGrads.shonen;
+    buildAndShowResult(data, window._lastAIContent || null, grad);
     loadMyMangas();
+    setTimeout(() => document.getElementById('creator-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
   } else {
     saveBtn.textContent = '❌ Error';
   }
   setTimeout(() => { saveBtn.textContent = origText; }, 2500);
 }
 
-function regenerate() {
-  if (!window._lastMangaData) return;
-  const saved = window._lastMangaData;
-  document.getElementById('f-titre').value     = saved.titre;
-  document.getElementById('f-genre').value     = saved.genre;
-  document.getElementById('f-style').value     = saved.style;
-  document.getElementById('f-heros').value     = saved.heros;
-  document.getElementById('f-hero-desc').value = saved.heroDesc;
-  document.getElementById('f-univers').value   = saved.univers;
-  document.getElementById('f-premise').value   = saved.premise;
-  handleGenerate();
-}
 
 function resetForm() {
   clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
@@ -323,6 +319,22 @@ async function openEditForm(storyId) {
       if (d) d.value = ch.description || '';
     });
 
+    // Restore existing scene images into entry previews
+    const { data: sceneImgs } = await _supabase
+      .from('manga_images')
+      .select('chapter_num, image_url')
+      .eq('story_id', storyId)
+      .eq('image_type', 'chapter');
+    const imgByNum = {};
+    (sceneImgs || []).forEach(r => { imgByNum[r.chapter_num] = r.image_url; });
+    document.querySelectorAll('.chapter-entry').forEach((entry, i) => {
+      const ch  = (chapters || [])[i];
+      const url = ch ? imgByNum[ch.chapter_num] : null;
+      if (!url) return;
+      const cid = entry.id.replace('chapter-entry-', '');
+      showScenePreview(cid, url);
+    });
+
     // Restore hero face image if saved
     clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
     const { data: heroRows, error: heroErr } = await _supabase
@@ -362,7 +374,6 @@ async function openEditForm(storyId) {
 
     // Activate edit mode
     window._editingStoryId = storyId;
-    document.getElementById('gen-btn').textContent = '🔄 Update my Manga!';
     document.getElementById('edit-mode-title').textContent = story.title || 'Untitled';
     document.getElementById('edit-mode-banner').style.display = 'flex';
 
@@ -378,7 +389,6 @@ async function openEditForm(storyId) {
 
 function cancelEdit() {
   window._editingStoryId = null;
-  document.getElementById('gen-btn').textContent = '🎨 Generate my Manga!';
   const banner = document.getElementById('edit-mode-banner');
   if (banner) banner.style.display = 'none';
 }

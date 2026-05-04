@@ -785,7 +785,8 @@ footer {
 }
 
 .manga-tile-delete-btn,
-.manga-tile-edit-btn {
+.manga-tile-edit-btn,
+.manga-tile-duplicate-btn {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
@@ -798,8 +799,17 @@ footer {
   cursor: pointer;
   transition: background .2s;
 }
-.manga-tile-delete-btn:hover { background: var(--red); }
-.manga-tile-edit-btn:hover   { background: #118ab2; }
+.manga-tile-delete-btn:hover    { background: var(--red); }
+.manga-tile-edit-btn:hover      { background: #118ab2; }
+.manga-tile-duplicate-btn:hover { background: #0a9e6e; }
+
+.manga-tile-no-images {
+  font-size: .75rem;
+  color: var(--muted);
+  text-align: center;
+  padding: .5rem .25rem;
+  line-height: 1.4;
+}
 
 .manga-tile-img {
   width: 100%;
@@ -908,6 +918,21 @@ footer {
   transition: background .2s, transform .15s;
 }
 .manga-tile-order-btn:hover { background: #0d3060; transform: translateY(-1px); }
+
+.manga-tile-physical-btn {
+  flex: 1;
+  padding: .55rem 1rem;
+  background: #1a1a2e;
+  color: #e0d0ff;
+  border: 1.5px solid #4a2080;
+  border-radius: 8px;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, transform .15s;
+}
+.manga-tile-physical-btn:hover { background: #2a1a4e; border-color: #7b2ff7; transform: translateY(-1px); }
 
 .manga-tile-purchased-actions {
   display: grid;
@@ -1418,12 +1443,15 @@ footer {
 
 .img-panel-order {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: .6rem;
   margin-top: .9rem;
 }
-.img-panel-order .action-btn.order-btn {
+.img-panel-order .action-btn {
   width: 100%;
   max-width: 480px;
+  justify-content: center;
 }
 .result-actions {
   display: flex;
@@ -2637,6 +2665,80 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 .chapter-remove-btn:hover { background: #ffe4e4; color: var(--red); border-color: var(--red); }
 .chapter-desc-input { font-size: .82rem !important; }
 
+.scene-gen-img-btn {
+  flex-shrink: 0;
+  background: #e65c00;
+  border: none;
+  border-radius: 5px;
+  height: 26px;
+  padding: 0 .55rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  white-space: nowrap;
+  transition: background .15s, transform .1s;
+}
+.scene-gen-img-btn:hover    { background: #c44f00; transform: translateY(-1px); }
+.scene-gen-img-btn:disabled { opacity: .55; cursor: wait; transform: none; }
+
+/* ── Per-scene thumbnail + hover popup ──────────────── */
+.scene-thumb {
+  flex-shrink: 0;
+  position: relative;
+  width: 24px;
+  height: 32px;
+  border-radius: 3px;
+  overflow: visible;
+  cursor: default;
+}
+.scene-thumb > img {
+  width: 24px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 3px;
+  display: block;
+  border: 1px solid var(--border);
+}
+.scene-thumb-popup {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  aspect-ratio: 2 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 200;
+  box-shadow: 0 12px 40px rgba(0,0,0,.55);
+  pointer-events: none;
+}
+.scene-thumb:hover .scene-thumb-popup { display: block; }
+.scene-thumb-popup > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.scene-thumb-popup .draft-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bangers', cursive;
+  font-size: 2rem;
+  letter-spacing: .22em;
+  color: rgba(255,255,255,.22);
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+
 /* ── IMAGE CAROUSEL ─────────────────────────────────── */
 .img-panel {
   border-top: 1px solid var(--border);
@@ -3338,4 +3440,214 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 
 @media (max-width: 480px) {
   .profile-row { grid-template-columns: 1fr; }
+}
+
+/* ── Physical copy button ─────────────────────────────── */
+.action-btn.physical-btn {
+  background: #1a1a2e;
+  border-color: #4a2080;
+  color: #e0d0ff;
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  padding: .55rem 1.3rem;
+  gap: .5rem;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.action-btn.physical-btn:hover {
+  background: #2a1a4e;
+  border-color: #7b2ff7;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* ── Physical order modal ─────────────────────────────── */
+.physical-card { max-width: 500px; }
+
+.physical-subtitle {
+  font-size: .8rem;
+  color: #888;
+  margin: .2rem 0 0;
+  text-align: center;
+}
+
+.physical-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding-top: .25rem;
+}
+
+.physical-preview-wrap {
+  width: 120px;
+  height: 180px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,.18);
+  flex-shrink: 0;
+}
+
+.physical-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.physical-preview-grad {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .65rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.7);
+  text-align: center;
+  padding: .5rem;
+}
+
+.physical-specs {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.physical-spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: .5rem .85rem;
+  font-size: .8rem;
+}
+.physical-spec-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+.physical-spec-row span:first-child { color: #888; }
+.physical-spec-row span:last-child  { font-weight: 600; }
+
+.physical-pdf-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+  width: 100%;
+}
+
+.action-btn.preview-pdf-btn {
+  background: #0a2540;
+  border-color: #0a2540;
+  color: #fff;
+  font-size: .78rem;
+  padding: .45rem 1rem;
+  justify-content: center;
+}
+.action-btn.preview-pdf-btn:hover {
+  background: #0d3060;
+  border-color: #0d3060;
+  transform: translateY(-1px);
+}
+.action-btn.preview-pdf-btn:disabled {
+  opacity: .6;
+  cursor: wait;
+  transform: none;
+}
+
+.action-btn.download-cover-btn {
+  background: #fff;
+  border-color: var(--border);
+  color: #444;
+  font-size: .78rem;
+  padding: .45rem 1rem;
+  justify-content: center;
+}
+.action-btn.download-cover-btn:hover {
+  border-color: var(--red);
+  background: var(--red-lt);
+  transform: none;
+}
+
+.physical-stripe-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.physical-stripe-placeholder {
+  text-align: center;
+  padding: 1rem;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  width: 100%;
+  color: #888;
+}
+.physical-stripe-placeholder p { margin: 0 0 .3rem; font-weight: 600; }
+.physical-stripe-placeholder small { font-size: .75rem; }
+
+/* ── Lulu price box ───────────────────────────────────── */
+.physical-price-box {
+  width: 100%;
+  border: 1.5px solid #7b2ff7;
+  border-radius: 10px;
+  padding: .8rem 1rem;
+  background: #0d0d1a;
+}
+
+.physical-price-loading {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  font-size: .82rem;
+  color: #aaa;
+}
+
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #555;
+  border-top-color: #7b2ff7;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+.physical-price-result { }
+
+.physical-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: .25rem;
+}
+
+.physical-price-label {
+  font-size: .8rem;
+  color: #aaa;
+}
+
+.physical-price-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #e0d0ff;
+  letter-spacing: -.01em;
+}
+
+.physical-price-shipping {
+  font-size: .78rem;
+  color: #888;
+  margin-bottom: .3rem;
+}
+
+.physical-price-note {
+  font-size: .7rem;
+  color: #555;
+  font-style: italic;
+}
+
+.physical-note {
+  font-size: .78rem;
+  color: #777;
+  text-align: center;
+  line-height: 1.5;
+  margin: 0;
 }

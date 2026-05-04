@@ -12,7 +12,6 @@ async function loadMyMangas() {
     return;
   }
 
-  // Fetch stories belonging to this user OR with no user_id (legacy rows)
   const { data: stories, error } = await _supabase
     .from('manga_stories')
     .select('id, title, genre, cover_gradient, created_at, tagline, purchased_at')
@@ -34,15 +33,20 @@ async function loadMyMangas() {
     return;
   }
 
-  // Fetch all images for these stories (pitch, chapter, ending)
   const ids = stories.map(s => s.id);
-  const { data: images } = ids.length ? await _supabase
-    .from('manga_images')
-    .select('story_id, image_url, image_type, chapter_num')
-    .in('story_id', ids)
-    .order('chapter_num', { ascending: true }) : { data: [] };
 
-  // Map: storyId → { pitch, ending, chapters: { chapterNum: url } }
+  // Fetch images and chapter counts in parallel
+  const [{ data: images }, { data: chapters }] = await Promise.all([
+    _supabase.from('manga_images')
+      .select('story_id, image_url, image_type, chapter_num')
+      .in('story_id', ids)
+      .order('chapter_num', { ascending: true }),
+    _supabase.from('manga_chapters')
+      .select('story_id')
+      .in('story_id', ids),
+  ]);
+
+  // Map: storyId → { chapters: { chapterNum: url } }
   const imgMap = {};
   (images || []).forEach(img => {
     if (!imgMap[img.story_id]) imgMap[img.story_id] = { chapters: {} };
@@ -53,20 +57,29 @@ async function loadMyMangas() {
     }
   });
 
+  // Map: storyId → expected scene count
+  const chapterCountMap = {};
+  (chapters || []).forEach(ch => {
+    chapterCountMap[ch.story_id] = (chapterCountMap[ch.story_id] || 0) + 1;
+  });
+
   grid.innerHTML = stories.map(story => {
     const grad       = story.cover_gradient || 'linear-gradient(155deg,#1a0505,#7a0f0f,#c0392b)';
     const genreColor = genreProfiles[story.genre]?.badgeColor || '#888';
     const genreLabel = genreProfiles[story.genre]?.label      || story.genre;
     const date       = new Date(story.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const storyImgs   = imgMap[story.id] || { chapters: {} };
-    const sceneUrls   = Object.keys(storyImgs.chapters || {})
+    const storyImgs  = imgMap[story.id] || { chapters: {} };
+    const sceneUrls  = Object.keys(storyImgs.chapters || {})
       .sort((a, b) => Number(a) - Number(b))
       .map(k => storyImgs.chapters[k]);
     const allUrls        = sceneUrls.filter(Boolean);
     const imgUrlsEncoded = encodeURIComponent(allUrls.join('|'));
-    const titleSafe   = (story.title || 'Untitled').replace(/'/g, "\\'");
-    const storyIdSafe = story.id;
-    const isPurchased = !!story.purchased_at;
+    const titleSafe      = (story.title || 'Untitled').replace(/'/g, "\\'");
+    const storyIdSafe    = story.id;
+    const isPurchased    = !!story.purchased_at;
+
+    const expectedScenes = chapterCountMap[story.id] || 0;
+    const allImagesReady = expectedScenes > 0 && allUrls.length >= expectedScenes;
 
     const thumbUrl = sceneUrls[0] || '';
     const visual = thumbUrl
@@ -75,20 +88,38 @@ async function loadMyMangas() {
          <div class="manga-tile-cover" style="background:${grad};display:none">${story.title}</div>`
       : `<div class="manga-tile-cover" style="background:${grad}">${story.title}</div>`;
 
-    const actionBtn = isPurchased
-      ? `<div class="manga-tile-purchased-actions">
-           <button class="manga-tile-view-btn" onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), true)">👁 View</button>
-           <button class="manga-tile-export-btn" onclick="exportMangaPDF('${storyIdSafe}', '${titleSafe}', this)">📄 Export PDF</button>
-         </div>`
-      : `<div class="manga-tile-purchased-actions">
-           <button class="manga-tile-view-btn" onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), false)">👁 View</button>
-           <button class="manga-tile-order-btn" style="flex:1" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">🛒 Order</button>
-         </div>`;
+    const gradSafe     = grad.replace(/'/g, "\\'");
+    const thumbSafe    = (sceneUrls[0] || '').replace(/'/g, "\\'");
+    const physicalCall = `openPhysicalOrder({storyId:'${storyIdSafe}',title:'${titleSafe}',grad:'${gradSafe}',numScenes:${allUrls.length},thumbUrl:'${thumbSafe}'})`;
+
+    let actionBtn;
+    if (!allImagesReady) {
+      actionBtn = `<div class="manga-tile-no-images">🎨 Generate all scene images to unlock</div>`;
+    } else if (isPurchased) {
+      actionBtn = `
+        <div class="manga-tile-purchased-actions">
+          <button class="manga-tile-view-btn" onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), true)">👁 View</button>
+          <button class="manga-tile-export-btn" onclick="exportMangaPDF('${storyIdSafe}', '${titleSafe}', this)">📄 Export PDF</button>
+        </div>`;
+    } else {
+      actionBtn = `
+        <div class="manga-tile-purchased-actions">
+          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), false)">👁 View</button>
+          <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">🛒 Digital</button>
+          <button class="manga-tile-physical-btn" onclick="${physicalCall}">🖨️ Physical</button>
+        </div>`;
+    }
 
     return `
       <div class="manga-tile" id="manga-tile-${storyIdSafe}">
         ${visual}
         <div class="manga-tile-actions">
+          <button class="manga-tile-duplicate-btn" onclick="duplicateManga('${storyIdSafe}', '${titleSafe}', this)" title="Duplicate manga">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
           <button class="manga-tile-edit-btn" onclick="openEditForm('${storyIdSafe}')" title="Edit manga">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -112,6 +143,61 @@ async function loadMyMangas() {
         </div>
       </div>`;
   }).join('');
+}
+
+// ── Duplicate manga ───────────────────────────────────
+
+async function duplicateManga(storyId, title, btn) {
+  if (!_supabase) return;
+
+  const origHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳';
+
+  try {
+    const { data: { user } } = await _supabase.auth.getUser();
+
+    const [{ data: story }, { data: chaps }, { data: imgs }] = await Promise.all([
+      _supabase.from('manga_stories').select('*').eq('id', storyId).single(),
+      _supabase.from('manga_chapters').select('*').eq('story_id', storyId).order('chapter_num'),
+      _supabase.from('manga_images').select('*').eq('story_id', storyId),
+    ]);
+
+    if (!story) throw new Error('Source manga not found');
+
+    // Insert new story
+    const { id: _oldId, created_at: _ca, updated_at: _ua, purchased_at: _pa, ...storyFields } = story;
+    const { data: newStory, error: storyErr } = await _supabase
+      .from('manga_stories')
+      .insert({ ...storyFields, title: story.title + ' [COPY]', user_id: user?.id || story.user_id })
+      .select('id')
+      .single();
+    if (storyErr) throw storyErr;
+
+    const newId = newStory.id;
+
+    // Copy chapters
+    if (chaps?.length) {
+      await _supabase.from('manga_chapters').insert(
+        chaps.map(({ id: _id, ...ch }) => ({ ...ch, story_id: newId }))
+      );
+    }
+
+    // Copy image records (same URLs — no re-upload needed)
+    if (imgs?.length) {
+      await _supabase.from('manga_images').insert(
+        imgs.map(({ id: _id, ...img }) => ({ ...img, story_id: newId }))
+      );
+    }
+
+    await loadMyMangas();
+
+  } catch (err) {
+    console.error('[Duplicate] error:', err);
+    alert('Could not duplicate: ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+  }
 }
 
 function confirmDeleteManga(storyId, title) {
@@ -146,11 +232,8 @@ async function _doDeleteManga(storyId, title) {
     console.error('[Delete] unexpected error:', err);
   }
 
-  if (ok) {
-    loadMyMangas();
-  } else {
-    if (tile) { tile.style.opacity = ''; tile.style.pointerEvents = ''; }
-  }
+  if (ok) loadMyMangas();
+  else if (tile) { tile.style.opacity = ''; tile.style.pointerEvents = ''; }
 }
 
 let _viewerIdx = 0;
@@ -161,19 +244,13 @@ function openMangaViewer(title, imgUrlsStr, purchased) {
   _viewerIdx  = 0;
   document.getElementById('viewer-title').textContent = title;
 
-  const n      = _viewerImgs.length;
-  const labels = _viewerImgs.map((_, i) => {
-    if (i === 0)     return 'Pitch';
-    if (i === n - 1) return 'Ending';
-    return `Chapter ${i}`;
-  });
-  const draft     = purchased ? '' : '<div class="draft-watermark">DRAFT</div>';
-  const track     = document.getElementById('viewer-track');
-  const dots      = document.getElementById('viewer-dots');
+  const draft = purchased ? '' : '<div class="draft-watermark">DRAFT</div>';
+  const track = document.getElementById('viewer-track');
+  const dots  = document.getElementById('viewer-dots');
 
   track.innerHTML = _viewerImgs.map((src, i) => `
     <div class="viewer-slide${i === 0 ? ' active' : ''}">
-      <img src="${src}" alt="${labels[i] || 'Page ' + (i+1)}" />
+      <img src="${src}" alt="Scene ${i + 1}" />
       ${draft}
     </div>`).join('');
 
