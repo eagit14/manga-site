@@ -54,7 +54,7 @@ function _updateCreditDisplay() {
 
   if (_credits === null) { badge.style.display = 'none'; return; }
 
-  badge.style.display = '';
+  badge.style.display = 'flex';
   count.textContent   = _credits;
   badge.className = _credits === 0 ? 'credits-badge credits-empty'
                   : _credits <= 5  ? 'credits-badge credits-low'

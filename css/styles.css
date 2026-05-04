@@ -2622,19 +2622,19 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   align-items: baseline;
   gap: .25rem;
   margin-left: auto;
-  color: rgba(255,255,255,.5);
+  color: rgba(0,0,0,.4);
   font-size: .78rem;
 }
 .credits-badge #credits-count {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: rgba(255,255,255,.85);
+  color: rgba(0,0,0,.7);
   line-height: 1;
 }
-.credits-badge.credits-low            { color: rgba(240,165,0,.7); }
-.credits-badge.credits-low #credits-count  { color: #f0a500; }
-.credits-badge.credits-empty          { color: rgba(231,76,60,.7); }
-.credits-badge.credits-empty #credits-count { color: #e74c3c; }
+.credits-badge.credits-low                  { color: rgba(180,90,0,.7); }
+.credits-badge.credits-low #credits-count   { color: #c97a00; }
+.credits-badge.credits-empty               { color: rgba(180,30,20,.7); }
+.credits-badge.credits-empty #credits-count { color: #c0392b; }
 
 .credit-msg {
   font-size: .78rem;
