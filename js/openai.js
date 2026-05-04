@@ -134,19 +134,21 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   ].filter(Boolean).join(' ');
 
   const visualStyle = isColor
-    ? `Full-color manga/anime art style. Vibrant colors, cel shading, clean anime linework, richly colored backgrounds, dynamic lighting. Consistent color palette across all panels.`
-    : `Authentic black-and-white manga ink art. Bold ink outlines, screen tones for shading, hatching, pure B&W — absolutely no color.`;
+    ? `Full-color professional anime/manga art. Vibrant saturated colors, smooth cel-shading with highlights and shadows, crisp clean linework, richly detailed and fully rendered backgrounds with dramatic lighting. Character designs consistent and polished like a published manga volume.`
+    : `Professional black-and-white manga art. Precise clean ink linework with varied line weights, detailed screentone shading and cross-hatching for depth and texture, bold dynamic compositions. Fully rendered backgrounds in every panel. Published manga volume quality.`;
 
   const textStyle = hasBubbles
-    ? `Include manga-style text directly in the panels: white speech bubbles with black text and thick outlines for dialogue, rectangular caption boxes for narration. All text in English, clearly legible, maximum 8 words per bubble or caption.`
+    ? `Include story-relevant dialogue and narration as manga text: rounded white speech bubbles with black text for dialogue, rectangular white caption boxes for narration. Text in English, max 8 words per bubble, clearly legible. Integrate text naturally into panel compositions.`
     : `No text, no speech bubbles, no captions, no lettering anywhere. Pure visual storytelling only.`;
 
-  const base = `Manga chapter page with 4–6 panels in a grid layout, white gutters between panels. Art style: ${styleLabel}. Genre: ${genreLabel}. Title: "${title}". Hero: ${hero}${heroDesc ? ' — ' + heroDesc : ''}. Setting: ${setting}. ${storyCtx}${faceRef} ${visualStyle} Hero must have a consistent, recognizable face and costume in every panel. Expressive characters, dynamic poses, speed lines, varied panel sizes for pacing. This must look like a real printed manga chapter page. ${textStyle}`;
+  const characterRule = `MANDATORY: ${hero} must have the exact same face, hairstyle, body proportions, and costume in every single panel — perfect character consistency throughout.${faceRef}`;
+
+  const base = `A professional manga/anime story page. 2-column grid layout with 8 panels, each panel numbered 1–8 in a small circle at its top-left corner, thin white gutters between panels. No title banner — use all space for story panels. ${visualStyle} Genre: ${genreLabel}. Art style: ${styleLabel}. Hero: ${hero}${heroDesc ? ' — ' + heroDesc : ''}. Setting: ${setting}. ${storyCtx} ${characterRule} Every panel must have a fully detailed background — no empty or plain backgrounds. Highly expressive anime faces conveying strong emotion. Dynamic action poses with speed lines. ${textStyle}`;
 
   const dialogueHint = (lines) => {
     if (!hasBubbles || !lines || !lines.length) return '';
     const clean = lines.filter(Boolean);
-    return clean.length ? `\nPanel text to include: ${clean.map(l => `"${l}"`).join(' | ')}` : '';
+    return clean.length ? `\nDialogue/caption text to include across panels: ${clean.map(l => `"${l}"`).join(' | ')}` : '';
   };
 
   const results = [];
@@ -155,8 +157,7 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   results.push({
     type: 'pitch', chapterNum: null, storageKey: 'pitch',
     prompt: `${base}
-Scene: OPENING / INCITING INCIDENT — ${premise || 'the hero\'s world is disrupted by an unexpected event'}.
-Panel sequence: (1) wide establishing shot of ${setting}; (2) ${hero} in their everyday life; (3) the inciting event erupts dramatically; (4) close-up of ${hero}'s face — shock or fierce determination.${dialogueHint(aiContent?.panel_lines?.pitch)}`,
+Scene flow across 8 panels — OPENING / INCITING INCIDENT: panels 1–2 establish ${setting} with ${hero} in daily life; panels 3–4 show ${premise || 'an unexpected event disrupts everything'}; panels 5–6 show ${hero}'s shocked reaction and first response; panels 7–8 close on ${hero} with fierce determination, ready to act.${dialogueHint(aiContent?.panel_lines?.pitch)}`,
   });
 
   // One image per chapter
@@ -169,8 +170,7 @@ Panel sequence: (1) wide establishing shot of ${setting}; (2) ${hero} in their e
     results.push({
       type: 'chapter', chapterNum: num, storageKey: `chapter-${num}`,
       prompt: `${base}
-Scene: CHAPTER ${num} KEY ACTION — ${chDesc}.
-Panel sequence: (1) wide action shot of ${hero} in motion; (2) dramatic confrontation or major obstacle; (3) ${hero}'s reaction and decision moment; (4) cliffhanger panel that drives the story forward.${dialogueHint(aiContent?.panel_lines?.chapters?.[i])}`,
+Scene flow across 8 panels — CHAPTER ${num} ${chDesc}: panels 1–2 show ${hero} entering the challenge with confidence; panels 3–4 depict the key conflict or obstacle at its peak intensity; panels 5–6 show ${hero}'s struggle, setback, and inner resolve; panels 7–8 deliver the turning point — ${hero} overcomes or adapts, ending on a dramatic cliffhanger.${dialogueHint(aiContent?.panel_lines?.chapters?.[i])}`,
     });
   });
 
@@ -184,8 +184,7 @@ Panel sequence: (1) wide action shot of ${hero} in motion; (2) dramatic confront
   results.push({
     type: 'ending', chapterNum: null, storageKey: 'ending',
     prompt: `${base}
-Scene: FINAL RESOLUTION — ${endingCtx}.
-Panel sequence: (1) climax — ${hero} at peak confrontation; (2) emotional close-up reaction; (3) quiet aftermath in ${setting}; (4) large symbolic final panel — new status quo or haunting unresolved question.${dialogueHint(aiContent?.panel_lines?.ending)}`,
+Scene flow across 8 panels — FINAL RESOLUTION — ${endingCtx}: panels 1–2 show the ultimate climax — ${hero} at maximum intensity; panels 3–4 deliver the decisive moment and its immediate aftermath; panels 5–6 show the emotional payoff — celebration, relief, or grief; panels 7–8 form a large symbolic closing — ${hero} in a new status quo, a final powerful image that lingers.${dialogueHint(aiContent?.panel_lines?.ending)}`,
   });
 
   return results;
