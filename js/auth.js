@@ -13,6 +13,8 @@ function updateAuthUI(session) {
     if (mainContent) mainContent.style.display = 'block';
     if (btnSignin)   btnSignin.style.display   = 'none';
     if (userInfo)    userInfo.style.display     = 'flex';
+    const supportLink = document.getElementById('nav-support-link');
+    if (supportLink) supportLink.style.display = '';
     const meta = session.user.user_metadata || {};
     const avatar = document.getElementById('nav-avatar');
     const nameEl = document.getElementById('nav-username');
@@ -81,9 +83,11 @@ async function checkAdminStatus(userId) {
     .single();
   window._isAdmin = data?.is_admin === true;
   const adminLink    = document.getElementById('nav-admin-link');
+  const ticketsLink  = document.getElementById('nav-tickets-link');
   const adminSection = document.getElementById('all-mangas');
   const surpriseBar  = document.getElementById('surprise-bar');
   if (adminLink)    adminLink.style.display    = window._isAdmin ? '' : 'none';
+  if (ticketsLink)  ticketsLink.style.display  = window._isAdmin ? '' : 'none';
   if (adminSection) adminSection.style.display = window._isAdmin ? '' : 'none';
   if (surpriseBar)  surpriseBar.style.display  = window._isAdmin ? '' : 'none';
   if (window._isAdmin && typeof loadAllMangas === 'function') loadAllMangas();
@@ -125,9 +129,13 @@ function initAuth() {
     if (event === 'SIGNED_OUT') {
       window._isAdmin = false;
       const adminLink    = document.getElementById('nav-admin-link');
+      const ticketsLink  = document.getElementById('nav-tickets-link');
+      const supportLink  = document.getElementById('nav-support-link');
       const adminSection = document.getElementById('all-mangas');
       const surpriseBar  = document.getElementById('surprise-bar');
       if (adminLink)    adminLink.style.display    = 'none';
+      if (ticketsLink)  ticketsLink.style.display  = 'none';
+      if (supportLink)  supportLink.style.display  = 'none';
       if (adminSection) adminSection.style.display = 'none';
       if (surpriseBar)  surpriseBar.style.display  = 'none';
       closeConnection();
