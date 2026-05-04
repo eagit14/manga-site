@@ -28,34 +28,25 @@ function buildAndShowResult(data, aiContent) {
 
   const synopsisSafe = synopsis.replace(/'/g, "\\'").replace(/`/g, "'");
 
+  const numChapters  = data.chapters?.length || 1;
+  const totalSlides  = numChapters + 2; // pitch + chapters + ending
+  const slideLabels  = ['Pitch', ...(data.chapters?.length ? data.chapters.map((_, i) => `Chapter ${i + 1}`) : ['Chapter 1']), 'Ending'];
+
   const imagePanel = isAI ? `
     <div class="img-panel">
-      <p class="img-panel-label">🎨 DALL-E Illustrations — B&amp;W Manga Style</p>
+      <p class="img-panel-label">🎨 DALL-E Illustrations — B&amp;W Manga Style (${totalSlides} pages)</p>
       <div class="img-carousel" id="result-carousel">
-        <div class="img-carousel-slide active" id="carousel-slide-0">
-          <div class="img-skeleton" id="carousel-skeleton-0">
-            <span>⏳</span><span>Generating…</span>
+        ${Array.from({ length: totalSlides }, (_, i) => `
+        <div class="img-carousel-slide${i === 0 ? ' active' : ''}" id="carousel-slide-${i}">
+          <div class="img-skeleton" id="carousel-skeleton-${i}">
+            <span>⏳</span><span>Generating ${slideLabels[i]}…</span>
           </div>
-          <img class="carousel-img" id="carousel-img-0" alt="Pitch" style="display:none" />
-        </div>
-        <div class="img-carousel-slide" id="carousel-slide-1">
-          <div class="img-skeleton" id="carousel-skeleton-1">
-            <span>⏳</span><span>Generating…</span>
-          </div>
-          <img class="carousel-img" id="carousel-img-1" alt="Chapter 1" style="display:none" />
-        </div>
-        <div class="img-carousel-slide" id="carousel-slide-2">
-          <div class="img-skeleton" id="carousel-skeleton-2">
-            <span>⏳</span><span>Generating…</span>
-          </div>
-          <img class="carousel-img" id="carousel-img-2" alt="Ending" style="display:none" />
-        </div>
+          <img class="carousel-img" id="carousel-img-${i}" alt="${slideLabels[i]}" style="display:none" />
+        </div>`).join('')}
         <button class="img-arrow img-arrow-left"  onclick="imgNav(-1)">&#8249;</button>
         <button class="img-arrow img-arrow-right" onclick="imgNav(1)">&#8250;</button>
         <div class="img-carousel-dots">
-          <button class="img-dot active" onclick="imgGoTo(0)"></button>
-          <button class="img-dot"        onclick="imgGoTo(1)"></button>
-          <button class="img-dot"        onclick="imgGoTo(2)"></button>
+          ${Array.from({ length: totalSlides }, (_, i) => `<button class="img-dot${i === 0 ? ' active' : ''}" onclick="imgGoTo(${i})"></button>`).join('')}
         </div>
         <div class="img-caption-badge" id="img-caption">Pitch</div>
       </div>
@@ -102,7 +93,6 @@ function buildAndShowResult(data, aiContent) {
   const resultEl = document.getElementById('creator-result');
   resultEl.innerHTML = html;
   resultEl.style.display = 'block';
-  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   window._lastMangaData = data;
 
   // Persist to manga_story table (skip on regenerate replays)
@@ -201,15 +191,67 @@ async function handleGenerate() {
     storyId = await saveStoryToSupabase(data, aiContent, grad);
   }
   window._lastStoryId = storyId || null;
-  loadMyMangas();
+
+  // Save hero face image (always re-upload so it survives updates that wipe manga_images)
+  if (_heroImageBase64 && storyId) {
+    const heroUrl = await _uploadBase64ToStorage(_heroImageBase64, storyId, 'hero-face');
+    if (heroUrl) await saveImageToSupabase(storyId, 'hero', null, heroUrl, null);
+  }
+
+  // Wait for My Mangas DOM update to settle before scrolling to avoid
+  // browser scroll-anchoring hijacking the scroll to the My Mangas section.
+  await loadMyMangas();
+  document.getElementById('creator-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // Kick off DALL-E image generation asynchronously (non-blocking)
   if (apiKey && aiContent) {
     const _styleLabel = styleLabels[data.style] || data.style;
     const _genreLabel = genreProfiles[data.genre]?.label || data.genre;
     const prompts = buildImagePrompts(data, aiContent, _styleLabel, _genreLabel);
-    generateImages(apiKey, prompts.pitch, prompts.chapter1, prompts.ending, storyId);
+    generateImages(apiKey, prompts, storyId);
   }
+}
+
+async function saveMangaDraft() {
+  const saveBtn = document.getElementById('save-draft-btn');
+  const origText = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ Saving…';
+
+  const data = {
+    titre:    document.getElementById('f-titre').value.trim()     || 'Untitled',
+    genre:    document.getElementById('f-genre').value,
+    style:    document.getElementById('f-style').value,
+    heros:    document.getElementById('f-heros').value.trim(),
+    heroDesc: document.getElementById('f-hero-desc').value.trim(),
+    univers:  document.getElementById('f-univers').value.trim(),
+    premise:  document.getElementById('f-premise').value.trim(),
+    fin:      document.getElementById('f-fin').value.trim(),
+    chapters: getChaptersData(),
+  };
+  const grad = coverGrads[data.genre] || coverGrads.shonen;
+
+  let storyId;
+  if (window._editingStoryId) {
+    storyId = await updateStoryInSupabase(window._editingStoryId, data, null, grad, true);
+  } else {
+    storyId = await saveStoryToSupabase(data, null, grad);
+    if (storyId) {
+      window._editingStoryId = storyId;
+      document.getElementById('gen-btn').textContent = '🔄 Update my Manga!';
+      document.getElementById('edit-mode-title').textContent = data.titre;
+      document.getElementById('edit-mode-banner').style.display = 'flex';
+    }
+  }
+
+  saveBtn.disabled = false;
+  if (storyId) {
+    saveBtn.textContent = '✅ Saved!';
+    loadMyMangas();
+  } else {
+    saveBtn.textContent = '❌ Error';
+  }
+  setTimeout(() => { saveBtn.textContent = origText; }, 2500);
 }
 
 function regenerate() {
@@ -282,6 +324,38 @@ async function openEditForm(storyId) {
       if (t) t.value = ch.title       || '';
       if (d) d.value = ch.description || '';
     });
+
+    // Restore hero face image if saved
+    clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
+    const { data: heroImg } = await _supabase
+      .from('manga_images')
+      .select('image_url')
+      .eq('story_id', storyId)
+      .eq('image_type', 'hero')
+      .maybeSingle();
+    if (heroImg?.image_url) {
+      try {
+        const res  = await fetch(heroImg.image_url);
+        const blob = await res.blob();
+        _heroImageMime = blob.type || 'image/png';
+        await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = e => {
+            const dataUrl = e.target.result;
+            _heroImageBase64 = dataUrl.split(',')[1];
+            document.getElementById('hero-upload-thumb').src   = dataUrl;
+            document.getElementById('hero-upload-name').textContent = 'Saved hero image';
+            document.getElementById('hero-upload-preview').style.display = 'flex';
+            document.getElementById('hero-upload-label').style.display   = 'none';
+            resolve();
+          };
+          reader.onerror = resolve;
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.warn('[Edit] hero image load failed:', e);
+      }
+    }
 
     // Activate edit mode
     window._editingStoryId = storyId;

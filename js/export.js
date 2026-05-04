@@ -75,22 +75,17 @@ async function exportMangaPDF(storyId, title, callerBtn) {
     doc.text('MANGA 世界', W / 2, H - 10, { align: 'center' });
 
     // ── Image pages ─────────────────────────────────────
-    const pageLabels = ['Opening Scene', 'Chapter 1', 'Ending'];
-
     for (let i = 0; i < ordered.length; i++) {
       if (btn) btn.textContent = `⏳ Page ${i + 1} / ${ordered.length}…`;
 
       doc.addPage([W, H]);
 
-      // Black background
       doc.setFillColor(0, 0, 0);
       doc.rect(0, 0, W, H, 'F');
 
       try {
         const b64 = await _fetchImageBase64(ordered[i].image_url);
         const fmt = b64.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        // New images are portrait (1024×1792) — fill the full page
-        // Legacy square images (1024×1024) are letterboxed with black bars
         doc.addImage(b64, fmt, 0, 0, W, H, undefined, 'NONE');
       } catch (e) {
         console.warn('[Export] image load failed:', e);
@@ -99,11 +94,17 @@ async function exportMangaPDF(storyId, title, callerBtn) {
         doc.text('Image unavailable', W / 2, H / 2, { align: 'center' });
       }
 
-      // Page label
+      // Page label — computed from image type
+      const img = ordered[i];
+      let pageLabel;
+      if (img.image_type === 'pitch')   pageLabel = 'Opening Scene';
+      else if (img.image_type === 'ending') pageLabel = 'Ending';
+      else pageLabel = `Chapter ${img.chapter_num || i}`;
+
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
       doc.setTextColor(80, 80, 80);
-      doc.text(pageLabels[i] || `Page ${i + 1}`, W / 2, H - 4, { align: 'center' });
+      doc.text(pageLabel, W / 2, H - 4, { align: 'center' });
     }
 
     const safeName = finalTitle.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'manga';

@@ -37,8 +37,12 @@ async function loadAllMangas() {
     : { data: [] };
   const imgMap = {};
   (images || []).forEach(img => {
-    if (!imgMap[img.story_id]) imgMap[img.story_id] = {};
-    imgMap[img.story_id][img.image_type] = img.image_url;
+    if (!imgMap[img.story_id]) imgMap[img.story_id] = { chapters: {} };
+    if (img.image_type === 'chapter') {
+      imgMap[img.story_id].chapters[img.chapter_num ?? 0] = img.image_url;
+    } else {
+      imgMap[img.story_id][img.image_type] = img.image_url;
+    }
   });
 
   grid.innerHTML = stories.map(story => {
@@ -47,11 +51,14 @@ async function loadAllMangas() {
     const genreLabel = genreProfiles[story.genre]?.label      || story.genre || '—';
     const date       = new Date(story.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const email      = emailMap[story.user_id] || '—';
-    const storyImgs  = imgMap[story.id] || {};
-    const pitchUrl   = storyImgs.pitch   || '';
-    const chapterUrl = storyImgs.chapter || '';
-    const endingUrl  = storyImgs.ending  || '';
-    const imgUrlsEncoded = encodeURIComponent([pitchUrl, chapterUrl, endingUrl].join('|'));
+    const storyImgs   = imgMap[story.id] || { chapters: {} };
+    const pitchUrl    = storyImgs.pitch  || '';
+    const endingUrl   = storyImgs.ending || '';
+    const chapterUrls = Object.keys(storyImgs.chapters || {})
+      .sort((a, b) => Number(a) - Number(b))
+      .map(k => storyImgs.chapters[k]);
+    const allUrls        = [pitchUrl, ...chapterUrls, endingUrl].filter(Boolean);
+    const imgUrlsEncoded = encodeURIComponent(allUrls.join('|'));
     const titleSafe  = (story.title || 'Untitled').replace(/'/g, "\\'");
     const isPurchased = !!story.purchased_at;
 
@@ -65,7 +72,7 @@ async function loadAllMangas() {
       ? `<span class="manga-tile-status status-ordered">✅ Ordered</span>`
       : `<span class="manga-tile-status status-generated">⚡ Generated</span>`;
 
-    const viewBtn = pitchUrl
+    const viewBtn = allUrls.length
       ? `<div class="manga-tile-order">
            <button class="manga-tile-view-btn" style="width:100%"
              onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), true)">👁 View</button>

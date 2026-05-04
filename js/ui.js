@@ -55,17 +55,21 @@ function initNavShadow() {
 
 // ── Image carousel ─────────────────────────────────────
 let _carouselIdx = 0;
-const _carouselCaptions = ['Pitch', 'Chapter 1', 'Ending'];
 
 function imgGoTo(idx) {
   const slides  = document.querySelectorAll('.img-carousel-slide');
   const dots    = document.querySelectorAll('.img-dot');
   const caption = document.getElementById('img-caption');
   if (!slides.length) return;
-  _carouselIdx = ((idx % slides.length) + slides.length) % slides.length;
+  const n = slides.length;
+  _carouselIdx = ((idx % n) + n) % n;
   slides.forEach((s, i) => s.classList.toggle('active', i === _carouselIdx));
   dots.forEach((d, i)   => d.classList.toggle('active', i === _carouselIdx));
-  if (caption) caption.textContent = _carouselCaptions[_carouselIdx] || '';
+  if (caption) {
+    if (_carouselIdx === 0) caption.textContent = 'Pitch';
+    else if (_carouselIdx === n - 1) caption.textContent = 'Ending';
+    else caption.textContent = `Chapter ${_carouselIdx}`;
+  }
 }
 
 function imgNav(dir) { imgGoTo(_carouselIdx + dir); }

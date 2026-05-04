@@ -82,8 +82,10 @@ async function checkAdminStatus(userId) {
   window._isAdmin = data?.is_admin === true;
   const adminLink    = document.getElementById('nav-admin-link');
   const adminSection = document.getElementById('all-mangas');
+  const surpriseBar  = document.getElementById('surprise-bar');
   if (adminLink)    adminLink.style.display    = window._isAdmin ? '' : 'none';
   if (adminSection) adminSection.style.display = window._isAdmin ? '' : 'none';
+  if (surpriseBar)  surpriseBar.style.display  = window._isAdmin ? '' : 'none';
   if (window._isAdmin && typeof loadAllMangas === 'function') loadAllMangas();
 }
 
@@ -122,8 +124,10 @@ function initAuth() {
       window._isAdmin = false;
       const adminLink    = document.getElementById('nav-admin-link');
       const adminSection = document.getElementById('all-mangas');
+      const surpriseBar  = document.getElementById('surprise-bar');
       if (adminLink)    adminLink.style.display    = 'none';
       if (adminSection) adminSection.style.display = 'none';
+      if (surpriseBar)  surpriseBar.style.display  = 'none';
       closeConnection();
       loadMyMangas();
     }

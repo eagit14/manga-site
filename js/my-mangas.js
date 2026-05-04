@@ -42,11 +42,15 @@ async function loadMyMangas() {
     .in('story_id', ids)
     .order('chapter_num', { ascending: true }) : { data: [] };
 
-  // Map: storyId → { pitch, chapter, ending }
+  // Map: storyId → { pitch, ending, chapters: { chapterNum: url } }
   const imgMap = {};
   (images || []).forEach(img => {
-    if (!imgMap[img.story_id]) imgMap[img.story_id] = {};
-    imgMap[img.story_id][img.image_type] = img.image_url;
+    if (!imgMap[img.story_id]) imgMap[img.story_id] = { chapters: {} };
+    if (img.image_type === 'chapter') {
+      imgMap[img.story_id].chapters[img.chapter_num ?? 0] = img.image_url;
+    } else {
+      imgMap[img.story_id][img.image_type] = img.image_url;
+    }
   });
 
   grid.innerHTML = stories.map(story => {
@@ -54,11 +58,14 @@ async function loadMyMangas() {
     const genreColor = genreProfiles[story.genre]?.badgeColor || '#888';
     const genreLabel = genreProfiles[story.genre]?.label      || story.genre;
     const date       = new Date(story.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const storyImgs  = imgMap[story.id] || {};
-    const pitchUrl   = storyImgs.pitch   || '';
-    const chapterUrl = storyImgs.chapter || '';
-    const endingUrl  = storyImgs.ending  || '';
-    const imgUrlsEncoded = encodeURIComponent([pitchUrl, chapterUrl, endingUrl].join('|'));
+    const storyImgs   = imgMap[story.id] || { chapters: {} };
+    const pitchUrl    = storyImgs.pitch  || '';
+    const endingUrl   = storyImgs.ending || '';
+    const chapterUrls = Object.keys(storyImgs.chapters || {})
+      .sort((a, b) => Number(a) - Number(b))
+      .map(k => storyImgs.chapters[k]);
+    const allUrls        = [pitchUrl, ...chapterUrls, endingUrl].filter(Boolean);
+    const imgUrlsEncoded = encodeURIComponent(allUrls.join('|'));
     const titleSafe   = (story.title || 'Untitled').replace(/'/g, "\\'");
     const storyIdSafe = story.id;
     const isPurchased = !!story.purchased_at;
@@ -155,7 +162,12 @@ function openMangaViewer(title, imgUrlsStr, purchased) {
   _viewerIdx  = 0;
   document.getElementById('viewer-title').textContent = title;
 
-  const labels    = ['Pitch', 'Chapter 1', 'Ending'];
+  const n      = _viewerImgs.length;
+  const labels = _viewerImgs.map((_, i) => {
+    if (i === 0)     return 'Pitch';
+    if (i === n - 1) return 'Ending';
+    return `Chapter ${i}`;
+  });
   const draft     = purchased ? '' : '<div class="draft-watermark">DRAFT</div>';
   const track     = document.getElementById('viewer-track');
   const dots      = document.getElementById('viewer-dots');

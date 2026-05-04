@@ -63,7 +63,7 @@ async function saveStoryToSupabase(data, aiContent, grad) {
   }
 }
 
-async function updateStoryInSupabase(storyId, data, aiContent, grad) {
+async function updateStoryInSupabase(storyId, data, aiContent, grad, keepImages = false) {
   if (!_supabase || !storyId) return storyId;
   try {
     const { error: storyErr } = await _supabase
@@ -100,12 +100,14 @@ async function updateStoryInSupabase(storyId, data, aiContent, grad) {
       );
     }
 
-    // Remove old images so fresh ones are generated
-    const { data: files } = await _supabase.storage.from('manga-images').list(storyId);
-    if (files && files.length > 0) {
-      await _supabase.storage.from('manga-images').remove(files.map(f => `${storyId}/${f.name}`));
+    // Remove old images so fresh ones are generated (skip on draft-only saves)
+    if (!keepImages) {
+      const { data: files } = await _supabase.storage.from('manga-images').list(storyId);
+      if (files && files.length > 0) {
+        await _supabase.storage.from('manga-images').remove(files.map(f => `${storyId}/${f.name}`));
+      }
+      await _supabase.from('manga_images').delete().eq('story_id', storyId);
     }
-    await _supabase.from('manga_images').delete().eq('story_id', storyId);
 
     console.log('[DB] Story updated ✓', storyId);
     return storyId;

@@ -77,8 +77,9 @@ async function saveProfile() {
   btn.textContent = '💾 Save';
 
   if (error) {
-    console.error('[Profile] save error:', error.message);
-    if (msg) { msg.textContent = '❌ Could not save. Please try again.'; msg.className = 'profile-save-msg error'; }
+    console.error('[Profile] save error:', error.code, error.message, error.details);
+    const detail = error.message || error.code || 'unknown error';
+    if (msg) { msg.textContent = `❌ Could not save: ${detail}`; msg.className = 'profile-save-msg error'; }
   } else {
     if (msg) { msg.textContent = '✅ Profile saved!'; msg.className = 'profile-save-msg success'; }
     setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);

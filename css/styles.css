@@ -782,10 +782,7 @@ footer {
   z-index: 10;
   display: flex;
   gap: .3rem;
-  opacity: 0;
-  transition: opacity .2s;
 }
-.manga-tile:hover .manga-tile-actions { opacity: 1; }
 
 .manga-tile-delete-btn,
 .manga-tile-edit-btn {
@@ -1125,13 +1122,34 @@ footer {
 }
 
 /* GENERATE BUTTON */
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  margin-top: 1.75rem;
+}
+
+.save-draft-btn {
+  width: 100%;
+  padding: .65rem 1.5rem;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.75);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px;
+  font-size: .95rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.save-draft-btn:hover { background: rgba(255,255,255,.13); color: #fff; }
+.save-draft-btn:disabled { opacity: .5; cursor: default; }
+
 .generate-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: .6rem;
   width: 100%;
-  margin-top: 1.75rem;
   padding: 1.1rem 2rem;
   background: linear-gradient(135deg, #e63946 0%, #ffd166 100%);
   color: var(--black);
