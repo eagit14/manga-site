@@ -245,6 +245,9 @@ async function saveMangaDraft() {
   }
 
   if (storyId && _heroImageBase64) {
+    // Remove any previous hero image rows before inserting to avoid duplicates
+    if (_supabase) await _supabase.from('manga_images').delete()
+      .eq('story_id', storyId).eq('image_type', 'hero');
     const heroUrl = await _uploadBase64ToStorage(_heroImageBase64, storyId, 'hero-face');
     if (heroUrl) await saveImageToSupabase(storyId, 'hero', null, heroUrl, null);
   }
@@ -332,12 +335,14 @@ async function openEditForm(storyId) {
 
     // Restore hero face image if saved
     clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
-    const { data: heroImg } = await _supabase
+    const { data: heroRows } = await _supabase
       .from('manga_images')
       .select('image_url')
       .eq('story_id', storyId)
       .eq('image_type', 'hero')
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1);
+    const heroImg = heroRows?.[0] ?? null;
     if (heroImg?.image_url) {
       try {
         const res  = await fetch(heroImg.image_url);
