@@ -81,7 +81,7 @@ Reply ONLY with a valid JSON object containing these fields:
     const err = await res.json().catch(() => ({}));
     const msg = err.error?.message || `Error ${res.status}`;
     if (res.status === 401) throw new Error('Invalid API key. Check your key at platform.openai.com.');
-    if (res.status === 429) throw new Error('Quota exceeded or too many requests. Try again in a few seconds.');
+    if (res.status === 429) throw new Error('Rate limit reached. Wait a few seconds and try again — or reduce the number of chapters to generate fewer images at once.');
     if (res.status === 400) throw new Error('Bad request: ' + msg);
     throw new Error(msg);
   }
@@ -206,23 +206,48 @@ async function _uploadBase64ToStorage(b64, storyId, imageType) {
 }
 
 async function generateImages(apiKey, prompts, storyId) {
-  const generate = async (promptObj, idx) => {
+  const _sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  const _fetchImage = async (prompt, attempt = 1) => {
+    const res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality: 'high' }),
+    });
+    if (res.status === 429 && attempt < 3) {
+      // Rate limited — wait and retry (12s, then 24s)
+      const wait = attempt * 12000;
+      console.warn(`[IMG] 429 rate limit — retrying in ${wait / 1000}s (attempt ${attempt})`);
+      const skeleton = document.getElementById(`carousel-skeleton-current`);
+      if (skeleton) skeleton.querySelector('span:last-child').textContent = `Rate limited — retrying in ${wait / 1000}s…`;
+      await _sleep(wait);
+      return _fetchImage(prompt, attempt + 1);
+    }
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error?.message || `HTTP ${res.status}`);
+    }
+    return res.json();
+  };
+
+  // Generate sequentially to stay within gpt-image-1 rate limits
+  for (let idx = 0; idx < prompts.length; idx++) {
+    const promptObj = prompts[idx];
+    const skeleton  = document.getElementById(`carousel-skeleton-${idx}`);
+    const img       = document.getElementById(`carousel-img-${idx}`);
+
+    // Mark this one as in-progress, queue the rest
+    if (skeleton) skeleton.innerHTML = '<span>⏳</span><span>Generating…</span>';
+    for (let j = idx + 1; j < prompts.length; j++) {
+      const s = document.getElementById(`carousel-skeleton-${j}`);
+      if (s) s.innerHTML = '<span>🕐</span><span>In queue…</span>';
+    }
+
     try {
-      const res = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: 'gpt-image-1', prompt: promptObj.prompt, n: 1, size: '1024x1536', quality: 'high' }),
-      });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || `HTTP ${res.status}`);
-      }
-      const json    = await res.json();
+      const json    = await _fetchImage(promptObj.prompt);
       const b64     = json.data[0].b64_json;
       const dataUrl = `data:image/png;base64,${b64}`;
 
-      const img      = document.getElementById(`carousel-img-${idx}`);
-      const skeleton = document.getElementById(`carousel-skeleton-${idx}`);
       if (img) {
         img.src = dataUrl;
         img.style.display = 'block';
@@ -238,13 +263,13 @@ async function generateImages(apiKey, prompts, storyId) {
           skeleton.innerHTML = '<span>⚠️</span><span>Storage not configured — image won\'t persist</span>';
           skeleton.style.display = 'flex';
         }
-        console.error('[IMG] Storage upload failed for idx=' + idx);
       }
     } catch (err) {
       console.error('[IMG] generate error idx=' + idx, err);
-      const skeleton = document.getElementById(`carousel-skeleton-${idx}`);
       if (skeleton) skeleton.innerHTML = `<span>❌</span><span>${err.message || 'Image unavailable'}</span>`;
     }
-  };
-  await Promise.allSettled(prompts.map((p, i) => generate(p, i)));
+
+    // Small pause between requests to respect rate limits
+    if (idx < prompts.length - 1) await _sleep(1500);
+  }
 }
