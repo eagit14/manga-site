@@ -78,7 +78,8 @@ Reply ONLY with a valid JSON object containing these fields:
   });
 
   if (res.status === 429 && _attempt < 4) {
-    const wait = _attempt * 8000; // 8s, 16s, 24s
+    const waits = [30000, 65000, 90000]; // 30s, 65s, 90s — ensure we cross the 60s rate-limit window
+    const wait = waits[_attempt - 1] || 65000;
     const msgEl = document.getElementById('loading-msg');
     if (msgEl) msgEl.textContent = `⏳ Rate limit — retrying in ${wait / 1000}s… (attempt ${_attempt}/3)`;
     await new Promise(r => setTimeout(r, wait));
