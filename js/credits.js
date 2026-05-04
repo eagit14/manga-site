@@ -80,6 +80,7 @@ function _showCreditMsg(text) {
 // ── Credits refill after payment ──────────────────────
 
 async function _processPendingCreditsRefill() {
+  console.log('[Credits] _processPendingCreditsRefill, flag=', window._pendingCreditsRefill);
   if (!window._pendingCreditsRefill) return;
   window._pendingCreditsRefill = false;
   await refillUserCredits();
@@ -87,8 +88,25 @@ async function _processPendingCreditsRefill() {
 
 async function refillUserCredits() {
   if (!_supabase) return;
+  console.log('[Credits] refilling…');
   const { data, error } = await _supabase.rpc('add_credits', { p_amount: 50 });
-  if (error) { console.error('[Credits] refill error:', error.message); return; }
+  if (error) {
+    console.error('[Credits] refill RPC error:', error.message, error.code);
+    // Fallback: direct upsert (less safe but works without the RPC)
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (user) {
+      const { data: row } = await _supabase
+        .from('user_credits').select('credits').eq('user_id', user.id).maybeSingle();
+      const newVal = (row?.credits ?? 0) + 50;
+      await _supabase.from('user_credits')
+        .upsert({ user_id: user.id, credits: newVal }, { onConflict: 'user_id' });
+      _credits = newVal;
+      _updateCreditDisplay();
+      _showCreditMsg('Credits refilled! You now have ' + newVal + ' credits.');
+    }
+    return;
+  }
+  console.log('[Credits] refill success, new total:', data);
   _credits = data;
   _updateCreditDisplay();
   _showCreditMsg('Credits refilled! You now have ' + data + ' credits.');
