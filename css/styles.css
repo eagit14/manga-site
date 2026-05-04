@@ -1155,22 +1155,21 @@ footer {
 }
 
 .save-draft-btn {
-  width: 100%;
-  padding: .85rem 1.5rem;
+  width: auto;
+  padding: .45rem 1.2rem;
   background: #e65c00;
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 1.05rem;
-  font-weight: 700;
+  border-radius: 7px;
+  font-size: .88rem;
+  font-weight: 600;
   font-family: inherit;
-  letter-spacing: .03em;
   cursor: pointer;
-  box-shadow: 0 4px 18px rgba(230,92,0,.45);
+  box-shadow: 0 2px 10px rgba(230,92,0,.35);
   transition: background .2s, box-shadow .2s, transform .1s;
 }
-.save-draft-btn:hover  { background: #ff6a00; box-shadow: 0 6px 24px rgba(230,92,0,.6); }
-.save-draft-btn:active { transform: scale(.98); }
+.save-draft-btn:hover  { background: #ff6a00; box-shadow: 0 3px 14px rgba(230,92,0,.5); }
+.save-draft-btn:active { transform: scale(.97); }
 .save-draft-btn:disabled { opacity: .55; cursor: default; box-shadow: none; }
 
 .generate-btn {
