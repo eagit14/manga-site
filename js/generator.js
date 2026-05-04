@@ -244,6 +244,11 @@ async function saveMangaDraft() {
     }
   }
 
+  if (storyId && _heroImageBase64) {
+    const heroUrl = await _uploadBase64ToStorage(_heroImageBase64, storyId, 'hero-face');
+    if (heroUrl) await saveImageToSupabase(storyId, 'hero', null, heroUrl, null);
+  }
+
   saveBtn.disabled = false;
   if (storyId) {
     saveBtn.textContent = '✅ Saved!';
