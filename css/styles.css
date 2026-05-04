@@ -2616,6 +2616,31 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   flex-wrap: wrap;
 }
 .chapter-count { font-size: .8rem; color: var(--muted); font-weight: 400; }
+
+.credits-badge {
+  font-size: .75rem;
+  font-weight: 600;
+  padding: .18rem .55rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.6);
+  margin-left: auto;
+}
+.credits-badge.credits-low   { color: #f0a500; border-color: rgba(240,165,0,.4); background: rgba(240,165,0,.08); }
+.credits-badge.credits-empty { color: #e74c3c; border-color: rgba(231,76,60,.4); background: rgba(231,76,60,.08); }
+
+.credit-msg {
+  font-size: .78rem;
+  color: rgba(255,255,255,.55);
+  margin-top: .35rem;
+  padding: .25rem .5rem;
+  border-radius: 6px;
+  background: rgba(255,255,255,.05);
+}
+.credit-msg.low   { color: #f0a500; background: rgba(240,165,0,.08); }
+.credit-msg.empty { color: #e74c3c; background: rgba(231,76,60,.08); }
+
 .add-chapter-btn {
   background: var(--yellow);
   color: var(--black);

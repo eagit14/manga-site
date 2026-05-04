@@ -101,6 +101,13 @@ async function generateSceneImage(cid) {
   const apiKey = OPENAI_API_KEY;
   if (!apiKey || apiKey.includes('YOUR_')) { alert('OpenAI API key not configured.'); return; }
 
+  // Credit check
+  const currentCredits = getUserCredits();
+  if (currentCredits !== null && currentCredits <= 0) {
+    _showCreditMsg('No image credits remaining. Contact support to get more.');
+    return;
+  }
+
   // Build story context from current form values
   const data = {
     titre:      document.getElementById('f-titre')?.value.trim()     || '',
@@ -162,6 +169,12 @@ async function generateSceneImage(cid) {
         .eq('chapter_num', sceneNum);
 
       await saveImageToSupabase(storyId, 'chapter', sceneNum, permanentUrl, promptObj.prompt);
+
+      // Spend one credit and show remaining
+      const remaining = await spendCredit();
+      _showCreditMsg(remaining > 0
+        ? `${remaining} image credit${remaining === 1 ? '' : 's'} remaining`
+        : 'No credits remaining');
 
       // Update tile thumbnail for scene 1
       if (sceneNum === 1) {

@@ -115,10 +115,12 @@ function initAuth() {
       trackConnection(session.user.id);
       checkAdminStatus(session.user.id);
       _processPendingPayment();
+      loadUserCredits();
     }
     if (event === 'INITIAL_SESSION' && session?.user) {
       checkAdminStatus(session.user.id);
       _processPendingPayment();
+      loadUserCredits();
     }
     if (event === 'SIGNED_OUT') {
       window._isAdmin = false;
