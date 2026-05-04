@@ -775,11 +775,20 @@ footer {
   transform: translateY(-6px) rotate(-.5deg);
   box-shadow: var(--shadow-hover);
 }
-.manga-tile-delete-btn {
+.manga-tile-actions {
   position: absolute;
   top: .5rem;
   right: .5rem;
   z-index: 10;
+  display: flex;
+  gap: .3rem;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.manga-tile:hover .manga-tile-actions { opacity: 1; }
+
+.manga-tile-delete-btn,
+.manga-tile-edit-btn {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
@@ -790,11 +799,10 @@ footer {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity .2s, background .2s;
+  transition: background .2s;
 }
-.manga-tile:hover .manga-tile-delete-btn { opacity: 1; }
 .manga-tile-delete-btn:hover { background: var(--red); }
+.manga-tile-edit-btn:hover   { background: #118ab2; }
 
 .manga-tile-img {
   width: 100%;
@@ -996,6 +1004,34 @@ footer {
   padding: 2.5rem 2.5rem 2rem;
   box-shadow: 0 32px 80px rgba(0,0,0,.4);
 }
+
+.edit-mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .65rem 1rem;
+  background: linear-gradient(135deg, rgba(17,138,178,.1), rgba(17,138,178,.05));
+  border: 1.5px solid rgba(17,138,178,.35);
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+  font-size: .82rem;
+  color: #118ab2;
+  font-weight: 600;
+}
+.edit-cancel-btn {
+  background: none;
+  border: 1.5px solid rgba(17,138,178,.4);
+  border-radius: 7px;
+  color: #118ab2;
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .3rem .75rem;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.edit-cancel-btn:hover { background: #118ab2; color: #fff; }
 
 .surprise-bar {
   display: flex;

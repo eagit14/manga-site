@@ -193,7 +193,13 @@ async function handleGenerate() {
 
   // Save story + chapters to Supabase, then kick off image generation with the story ID
   const grad = coverGrads[data.genre] || coverGrads.shonen;
-  const storyId = await saveStoryToSupabase(data, aiContent, grad);
+  let storyId;
+  if (window._editingStoryId) {
+    storyId = await updateStoryInSupabase(window._editingStoryId, data, aiContent, grad);
+    cancelEdit();
+  } else {
+    storyId = await saveStoryToSupabase(data, aiContent, grad);
+  }
   window._lastStoryId = storyId || null;
   loadMyMangas();
 
@@ -221,9 +227,83 @@ function regenerate() {
 
 function resetForm() {
   clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
+  cancelEdit();
   document.getElementById('creator-result').style.display = 'none';
   document.getElementById('creator-form-card').style.display = 'block';
   document.getElementById('creator-form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Edit existing manga ────────────────────────────────────
+
+window._editingStoryId = null;
+
+async function openEditForm(storyId) {
+  if (!_supabase || !storyId) return;
+
+  const card = document.getElementById('creator-form-card');
+
+  // Scroll to form and show loading state
+  document.getElementById('creer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.style.opacity = '.45';
+  card.style.pointerEvents = 'none';
+
+  try {
+    const [{ data: story }, { data: chapters }] = await Promise.all([
+      _supabase.from('manga_stories')
+        .select('title, genre, art_style, hero_name, hero_desc, universe, pitch, ending')
+        .eq('id', storyId).single(),
+      _supabase.from('manga_chapters')
+        .select('chapter_num, title, description')
+        .eq('story_id', storyId)
+        .order('chapter_num', { ascending: true }),
+    ]);
+
+    if (!story) return;
+
+    // Fill form fields
+    document.getElementById('f-titre').value     = story.title     || '';
+    document.getElementById('f-genre').value     = story.genre     || 'shonen';
+    document.getElementById('f-style').value     = story.art_style || 'dynamique';
+    document.getElementById('f-heros').value     = story.hero_name || '';
+    document.getElementById('f-hero-desc').value = story.hero_desc || '';
+    document.getElementById('f-univers').value   = story.universe  || '';
+    document.getElementById('f-premise').value   = story.pitch     || '';
+    document.getElementById('f-fin').value       = story.ending    || '';
+
+    // Replace chapters
+    document.querySelectorAll('.chapter-entry').forEach(el => el.remove());
+    updateChapterUI();
+    (chapters || []).forEach(() => addChapter());
+    document.querySelectorAll('.chapter-entry').forEach((entry, i) => {
+      const ch = (chapters || [])[i];
+      if (!ch) return;
+      const t = entry.querySelector('.chapter-title-input');
+      const d = entry.querySelector('.chapter-desc-input');
+      if (t) t.value = ch.title       || '';
+      if (d) d.value = ch.description || '';
+    });
+
+    // Activate edit mode
+    window._editingStoryId = storyId;
+    document.getElementById('gen-btn').textContent = '🔄 Update my Manga!';
+    document.getElementById('edit-mode-title').textContent = story.title || 'Untitled';
+    document.getElementById('edit-mode-banner').style.display = 'flex';
+
+    // Ensure form is visible
+    document.getElementById('creator-result').style.display = 'none';
+    card.style.display = 'block';
+
+  } finally {
+    card.style.opacity = '';
+    card.style.pointerEvents = '';
+  }
+}
+
+function cancelEdit() {
+  window._editingStoryId = null;
+  document.getElementById('gen-btn').textContent = '🎨 Generate my Manga!';
+  const banner = document.getElementById('edit-mode-banner');
+  if (banner) banner.style.display = 'none';
 }
 
 function copySynopsis(text) {

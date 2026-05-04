@@ -176,7 +176,7 @@ async function generateImages(apiKey, promptPitch, promptChapter1, promptEnding,
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         // b64_json returns image data directly — no cross-origin fetch needed
-        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', response_format: 'b64_json' }),
+        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality: 'hd', response_format: 'b64_json' }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json   = await res.json();

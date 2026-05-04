@@ -63,6 +63,58 @@ async function saveStoryToSupabase(data, aiContent, grad) {
   }
 }
 
+async function updateStoryInSupabase(storyId, data, aiContent, grad) {
+  if (!_supabase || !storyId) return storyId;
+  try {
+    const { error: storyErr } = await _supabase
+      .from('manga_stories')
+      .update({
+        title:          data.titre    || 'Untitled',
+        genre:          data.genre,
+        art_style:      data.style,
+        hero_name:      data.heros    || null,
+        hero_desc:      data.heroDesc || null,
+        universe:       data.univers  || null,
+        pitch:          data.premise,
+        ending:         data.fin,
+        synopsis:       aiContent?.synopsis         || null,
+        tagline:        aiContent?.tagline          || null,
+        hero_ai_desc:   aiContent?.hero_description || null,
+        universe_desc:  aiContent?.universe_desc    || null,
+        cover_gradient: grad || null,
+      })
+      .eq('id', storyId);
+
+    if (storyErr) { console.error('[DB] updateStory error:', storyErr.message); return storyId; }
+
+    // Replace chapters
+    await _supabase.from('manga_chapters').delete().eq('story_id', storyId);
+    if (data.chapters && data.chapters.length > 0) {
+      await _supabase.from('manga_chapters').insert(
+        data.chapters.map(ch => ({
+          story_id:    storyId,
+          chapter_num: ch.num,
+          title:       ch.title       || null,
+          description: ch.description || null,
+        }))
+      );
+    }
+
+    // Remove old images so fresh ones are generated
+    const { data: files } = await _supabase.storage.from('manga-images').list(storyId);
+    if (files && files.length > 0) {
+      await _supabase.storage.from('manga-images').remove(files.map(f => `${storyId}/${f.name}`));
+    }
+    await _supabase.from('manga_images').delete().eq('story_id', storyId);
+
+    console.log('[DB] Story updated ✓', storyId);
+    return storyId;
+  } catch (err) {
+    console.error('[DB] updateStoryInSupabase unexpected error:', err);
+    return storyId;
+  }
+}
+
 async function markMangaPurchased(storyId) {
   if (!_supabase || !storyId) return;
   const { error } = await _supabase
