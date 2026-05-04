@@ -13,10 +13,14 @@ async function loadUserCredits() {
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (error) { console.warn('[Credits] load error:', error.message); return; }
-
-  // No row yet — defaults to 50 (row is created on first spend via RPC)
-  _credits = data !== null ? data.credits : 50;
+  if (error) {
+    console.warn('[Credits] load error (table may not exist yet):', error.message);
+    // Show 50 as optimistic default so the badge is always visible
+    _credits = 50;
+  } else {
+    // No row yet — defaults to 50 (row is created on first spend via RPC)
+    _credits = data !== null ? data.credits : 50;
+  }
   _updateCreditDisplay();
 }
 
