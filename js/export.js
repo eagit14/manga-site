@@ -13,16 +13,19 @@ async function exportMangaPDF(storyId, title, callerBtn) {
 
   try {
     const [{ data: story }, { data: images, error: imgErr }] = await Promise.all([
-      _supabase.from('manga_stories').select('title, genre, tagline').eq('id', storyId).single(),
+      _supabase.from('manga_stories').select('title, genre, tagline, synopsis, cover_gradient').eq('id', storyId).single(),
       _supabase.from('manga_images').select('image_url, image_type, chapter_num').eq('story_id', storyId),
     ]);
 
     if (imgErr) throw imgErr;
     if (!images || images.length === 0) throw new Error('No images found for this manga.');
 
-    const finalTitle = story?.title  || title;
+    const finalTitle = story?.title    || title;
     const genre      = genreProfiles[story?.genre]?.label || story?.genre || '';
-    const tagline    = story?.tagline || '';
+    const tagline    = story?.tagline  || '';
+    const synopsis   = story?.synopsis || '';
+    const grad       = story?.cover_gradient || 'linear-gradient(155deg,#1a0505,#7a0f0f,#c0392b)';
+    const cols       = _parseGradColors(grad);
 
     const ordered = images
       .filter(i => i.image_type === 'chapter')
@@ -32,44 +35,13 @@ async function exportMangaPDF(storyId, title, callerBtn) {
     const W = 152.4, H = 228.6;
     const doc = new jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: [W, H], compress: true });
 
-    // ── Title page ──────────────────────────────────────
-    doc.setFillColor(10, 10, 10);
-    doc.rect(0, 0, W, H, 'F');
-
-    // Title
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    const titleFontSize = finalTitle.length > 22 ? 20 : finalTitle.length > 14 ? 26 : 32;
-    doc.setFontSize(titleFontSize);
-    const titleLines = doc.splitTextToSize(finalTitle.toUpperCase(), W - 20);
-    doc.text(titleLines, W / 2, H * 0.38, { align: 'center' });
-
-    // Red accent line
-    doc.setFillColor(192, 57, 43);
-    doc.rect(12, H * 0.47, W - 24, 1.2, 'F');
-
-    // Genre
-    if (genre) {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(192, 57, 43);
-      doc.text(genre.toUpperCase(), W / 2, H * 0.47 + 8, { align: 'center' });
+    // ── Front cover ─────────────────────────────────────
+    if (btn) btn.textContent = '⏳ Loading cover image…';
+    let firstImageB64 = null;
+    if (ordered.length > 0) {
+      try { firstImageB64 = await _fetchImageBase64(ordered[0].image_url); } catch (_) {}
     }
-
-    // Tagline
-    if (tagline) {
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(8.5);
-      doc.setTextColor(140, 140, 140);
-      const tagLines = doc.splitTextToSize(`"${tagline}"`, W - 32);
-      doc.text(tagLines, W / 2, H * 0.47 + (genre ? 20 : 9), { align: 'center' });
-    }
-
-    // Branding
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(50, 50, 50);
-    doc.text('MANGA 世界', W / 2, H - 10, { align: 'center' });
+    _drawFrontCover(doc, W, H, cols, { title: finalTitle, genre, tagline, heroName: '', firstImageB64 });
 
     // ── Image pages ─────────────────────────────────────
     for (let i = 0; i < ordered.length; i++) {
@@ -91,15 +63,16 @@ async function exportMangaPDF(storyId, title, callerBtn) {
         doc.text('Image unavailable', W / 2, H / 2, { align: 'center' });
       }
 
-      // Page label
-      const img = ordered[i];
-      const pageLabel = `Scene ${img.chapter_num || i + 1}`;
-
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
       doc.setTextColor(80, 80, 80);
-      doc.text(pageLabel, W / 2, H - 4, { align: 'center' });
+      doc.text(`Scene ${ordered[i].chapter_num || i + 1}`, W / 2, H - 4, { align: 'center' });
     }
+
+    // ── Back cover ───────────────────────────────────────
+    if (btn) btn.textContent = '⏳ Generating QR code…';
+    doc.addPage([W, H]);
+    await _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis });
 
     const safeName = finalTitle.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'manga';
     doc.save(`${safeName}.pdf`);
