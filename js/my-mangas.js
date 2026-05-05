@@ -152,10 +152,21 @@ let _pendingDupId    = null;
 let _pendingDupTitle = null;
 
 function confirmDuplicateManga(storyId, title) {
+  const modal  = document.getElementById('duplicate-modal');
+  const nameEl = document.getElementById('duplicate-confirm-name');
+
+  if (!modal || !nameEl) {
+    // HTML not yet updated — fall back to native dialog
+    if (window.confirm(`Duplicate "${title}"?`)) {
+      duplicateManga(storyId, title, { disabled: false, innerHTML: '' });
+    }
+    return;
+  }
+
   _pendingDupId    = storyId;
   _pendingDupTitle = title;
-  document.getElementById('duplicate-confirm-name').textContent = title;
-  document.getElementById('duplicate-modal').style.display = 'flex';
+  nameEl.textContent = title;
+  modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
