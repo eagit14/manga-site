@@ -151,22 +151,31 @@ async function loadMyMangas() {
 let _pendingDupId    = null;
 let _pendingDupTitle = null;
 
+function _ensureDuplicateModal() {
+  if (document.getElementById('duplicate-modal')) return;
+  const div = document.createElement('div');
+  div.id = 'duplicate-modal';
+  div.className = 'payment-overlay';
+  div.style.display = 'none';
+  div.innerHTML = `
+    <div class="delete-confirm-card">
+      <div class="delete-confirm-icon">📋</div>
+      <h3 class="delete-confirm-title">Duplicate Manga?</h3>
+      <p class="delete-confirm-msg">Create a copy of <strong id="duplicate-confirm-name"></strong>?</p>
+      <div class="delete-confirm-actions">
+        <button class="action-btn" onclick="closeDuplicateModal()">Cancel</button>
+        <button class="action-btn" style="background:#1a1a2e;color:#fff" onclick="_executeDuplicate()">Duplicate</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+}
+
 function confirmDuplicateManga(storyId, title) {
-  const modal  = document.getElementById('duplicate-modal');
-  const nameEl = document.getElementById('duplicate-confirm-name');
-
-  if (!modal || !nameEl) {
-    // HTML not yet updated — fall back to native dialog
-    if (window.confirm(`Duplicate "${title}"?`)) {
-      duplicateManga(storyId, title, { disabled: false, innerHTML: '' });
-    }
-    return;
-  }
-
+  _ensureDuplicateModal();
   _pendingDupId    = storyId;
   _pendingDupTitle = title;
-  nameEl.textContent = title;
-  modal.style.display = 'flex';
+  document.getElementById('duplicate-confirm-name').textContent = title;
+  document.getElementById('duplicate-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
