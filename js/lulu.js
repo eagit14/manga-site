@@ -232,22 +232,29 @@ function handlePhysicalOverlayClick(e) {
   if (e.target === document.getElementById('physical-modal')) closePhysicalModal();
 }
 
-function downloadCover() {
+async function downloadCover() {
   const data      = window._lastMangaData;
   const aiContent = window._lastAIContent;
 
-  // Use freshly-generated data if available, otherwise fall back to what the modal stored
   const title    = data?.titre        || _physicalOpts._title || 'Manga';
   const grad     = window._lastGrad   || _physicalOpts._grad  || 'linear-gradient(135deg,#1a0505,#c0392b)';
   const profile  = genreProfiles[data?.genre] || genreProfiles.shonen;
 
-  generateCoverPDF({
+  // Try to get first scene image for the front cover
+  let firstImageB64 = null;
+  const thumbUrl = _physicalOpts.thumbUrl || null;
+  if (thumbUrl) {
+    try { firstImageB64 = await _fetchImageBase64(thumbUrl); } catch (_) {}
+  }
+
+  await generateCoverPDF({
     title,
     tagline:  aiContent?.tagline  || '',
     genre:    profile.label       || data?.genre || '',
     heroName: data?.heros         || '',
     synopsis: aiContent?.synopsis || '',
     grad,
+    firstImageB64,
     download: true,
   });
 }
@@ -290,8 +297,15 @@ async function previewFullPDF(btn) {
     const W = 152.4, H = 228.6;
     const doc = new jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: [W, H], compress: true });
 
+    // Fetch first scene image for the front cover
+    let firstImageB64 = null;
+    if (sceneImages.length > 0) {
+      btn.textContent = '⏳ Loading cover image…';
+      try { firstImageB64 = await _fetchImageBase64(sceneImages[0].image_url); } catch (_) {}
+    }
+
     // Page 1 — front cover
-    _drawFrontCover(doc, W, H, cols, { title: finalTitle, genre, tagline, heroName });
+    _drawFrontCover(doc, W, H, cols, { title: finalTitle, genre, tagline, heroName, firstImageB64 });
 
     // Interior — one page per scene image
     for (let i = 0; i < sceneImages.length; i++) {
@@ -316,8 +330,9 @@ async function previewFullPDF(btn) {
     }
 
     // Last page — back cover
+    btn.textContent = '⏳ Generating QR code…';
     doc.addPage([W, H]);
-    _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis });
+    await _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis });
 
     // Open in new tab
     const url = doc.output('bloburl');

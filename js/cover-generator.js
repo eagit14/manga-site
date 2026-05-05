@@ -11,128 +11,140 @@ function _parseGradColors(grad) {
   });
 }
 
-// Draw front cover onto the current page of an existing jsPDF doc.
-function _drawFrontCover(doc, W, H, cols, { title, genre, tagline, heroName }) {
-  const dark   = cols[0] || [10, 5, 5];
-  const mid    = cols[1] || [80, 20, 20];
+// Draw front cover — white background, first manga image centered.
+function _drawFrontCover(doc, W, H, cols, { title, genre, tagline, heroName, firstImageB64 }) {
   const accent = cols[2] || [192, 57, 43];
 
-  doc.setFillColor(...dark);
+  // White background
+  doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, W, H, 'F');
 
-  doc.setFillColor(...mid);
-  doc.rect(W * 0.6, 0, W * 0.4, H, 'F');
-
-  doc.setFillColor(...accent);
-  doc.rect(W * 0.6 - 2, 0, 3, H, 'F');
-
+  // Top accent bar
   doc.setFillColor(...accent);
   doc.rect(0, 0, W, 3, 'F');
 
-  // Volume badge
-  doc.setFillColor(...dark);
-  doc.roundedRect(9, 10, 34, 8, 2, 2, 'F');
-  doc.setFillColor(...accent);
-  doc.roundedRect(8, 9, 34, 8, 2, 2, 'F');
+  // Title
+  const tfSize   = title.length > 22 ? 18 : title.length > 14 ? 22 : 26;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(255, 255, 255);
-  doc.text('VOLUME 1', 25, 14.5, { align: 'center' });
+  doc.setFontSize(tfSize);
+  doc.setTextColor(20, 20, 20);
+  const titleLines = doc.splitTextToSize(title.toUpperCase(), W - 20);
+  doc.text(titleLines, W / 2, 16, { align: 'center' });
 
+  // Genre label
+  const genreY = 16 + titleLines.length * tfSize * 0.3528 + 4;
   if (genre) {
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(255, 255, 255);
-    doc.text(genre.toUpperCase(), W - 8, 14.5, { align: 'right' });
+    doc.setFontSize(6.5);
+    doc.setTextColor(...accent);
+    doc.text(genre.toUpperCase(), W / 2, genreY, { align: 'center' });
   }
 
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(255, 255, 255);
-  const tfSize = title.length > 22 ? 22 : title.length > 14 ? 28 : 34;
-  doc.setFontSize(tfSize);
-  const titleLines = doc.splitTextToSize(title.toUpperCase(), W * 0.55 - 12);
-  doc.text(titleLines, 10, H * 0.38, { align: 'left', baseline: 'middle' });
+  // First manga image — centered with margin, not full page
+  const imageTop = genreY + 7;
+  const margin   = 12; // mm
+  const imgW     = W - margin * 2;
+  const imgH     = imgW; // square
+  const maxH     = H - imageTop - 22; // leave room for tagline
+  const drawH    = Math.min(imgH, maxH);
+  const imgX     = margin;
+  const imgY     = imageTop;
 
-  const divY = H * 0.38 + (titleLines.length * tfSize * 0.3528) + 4;
-  doc.setFillColor(...accent);
-  doc.rect(10, divY, W * 0.5 - 10, 1.5, 'F');
+  if (firstImageB64) {
+    try {
+      const fmt = firstImageB64.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(firstImageB64, fmt, imgX, imgY, imgW, drawH, undefined, 'NONE');
+    } catch (_) {
+      // fallback: light gray placeholder
+      doc.setFillColor(230, 230, 230);
+      doc.rect(imgX, imgY, imgW, drawH, 'F');
+    }
+  } else {
+    doc.setFillColor(230, 230, 230);
+    doc.rect(imgX, imgY, imgW, drawH, 'F');
+  }
 
+  // Tagline below image
   if (tagline) {
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8);
-    doc.setTextColor(180, 180, 180);
-    const tlLines = doc.splitTextToSize(`"${tagline}"`, W * 0.55 - 14);
-    doc.text(tlLines, 10, divY + 7, { align: 'left' });
-  }
-
-  if (heroName && heroName !== 'Protagonist') {
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
-    doc.setTextColor(...accent);
-    doc.text(`★ ${heroName}`, 10, H - 22);
+    doc.setTextColor(90, 90, 90);
+    const tlLines = doc.splitTextToSize(`"${tagline}"`, W - 20);
+    doc.text(tlLines, W / 2, imgY + drawH + 8, { align: 'center' });
   }
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text('MANGA', 10, H - 10);
-  doc.setTextColor(...accent);
-  doc.text(' 世界', 10 + doc.getTextWidth('MANGA'), H - 10);
+  // Bottom accent bar
+  doc.setFillColor(...accent);
+  doc.rect(0, H - 3, W, 3, 'F');
 }
 
-// Draw back cover onto the current page of an existing jsPDF doc.
-function _drawBackCover(doc, W, H, cols, { title, synopsis }) {
-  const mid    = cols[1] || [80, 20, 20];
+// Draw back cover — synopsis at top, QR code near bottom. Async (QR generation).
+async function _drawBackCover(doc, W, H, cols, { title, synopsis }) {
   const accent = cols[2] || [192, 57, 43];
 
-  doc.setFillColor(8, 8, 8);
+  // White background
+  doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, W, H, 'F');
 
+  // Top accent bar
   doc.setFillColor(...accent);
   doc.rect(0, 0, W, 3, 'F');
 
+  // Title
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(...accent);
-  doc.text('MANGA ', W / 2, 20, { align: 'right' });
-  doc.setTextColor(255, 255, 255);
-  doc.text('世界', W / 2, 20, { align: 'left' });
+  doc.setFontSize(12);
+  doc.setTextColor(20, 20, 20);
+  doc.text(title.toUpperCase(), W / 2, 18, { align: 'center' });
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(255, 255, 255);
-  doc.text(title.toUpperCase(), W / 2, 32, { align: 'center' });
+  // Divider
+  doc.setFillColor(...accent);
+  doc.rect(16, 23, W - 32, 0.7, 'F');
 
-  doc.setFillColor(...mid);
-  doc.rect(16, 37, W - 32, 0.7, 'F');
-
+  // Synopsis
   if (synopsis) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    doc.setTextColor(160, 160, 160);
+    doc.setTextColor(60, 60, 60);
     const synLines = doc.splitTextToSize(synopsis, W - 28);
-    doc.text(synLines.slice(0, 13), W / 2, 46, { align: 'center', lineHeightFactor: 1.55 });
+    doc.text(synLines.slice(0, 15), W / 2, 31, { align: 'center', lineHeightFactor: 1.55 });
   }
 
-  const bx = W / 2 - 19, by = H - 40;
-  doc.setFillColor(18, 18, 18);
-  doc.roundedRect(bx, by, 38, 24, 1, 1, 'F');
-  doc.setDrawColor(...mid);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(bx, by, 38, 24, 1, 1, 'S');
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(5.5);
-  doc.setTextColor(60, 60, 60);
-  doc.text('ISBN / BARCODE', W / 2, by + 14, { align: 'center' });
+  // QR code near bottom — links to localhost:8080
+  const qrSize = 32; // mm
+  const qrX    = (W - qrSize) / 2;
+  const qrY    = H - 52;
+
+  try {
+    const qrDataUrl = await QRCode.toDataURL('http://localhost:8080', {
+      width:  180,
+      margin: 1,
+      color:  { dark: '#141414', light: '#ffffff' },
+    });
+    doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+  } catch (err) {
+    console.warn('[QR] generation failed:', err);
+    // Fallback placeholder box
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.4);
+    doc.rect(qrX, qrY, qrSize, qrSize, 'S');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5);
+    doc.setTextColor(160, 160, 160);
+    doc.text('QR code', qrX + qrSize / 2, qrY + qrSize / 2, { align: 'center' });
+  }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.5);
-  doc.setTextColor(70, 70, 70);
-  doc.text('manga-world.com', W / 2, H - 6, { align: 'center' });
+  doc.setTextColor(120, 120, 120);
+  doc.text('Scan to read online', W / 2, qrY + qrSize + 5, { align: 'center' });
+
+  // Bottom accent bar
+  doc.setFillColor(...accent);
+  doc.rect(0, H - 3, W, 3, 'F');
 }
 
 // Public: generate a 2-page cover PDF and optionally download it.
-function generateCoverPDF({ title, tagline, genre, heroName, synopsis, grad, download = false }) {
+async function generateCoverPDF({ title, tagline, genre, heroName, synopsis, grad, firstImageB64 = null, download = false }) {
   if (typeof jspdf === 'undefined') {
     alert('PDF library not loaded — please refresh the page.');
     return null;
@@ -142,9 +154,9 @@ function generateCoverPDF({ title, tagline, genre, heroName, synopsis, grad, dow
   const doc  = new jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: [W, H], compress: true });
   const cols = _parseGradColors(grad);
 
-  _drawFrontCover(doc, W, H, cols, { title, genre, tagline, heroName });
+  _drawFrontCover(doc, W, H, cols, { title, genre, tagline, heroName, firstImageB64 });
   doc.addPage([W, H]);
-  _drawBackCover(doc, W, H, cols, { title, synopsis });
+  await _drawBackCover(doc, W, H, cols, { title, synopsis });
 
   if (download) {
     const safe = (title || 'cover').replace(/[^a-z0-9_\- ]/gi, '').trim() || 'cover';
