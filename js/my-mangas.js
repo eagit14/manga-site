@@ -115,13 +115,13 @@ async function loadMyMangas() {
       <div class="manga-tile" id="manga-tile-${storyIdSafe}">
         ${visual}
         <div class="manga-tile-actions">
-          <button class="manga-tile-duplicate-btn" onclick="duplicateManga('${storyIdSafe}', '${titleSafe}', this)" title="Duplicate manga">
+          <button class="manga-tile-duplicate-btn" onclick="confirmDuplicateManga('${storyIdSafe}', '${titleSafe}')" title="Duplicate manga">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
           </button>
-          <button class="manga-tile-edit-btn" onclick="openEditForm('${storyIdSafe}')" title="Edit manga">
+          <button class="manga-tile-edit-btn" ${isPurchased ? 'disabled title="Cannot edit — already ordered"' : `onclick="openEditForm('${storyIdSafe}')" title="Edit manga"`}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -144,6 +144,24 @@ async function loadMyMangas() {
         </div>
       </div>`;
   }).join('');
+}
+
+// ── Duplicate confirmation modal ──────────────────────
+
+function confirmDuplicateManga(storyId, title) {
+  document.getElementById('duplicate-confirm-name').textContent = title;
+  document.getElementById('duplicate-confirm-btn').onclick = () => {
+    closeDuplicateModal();
+    const fakeBtn = { disabled: false, innerHTML: '' };
+    duplicateManga(storyId, title, fakeBtn);
+  };
+  document.getElementById('duplicate-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDuplicateModal() {
+  document.getElementById('duplicate-modal').style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 // ── Duplicate manga ───────────────────────────────────

@@ -802,6 +802,8 @@ footer {
 .manga-tile-delete-btn:hover    { background: var(--red); }
 .manga-tile-edit-btn:hover      { background: #118ab2; }
 .manga-tile-duplicate-btn:hover { background: #0a9e6e; }
+.manga-tile-edit-btn:disabled   { opacity: .3; cursor: not-allowed; }
+.manga-tile-edit-btn:disabled:hover { background: transparent; }
 
 .manga-tile-no-images {
   font-size: .75rem;
