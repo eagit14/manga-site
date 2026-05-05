@@ -32,6 +32,7 @@ async function saveStoryToSupabase(data, aiContent, grad) {
         hero_ai_desc:   aiContent?.hero_description || null,
         universe_desc:  aiContent?.universe_desc    || null,
         cover_gradient: grad || null,
+        updated_at:     new Date().toISOString(),
       })
       .select('id')
       .single();
@@ -82,6 +83,7 @@ async function updateStoryInSupabase(storyId, data, aiContent, grad, keepImages 
         hero_ai_desc:   aiContent?.hero_description || null,
         universe_desc:  aiContent?.universe_desc    || null,
         cover_gradient: grad || null,
+        updated_at:     new Date().toISOString(),
       })
       .eq('id', storyId);
 
