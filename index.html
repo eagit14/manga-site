@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manga World — The Art That Changed Everything!</title>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=25" />
+  <link rel="stylesheet" href="css/styles.css?v=26" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -1150,7 +1150,7 @@
 
 <!-- PHYSICAL ORDER MODAL -->
 <div id="physical-modal" class="payment-overlay" style="display:none" onclick="handlePhysicalOverlayClick(event)">
-  <div class="payment-card physical-card">
+  <div class="payment-card">
     <button class="payment-close" onclick="closePhysicalModal()" aria-label="Close">✕</button>
 
     <div class="payment-header">
@@ -1158,58 +1158,69 @@
       <p class="physical-subtitle">🖨️ Printed &amp; shipped by <strong>Lulu</strong></p>
     </div>
 
-    <div class="payment-body physical-body">
-      <!-- Cover preview -->
-      <div class="physical-preview-wrap">
-        <img id="physical-cover-preview-img" src="" alt="Cover preview" style="display:none" class="physical-preview-img" />
-        <div id="physical-cover-preview-grad" class="physical-preview-grad" style="display:none"></div>
-      </div>
-
-      <!-- Book specs -->
-      <div class="physical-specs">
-        <div class="physical-spec-row"><span>Format</span><span>6″ × 9″ Paperback</span></div>
-        <div class="physical-spec-row"><span>Binding</span><span>Perfect bound, matte</span></div>
-        <div class="physical-spec-row"><span>Interior</span><span>Full color</span></div>
-        <div class="physical-spec-row"><span>Pages</span><span id="physical-spec-pages">—</span></div>
-        <div class="physical-spec-row"><span>Fulfillment</span><span>Lulu print-on-demand</span></div>
-        <div class="physical-spec-row"><span>Delivery</span><span>7–14 business days</span></div>
-      </div>
-
-      <!-- Lulu price box -->
-      <div class="physical-price-box">
-        <div class="physical-price-loading" id="physical-price-loading">
-          <span class="spinner-small"></span> Fetching Lulu price…
+    <div class="payment-body">
+      <!-- LEFT: details -->
+      <div class="physical-left">
+        <!-- Cover preview -->
+        <div class="physical-preview-wrap">
+          <img id="physical-cover-preview-img" src="" alt="Cover preview" style="display:none" class="physical-preview-img" />
+          <div id="physical-cover-preview-grad" class="physical-preview-grad" style="display:none"></div>
         </div>
-        <div class="physical-price-result" id="physical-price-result" style="display:none">
-          <div class="physical-price-row">
-            <span class="physical-price-label">Print cost (Lulu)</span>
-            <span class="physical-price-value" id="physical-price-value">—</span>
+
+        <!-- Book specs -->
+        <div class="physical-specs">
+          <div class="physical-spec-row"><span>Format</span><span>6″ × 9″ Paperback</span></div>
+          <div class="physical-spec-row"><span>Binding</span><span>Perfect bound, matte</span></div>
+          <div class="physical-spec-row"><span>Interior</span><span>Full color</span></div>
+          <div class="physical-spec-row"><span>Pages</span><span id="physical-spec-pages">—</span></div>
+          <div class="physical-spec-row"><span>Fulfillment</span><span>Lulu print-on-demand</span></div>
+          <div class="physical-spec-row"><span>Delivery</span><span>7–14 business days</span></div>
+        </div>
+
+        <!-- Lulu price box -->
+        <div class="physical-price-box">
+          <div class="physical-price-loading" id="physical-price-loading">
+            <span class="spinner-small"></span> Fetching Lulu price…
           </div>
-          <div class="physical-price-shipping" id="physical-price-shipping"></div>
-          <div class="physical-price-note" id="physical-price-note"></div>
+          <div class="physical-price-result" id="physical-price-result" style="display:none">
+            <div class="physical-price-row">
+              <span class="physical-price-label">Print cost (Lulu)</span>
+              <span class="physical-price-value" id="physical-price-value">—</span>
+            </div>
+            <div class="physical-price-shipping" id="physical-price-shipping"></div>
+            <div class="physical-price-note" id="physical-price-note"></div>
+          </div>
+        </div>
+
+        <!-- PDF actions -->
+        <div class="physical-pdf-actions">
+          <button class="action-btn preview-pdf-btn" onclick="previewFullPDF(this)">🔍 Preview Full PDF</button>
+          <button class="action-btn download-cover-btn" onclick="downloadCover()">📄 Download Cover</button>
         </div>
       </div>
 
-      <!-- PDF actions -->
-      <div class="physical-pdf-actions">
-        <button class="action-btn preview-pdf-btn" onclick="previewFullPDF(this)">🔍 Preview Full PDF</button>
-        <button class="action-btn download-cover-btn" onclick="downloadCover()">📄 Download Cover</button>
-      </div>
-
-      <!-- Stripe physical payment -->
-      <div class="physical-stripe-wrap">
+      <!-- RIGHT: Stripe -->
+      <div class="payment-stripe">
         <div id="physical-stripe-container"></div>
+
+        <p class="payment-header-label" style="text-align:center;margin-top:.75rem">⚡ Powered by Stripe</p>
+
+        <div class="payment-security-badges">
+          <span class="security-badge">🔒 SSL / TLS</span>
+          <span class="security-badge">🛡️ 3D Secure</span>
+          <span class="security-badge">⚡ Stripe</span>
+        </div>
+
+        <p class="payment-stripe-footer">
+          Secure payment by <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>.
+          Printing &amp; fulfilment by <a href="https://www.lulu.com" target="_blank" rel="noopener">Lulu</a>.
+        </p>
+
+        <p class="physical-note">
+          After payment your manga is sent to Lulu for printing.
+          A shipping confirmation will arrive at your email within 24 hours.
+        </p>
       </div>
-
-      <p class="physical-note">
-        After payment your manga is sent to Lulu for printing.
-        A shipping confirmation will arrive at your email within 24 hours.
-      </p>
-
-      <p class="payment-stripe-footer">
-        Secure payment by <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>.
-        Printing &amp; fulfilment by <a href="https://www.lulu.com" target="_blank" rel="noopener">Lulu</a>.
-      </p>
     </div>
   </div>
 </div>

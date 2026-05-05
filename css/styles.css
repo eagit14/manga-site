@@ -3709,8 +3709,6 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 }
 
 /* ── Physical order modal ─────────────────────────────── */
-.physical-card { max-width: 500px; }
-
 .physical-subtitle {
   font-size: .8rem;
   color: #888;
@@ -3718,12 +3716,13 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   text-align: center;
 }
 
-.physical-body {
+.physical-left {
+  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding-top: .25rem;
+  gap: .9rem;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
 }
 
 .physical-preview-wrap {
