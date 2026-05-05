@@ -64,6 +64,8 @@ async function loadMyMangas() {
     chapterCountMap[ch.story_id] = (chapterCountMap[ch.story_id] || 0) + 1;
   });
 
+  window._tileImageUrls = window._tileImageUrls || {};
+
   grid.innerHTML = stories.map(story => {
     const grad       = story.cover_gradient || 'linear-gradient(155deg,#1a0505,#7a0f0f,#c0392b)';
     const genreColor = genreProfiles[story.genre]?.badgeColor || '#888';
@@ -78,6 +80,8 @@ async function loadMyMangas() {
     const titleSafe      = (story.title || 'Untitled').replace(/'/g, "\\'");
     const storyIdSafe    = story.id;
     const isPurchased    = !!story.purchased_at;
+
+    window._tileImageUrls[story.id] = allUrls.slice();
 
     const expectedScenes = chapterCountMap[story.id] || 0;
     const allImagesReady = expectedScenes > 0 && allUrls.length >= expectedScenes;
@@ -99,13 +103,13 @@ async function loadMyMangas() {
     } else if (isPurchased) {
       actionBtn = `
         <div class="manga-tile-purchased-actions">
-          <button class="manga-tile-view-btn" onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), true)">👁 View</button>
+          <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', true)">👁 View</button>
           <button class="manga-tile-export-btn" onclick="exportMangaPDF('${storyIdSafe}', '${titleSafe}', this)">📄 Export PDF</button>
         </div>`;
     } else {
       actionBtn = `
         <div class="manga-tile-purchased-actions">
-          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), false)">👁 View</button>
+          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">👁 View</button>
           <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">🛒 Order Digital</button>
           <button class="manga-tile-physical-btn" onclick="${physicalCall}">🖨️ Order Physical</button>
         </div>`;
@@ -285,6 +289,11 @@ async function _doDeleteManga(storyId, title) {
 
   if (ok) loadMyMangas();
   else if (tile) { tile.style.opacity = ''; tile.style.pointerEvents = ''; }
+}
+
+function openMangaViewerFromTile(storyId, title, purchased) {
+  const urls = (window._tileImageUrls || {})[storyId] || [];
+  openMangaViewer(title, urls.join('|'), purchased);
 }
 
 let _viewerIdx = 0;

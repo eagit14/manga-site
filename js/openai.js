@@ -131,7 +131,7 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
 
   const characterRule = `MANDATORY: ${hero} must have the exact same face, hairstyle, body proportions, and costume in every single panel — perfect character consistency throughout.${faceRef}`;
 
-  const base = `A professional manga/anime story page. 2-column grid layout with 8 panels, each panel numbered 1–8 in a small circle at its top-left corner, thin white gutters between panels. No title banner — use all space for story panels. ${visualStyle} Genre: ${genreLabel}. Art style: ${styleLabel}. Hero: ${hero}${heroDesc ? ' — ' + heroDesc : ''}. Setting: ${setting}. ${storyCtx} ${characterRule} Every panel must have a fully detailed background — no empty or plain backgrounds. Highly expressive anime faces conveying strong emotion. Dynamic action poses with speed lines. ${textStyle}`;
+  const base = `A professional manga/anime story page. PORTRAIT orientation — taller than wide, vertical page. Strict 2-column × 4-row grid layout with exactly 8 panels (panels 1–2 top row, 3–4 second row, 5–6 third row, 7–8 bottom row), each panel numbered 1–8 in a small circle at its top-left corner, thin white gutters between panels. No title banner — use all space for story panels. ${visualStyle} Genre: ${genreLabel}. Art style: ${styleLabel}. Hero: ${hero}${heroDesc ? ' — ' + heroDesc : ''}. Setting: ${setting}. ${storyCtx} ${characterRule} Every panel must have a fully detailed background — no empty or plain backgrounds. Highly expressive anime faces conveying strong emotion. Dynamic action poses with speed lines. ${textStyle}`;
 
   const dialogueHint = (lines) => {
     if (!hasBubbles || !lines || !lines.length) return '';

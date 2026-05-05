@@ -924,9 +924,9 @@ footer {
 .manga-tile-physical-btn {
   flex: 1;
   padding: .55rem 1rem;
-  background: #1a1a2e;
-  color: #e0d0ff;
-  border: 1.5px solid #4a2080;
+  background: #1a7a3a;
+  color: #fff;
+  border: 1.5px solid #25a050;
   border-radius: 8px;
   font-size: .75rem;
   font-weight: 800;
@@ -934,7 +934,7 @@ footer {
   cursor: pointer;
   transition: background .2s, border-color .2s, transform .15s;
 }
-.manga-tile-physical-btn:hover { background: #2a1a4e; border-color: #7b2ff7; transform: translateY(-1px); }
+.manga-tile-physical-btn:hover { background: #145e2c; border-color: #1e8a45; transform: translateY(-1px); }
 
 .manga-tile-purchased-actions {
   display: grid;
@@ -2922,6 +2922,20 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   gap: .5rem;
 }
 .chapter-entry-hdr { display: flex; align-items: center; gap: .5rem; }
+
+.chapter-drag-handle {
+  flex-shrink: 0;
+  color: var(--muted);
+  cursor: grab;
+  opacity: .4;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  transition: opacity .15s;
+}
+.chapter-drag-handle:hover { opacity: 1; }
+.chapter-entry.dragging { opacity: .35; background: var(--bg2); }
+
 .chapter-entry-num {
   font-family: 'Bangers', cursive;
   font-size: 1rem;
@@ -2969,6 +2983,24 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 }
 .scene-gen-img-btn:hover    { background: #c44f00; transform: translateY(-1px); }
 .scene-gen-img-btn:disabled { opacity: .55; cursor: wait; transform: none; }
+
+.scene-attach-btn {
+  flex-shrink: 0;
+  background: #2d6a9f;
+  border: none;
+  border-radius: 5px;
+  height: 26px;
+  width: 26px;
+  padding: 0;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, transform .1s;
+}
+.scene-attach-btn:hover    { background: #1e4d75; transform: translateY(-1px); }
+.scene-attach-btn:disabled { opacity: .55; cursor: wait; transform: none; }
 
 /* ── Per-scene thumbnail + hover popup ──────────────── */
 .scene-thumb {
