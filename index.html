@@ -769,11 +769,13 @@
       <form id="manga-form" novalidate onsubmit="return false">
         <div class="form-grid">
 
+          <!-- 1 · Title -->
           <div class="form-group full">
             <label class="form-label" for="f-titre">📝 Your manga title</label>
             <input class="form-input" id="f-titre" type="text" placeholder="e.g. Shadow of the Last Samurai, Neon Butterfly…" maxlength="80" />
           </div>
 
+          <!-- 2 · Genre | Art Style -->
           <div class="form-group">
             <label class="form-label" for="f-genre">🎭 Genre</label>
             <select class="form-select" id="f-genre">
@@ -800,6 +802,7 @@
             </select>
           </div>
 
+          <!-- 3 · Color Mode | Panel Style -->
           <div class="form-group">
             <label class="form-label" for="f-color-style">🌈 Color mode</label>
             <select class="form-select" id="f-color-style">
@@ -816,6 +819,53 @@
             </select>
           </div>
 
+          <!-- 4 · Universe Setting (left col only) -->
+          <div class="form-group">
+            <label class="form-label" for="f-univers">🌍 Universe &amp; setting</label>
+            <input class="form-input" id="f-univers" type="text" placeholder="e.g. Dystopian Tokyo, medieval kingdom, high school…" maxlength="80" />
+          </div>
+          <div class="form-group" aria-hidden="true"></div>
+
+          <!-- 5 · Hero Photo | Hero/Heroine name -->
+          <div class="form-group">
+            <label class="form-label">📸 Hero photo</label>
+            <input type="file" id="f-hero-img" accept="image/*" onchange="handleHeroImage(event)" style="display:none" />
+            <div class="hero-upload-area" id="hero-upload-area" onclick="triggerHeroUpload()">
+              <div class="hero-upload-label" id="hero-upload-label">
+                <span class="upload-icon">🖼️</span>
+                <span>Click to upload</span>
+              </div>
+              <div class="hero-upload-preview" id="hero-upload-preview" style="display:none">
+                <img class="hero-upload-thumb" id="hero-upload-thumb" src="" alt="Hero face" />
+                <div class="hero-upload-info">
+                  <div class="hero-upload-name" id="hero-upload-name">photo.jpg</div>
+                  <button type="button" class="hero-upload-clear" onclick="clearHeroImage(event)">✕ Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-heros">🦸 Hero / heroine name</label>
+            <input class="form-input" id="f-heros" type="text" placeholder="e.g. Ryō, Sakura, Jin, Akemi…" maxlength="50" />
+          </div>
+
+          <!-- 6 · Describe your hero (full) -->
+          <div class="form-group full">
+            <label class="form-label" for="f-hero-desc">✨ Describe your hero / heroine</label>
+            <textarea class="form-textarea" id="f-hero-desc" placeholder="e.g. A brilliant but lonely high school girl who hides a power she doesn't yet understand…"></textarea>
+          </div>
+
+          <!-- 7 · Image Quality | Image Model -->
+          <div class="form-group">
+            <label class="form-label" for="f-img-quality">⚡ Image quality</label>
+            <select class="form-select" id="f-img-quality">
+              <option value="low">Draft — fastest &amp; cheapest (~€0.01/image)</option>
+              <option value="medium" selected>Standard — good quality (~€0.04/image)</option>
+              <option value="high">Premium — best quality (~€0.17/image)</option>
+            </select>
+          </div>
+
           <div class="form-group">
             <label class="form-label">🤖 Image model</label>
             <div class="img-model-radios">
@@ -827,46 +877,6 @@
                 <input type="radio" name="img-model" value="dall-e-3" onchange="onImgModelChange('dall-e-3')">
                 <span>DALL-E 3 <small>faster, text prompt only</small></span>
               </label>
-            </div>
-            <label class="form-label" for="f-img-quality" style="margin-top:.65rem">⚡ Image quality</label>
-            <select class="form-select" id="f-img-quality">
-              <option value="low">Draft — fastest &amp; cheapest (~€0.01/image)</option>
-              <option value="medium" selected>Standard — good quality (~€0.04/image)</option>
-              <option value="high">Premium — best quality (~€0.17/image)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="f-heros">🦸 Hero / heroine name</label>
-            <input class="form-input" id="f-heros" type="text" placeholder="e.g. Ryō, Sakura, Jin, Akemi…" maxlength="50" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="f-univers">🌍 Universe &amp; setting</label>
-            <input class="form-input" id="f-univers" type="text" placeholder="e.g. Dystopian Tokyo, medieval kingdom, high school…" maxlength="80" />
-          </div>
-
-          <div class="form-group full hero-desc-row">
-            <div class="hero-photo-col">
-              <label class="form-label">📸 Hero photo</label>
-              <input type="file" id="f-hero-img" accept="image/*" onchange="handleHeroImage(event)" style="display:none" />
-              <div class="hero-upload-area" id="hero-upload-area" onclick="triggerHeroUpload()">
-                <div class="hero-upload-label" id="hero-upload-label">
-                  <span class="upload-icon">🖼️</span>
-                  <span>Click to upload</span>
-                </div>
-                <div class="hero-upload-preview" id="hero-upload-preview" style="display:none">
-                  <img class="hero-upload-thumb" id="hero-upload-thumb" src="" alt="Hero face" />
-                  <div class="hero-upload-info">
-                    <div class="hero-upload-name" id="hero-upload-name">photo.jpg</div>
-                    <button type="button" class="hero-upload-clear" onclick="clearHeroImage(event)">✕ Remove</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="hero-desc-col">
-              <label class="form-label" for="f-hero-desc">✨ Describe your hero / heroine</label>
-              <textarea class="form-textarea hero-desc-textarea" id="f-hero-desc" placeholder="e.g. A brilliant but lonely high school girl who hides a power she doesn't yet understand…"></textarea>
             </div>
           </div>
 
