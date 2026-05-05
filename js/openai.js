@@ -193,9 +193,6 @@ async function generateImages(apiKey, prompts, storyId, quality = 'medium', mode
       reqBody = { model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json' };
     } else {
       reqBody = { model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality };
-      if (_heroImageBase64) {
-        reqBody.image = `data:${_heroImageMime || 'image/png'};base64,${_heroImageBase64}`;
-      }
     }
     const res = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
