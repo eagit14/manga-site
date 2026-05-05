@@ -3014,11 +3014,13 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   align-items: center;
   justify-content: center;
   font-family: 'Bangers', cursive;
-  font-size: 2rem;
-  letter-spacing: .22em;
-  color: rgba(255,255,255,.22);
-  transform: rotate(-25deg);
+  font-size: clamp(3rem, 10vw, 6rem);
+  letter-spacing: .2em;
+  color: rgba(192, 57, 43, 0.55);
+  -webkit-text-stroke: 2px rgba(192, 57, 43, 0.7);
+  transform: rotate(-30deg);
   pointer-events: none;
+  user-select: none;
 }
 
 /* ── IMAGE CAROUSEL ─────────────────────────────────── */
