@@ -14,9 +14,9 @@ async function loadMyMangas() {
 
   const { data: stories, error } = await _supabase
     .from('manga_stories')
-    .select('id, title, genre, cover_gradient, created_at, tagline, purchased_at')
+    .select('id, title, genre, cover_gradient, created_at, updated_at, tagline, purchased_at')
     .or(`user_id.eq.${user.id},user_id.is.null`)
-    .order('created_at', { ascending: false });
+    .order('updated_at', { ascending: false, nullsFirst: false });
 
   if (error) {
     console.error('[MyMangas] fetch error:', error.message);
