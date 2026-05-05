@@ -105,8 +105,8 @@ async function loadMyMangas() {
       actionBtn = `
         <div class="manga-tile-purchased-actions">
           <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), false)">👁 View</button>
-          <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">🛒 Digital</button>
-          <button class="manga-tile-physical-btn" onclick="${physicalCall}">🖨️ Physical</button>
+          <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">🛒 Order Digital</button>
+          <button class="manga-tile-physical-btn" onclick="${physicalCall}">🖨️ Order Physical</button>
         </div>`;
     }
 
