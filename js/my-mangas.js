@@ -16,12 +16,12 @@ async function loadMyMangas() {
     .from('manga_stories')
     .select('id, title, genre, cover_gradient, created_at, tagline, purchased_at')
     .or(`user_id.eq.${user.id},user_id.is.null`)
-    .order('updated_at', { ascending: false, nullsFirst: false })
+    .order('updated_at', { ascending: false })
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[MyMangas] fetch error:', error.message);
-    grid.innerHTML = '<div class="my-mangas-empty"><p>Could not load your mangas.</p></div>';
+    console.error('[MyMangas] fetch error:', error.code, error.message, error.details, error.hint);
+    grid.innerHTML = `<div class="my-mangas-empty"><p>Could not load your mangas.</p><small style="color:#888">${error.message}</small></div>`;
     return;
   }
 
