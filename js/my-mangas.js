@@ -152,7 +152,9 @@ let _pendingDupId    = null;
 let _pendingDupTitle = null;
 
 function _ensureDuplicateModal() {
-  if (document.getElementById('duplicate-modal')) return;
+  if (document.getElementById('duplicate-confirm-name')) return;
+  const existing = document.getElementById('duplicate-modal');
+  if (existing) existing.remove();
   const div = document.createElement('div');
   div.id = 'duplicate-modal';
   div.className = 'payment-overlay';
