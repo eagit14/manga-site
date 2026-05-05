@@ -247,7 +247,7 @@ async function downloadCover() {
     try { firstImageB64 = await _fetchImageBase64(thumbUrl); } catch (_) {}
   }
 
-  await generateCoverPDF({
+  generateCoverPDF({
     title,
     tagline:  aiContent?.tagline  || '',
     genre:    profile.label       || data?.genre || '',
@@ -330,9 +330,9 @@ async function previewFullPDF(btn) {
     }
 
     // Last page — back cover
-    btn.textContent = '⏳ Generating QR code…';
+    btn.textContent = '⏳ Building back cover…';
     doc.addPage([W, H]);
-    await _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis });
+    _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis });
 
     // Open in new tab
     const url = doc.output('bloburl');

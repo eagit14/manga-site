@@ -78,9 +78,10 @@ function _drawFrontCover(doc, W, H, cols, { title, genre, tagline, heroName, fir
   doc.rect(0, H - 3, W, 3, 'F');
 }
 
-// Draw back cover — synopsis at top, QR code near bottom. Async (QR generation).
-async function _drawBackCover(doc, W, H, cols, { title, synopsis }) {
-  const accent = cols[2] || [192, 57, 43];
+// Draw back cover — synopsis at top, QR code near bottom.
+function _drawBackCover(doc, W, H, cols, { title, synopsis }) {
+  const accent  = cols[2] || [192, 57, 43];
+  const siteUrl = window.location.origin;
 
   // White background
   doc.setFillColor(255, 255, 255);
@@ -109,28 +110,22 @@ async function _drawBackCover(doc, W, H, cols, { title, synopsis }) {
     doc.text(synLines.slice(0, 15), W / 2, 31, { align: 'center', lineHeightFactor: 1.55 });
   }
 
-  // QR code near bottom — links to localhost:8080
+  // QR code near bottom — links to site origin
   const qrSize = 32; // mm
   const qrX    = (W - qrSize) / 2;
   const qrY    = H - 52;
 
   try {
-    const qrDataUrl = await QRCode.toDataURL('http://localhost:8080', {
-      width:  180,
-      margin: 1,
-      color:  { dark: '#141414', light: '#ffffff' },
-    });
+    const qr = qrcode(0, 'M');
+    qr.addData(siteUrl);
+    qr.make();
+    const qrDataUrl = qr.createDataURL(4, 0);
     doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
   } catch (err) {
     console.warn('[QR] generation failed:', err);
-    // Fallback placeholder box
     doc.setDrawColor(180, 180, 180);
     doc.setLineWidth(0.4);
     doc.rect(qrX, qrY, qrSize, qrSize, 'S');
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5);
-    doc.setTextColor(160, 160, 160);
-    doc.text('QR code', qrX + qrSize / 2, qrY + qrSize / 2, { align: 'center' });
   }
 
   doc.setFont('helvetica', 'normal');
@@ -144,7 +139,7 @@ async function _drawBackCover(doc, W, H, cols, { title, synopsis }) {
 }
 
 // Public: generate a 2-page cover PDF and optionally download it.
-async function generateCoverPDF({ title, tagline, genre, heroName, synopsis, grad, firstImageB64 = null, download = false }) {
+function generateCoverPDF({ title, tagline, genre, heroName, synopsis, grad, firstImageB64 = null, download = false }) {
   if (typeof jspdf === 'undefined') {
     alert('PDF library not loaded — please refresh the page.');
     return null;
@@ -156,7 +151,7 @@ async function generateCoverPDF({ title, tagline, genre, heroName, synopsis, gra
 
   _drawFrontCover(doc, W, H, cols, { title, genre, tagline, heroName, firstImageB64 });
   doc.addPage([W, H]);
-  await _drawBackCover(doc, W, H, cols, { title, synopsis });
+  _drawBackCover(doc, W, H, cols, { title, synopsis });
 
   if (download) {
     const safe = (title || 'cover').replace(/[^a-z0-9_\- ]/gi, '').trim() || 'cover';

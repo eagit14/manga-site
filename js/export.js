@@ -70,9 +70,9 @@ async function exportMangaPDF(storyId, title, callerBtn) {
     }
 
     // ── Back cover ───────────────────────────────────────
-    if (btn) btn.textContent = '⏳ Generating QR code…';
+    if (btn) btn.textContent = '⏳ Building back cover…';
     doc.addPage([W, H]);
-    await _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis });
+    _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis });
 
     const safeName = finalTitle.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'manga';
     doc.save(`${safeName}.pdf`);
