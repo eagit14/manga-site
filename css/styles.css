@@ -2599,6 +2599,43 @@ footer {
 }
 .hero-upload-clear:hover { background: #ffe4e4; color: var(--red); border-color: var(--red); }
 
+/* ── Image model radios ──────────────────────────────── */
+.img-model-radios {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: .4rem 0 .15rem;
+}
+
+.img-model-radio {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.img-model-radio input[type="radio"] {
+  accent-color: var(--red);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.img-model-radio span {
+  font-size: .85rem;
+  color: var(--black);
+  line-height: 1.3;
+}
+
+.img-model-radio small {
+  display: block;
+  font-size: .7rem;
+  color: #999;
+  font-weight: 400;
+}
+
 /* ── HIDDEN SECTIONS ───────────────────────────────── */
 #hero, #origin, .onoma-strip, #manga-books, #manga-movies, #mes-mangas { display: none !important; }
 nav .nav-links li:has([href="#origin"]),

@@ -86,6 +86,27 @@ function clearHeroImage(event) {
   document.getElementById('hero-upload-label').style.display  = '';
 }
 
+// ── Image model selector ──────────────────────────────
+
+function getImgModel() {
+  return document.querySelector('input[name="img-model"]:checked')?.value || 'gpt-image-1';
+}
+
+function onImgModelChange(model) {
+  const sel = document.getElementById('f-img-quality');
+  if (!sel) return;
+  if (model === 'dall-e-3') {
+    sel.innerHTML = `
+      <option value="standard" selected>Standard</option>
+      <option value="hd">HD — highest quality</option>`;
+  } else {
+    sel.innerHTML = `
+      <option value="low">Draft — fastest &amp; cheapest (~€0.01/image)</option>
+      <option value="medium" selected>Standard — good quality (~€0.04/image)</option>
+      <option value="high">Premium — best quality (~€0.17/image)</option>`;
+  }
+}
+
 // ── Init all UI observers on load ─────────────────────
 function initUI() {
   document.querySelectorAll('.card-img img[data-wiki]').forEach(loadWikiImage);

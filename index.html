@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manga World — The Art That Changed Everything!</title>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=26" />
+  <link rel="stylesheet" href="css/styles.css?v=27" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -817,7 +817,18 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="f-img-quality">⚡ Image quality</label>
+            <label class="form-label">🤖 Image model</label>
+            <div class="img-model-radios">
+              <label class="img-model-radio">
+                <input type="radio" name="img-model" value="gpt-image-1" checked onchange="onImgModelChange('gpt-image-1')">
+                <span>GPT Image 1 <small>recommended — uses hero photo</small></span>
+              </label>
+              <label class="img-model-radio">
+                <input type="radio" name="img-model" value="dall-e-3" onchange="onImgModelChange('dall-e-3')">
+                <span>DALL-E 3 <small>faster, text prompt only</small></span>
+              </label>
+            </div>
+            <label class="form-label" for="f-img-quality" style="margin-top:.65rem">⚡ Image quality</label>
             <select class="form-select" id="f-img-quality">
               <option value="low">Draft — fastest &amp; cheapest (~€0.01/image)</option>
               <option value="medium" selected>Standard — good quality (~€0.04/image)</option>
@@ -1228,12 +1239,12 @@
 <script src="js/i18n.js?v=2"></script>
 <script src="js/config.js?v=3"></script>
 <script src="js/generator-data.js?v=2"></script>
-<script src="js/ui.js?v=5"></script>
-<script src="js/chapters.js?v=9"></script>
+<script src="js/ui.js?v=6"></script>
+<script src="js/chapters.js?v=10"></script>
 <script src="js/database.js?v=4"></script>
 <script src="js/credits.js?v=7"></script>
 <script src="js/auth.js?v=9"></script>
-<script src="js/openai.js?v=15"></script>
+<script src="js/openai.js?v=16"></script>
 <script src="js/generator.js?v=21"></script>
 <script src="js/storage.js?v=2"></script>
 <script src="js/stripe.js?v=4"></script>

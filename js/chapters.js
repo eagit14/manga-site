@@ -120,6 +120,7 @@ async function generateSceneImage(cid) {
     bubbles:    document.getElementById('f-bubbles')?.value          !== 'no',
     chapters:   getChaptersData(),
   };
+  const imgModel    = getImgModel();
   const quality     = document.getElementById('f-img-quality')?.value || 'medium';
   const profile     = genreProfiles[data.genre]  || genreProfiles.shonen;
   const styleLabels = window.styleLabels || {};
@@ -131,6 +132,17 @@ async function generateSceneImage(cid) {
   const promptObj   = allPrompts.find(p => p.chapterNum === sceneNum) || allPrompts[0];
   if (!promptObj) { alert('Could not build prompt for this scene.'); return; }
 
+  // ── Build request body ─────────────────────────
+  let reqBody;
+  if (imgModel === 'dall-e-3') {
+    reqBody = { model: 'dall-e-3', prompt: promptObj.prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json' };
+  } else {
+    reqBody = { model: 'gpt-image-1', prompt: promptObj.prompt, n: 1, size: '1024x1536', quality };
+    if (_heroImageBase64) {
+      reqBody.image = `data:${_heroImageMime || 'image/png'};base64,${_heroImageBase64}`;
+    }
+  }
+
   // ── Loading state ──────────────────────────────────
   const origLabel = btn.textContent;
   btn.disabled    = true;
@@ -141,7 +153,7 @@ async function generateSceneImage(cid) {
     const res = await fetch('https://api.openai.com/v1/images/generations', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'gpt-image-1', prompt: promptObj.prompt, n: 1, size: '1024x1536', quality }),
+      body: JSON.stringify(reqBody),
     });
 
     if (!res.ok) {
