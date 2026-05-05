@@ -145,6 +145,14 @@ async function generateSceneImage(cid) {
   btn.disabled    = true;
   btn.textContent = '⏳';
 
+  // Clear old thumbnail immediately so stale image doesn't linger
+  const _oldThumb    = document.getElementById(`scene-thumb-${cid}`);
+  const _oldThumbImg = document.getElementById(`scene-thumb-img-${cid}`);
+  const _oldPopupImg = document.getElementById(`scene-popup-img-${cid}`);
+  if (_oldThumb)    _oldThumb.style.display = 'none';
+  if (_oldThumbImg) _oldThumbImg.src = '';
+  if (_oldPopupImg) _oldPopupImg.src = '';
+
   try {
     // ── Call OpenAI image API ──────────────────────
     const res = await fetch('https://api.openai.com/v1/images/generations', {
