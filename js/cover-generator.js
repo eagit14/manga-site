@@ -159,7 +159,7 @@ function _drawBackCover(doc, W, H, cols, { title, synopsis, backSummary }) {
 
 // Calls GPT-4o-mini with all chapter descriptions to produce a 4-5 sentence back cover blurb.
 async function generateBackCoverSummary(chapters, title, genre) {
-  if (typeof OPENAI_API_KEY === 'undefined' || !OPENAI_API_KEY || !chapters?.length) return null;
+  if (!chapters?.length) return null;
 
   const scenesText = chapters
     .map((ch, i) => {
@@ -174,16 +174,13 @@ async function generateBackCoverSummary(chapters, title, genre) {
   if (!scenesText.trim()) return null;
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method:  'POST',
-      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model:       'gpt-4o-mini',
-        max_tokens:  280,
-        temperature: 0.75,
-        messages: [{
-          role:    'user',
-          content: `You are writing the back cover blurb for a manga/comic book titled "${title}" (genre: ${genre || 'manga'}).
+    const res = await _openaiProxy('chat', {
+      model:       'gpt-4o-mini',
+      max_tokens:  280,
+      temperature: 0.75,
+      messages: [{
+        role:    'user',
+        content: `You are writing the back cover blurb for a manga/comic book titled "${title}" (genre: ${genre || 'manga'}).
 
 Here are the story scenes:
 ${scenesText}
@@ -196,8 +193,7 @@ Write exactly 4-5 sentences that:
 • Read like a professional book blurb
 
 Return ONLY the blurb text, no quotes, no titles, no labels.`,
-        }],
-      }),
+      }],
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -208,8 +204,8 @@ Return ONLY the blurb text, no quotes, no titles, no labels.`,
 }
 
 // Generate a manga-style hero portrait for the cover using the hero reference photo.
-async function _generateCoverHeroImage(apiKey, heroDataUrl, story) {
-  if (!apiKey || !heroDataUrl) return null;
+async function _generateCoverHeroImage(heroDataUrl, story) {
+  if (!heroDataUrl) return null;
   const match = heroDataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (!match) return null;
   const [, mime, b64] = match;
@@ -234,11 +230,7 @@ async function _generateCoverHeroImage(apiKey, heroDataUrl, story) {
     form.append('quality', 'medium');
     form.append('n',       '1');
 
-    const res = await fetch('https://api.openai.com/v1/images/edits', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}` },
-      body: form,
-    });
+    const res = await _openaiProxy('image-edit', form, true);
     if (!res.ok) return null;
     const json = await res.json();
     const resultB64 = json.data?.[0]?.b64_json;
@@ -290,15 +282,14 @@ async function _triggerCoverPreGeneration(storyId) {
     const genre    = profile?.label || story.genre || '';
 
     // 1. Generate manga-style hero portrait (cover photo)
-    const apiKey  = typeof OPENAI_API_KEY !== 'undefined' ? OPENAI_API_KEY : null;
     const heroRow = (images || []).find(i => i.image_type === 'hero');
     let coverImageDataUrl = null;
-    console.log('[Cover] apiKey present:', !!apiKey, '| heroRow:', !!heroRow?.image_url);
+    console.log('[Cover] heroRow:', !!heroRow?.image_url);
 
-    if (apiKey && heroRow?.image_url) {
+    if (heroRow?.image_url) {
       try {
         const heroDataUrl  = await _fetchImageBase64(heroRow.image_url);
-        coverImageDataUrl  = await _generateCoverHeroImage(apiKey, heroDataUrl, story);
+        coverImageDataUrl  = await _generateCoverHeroImage(heroDataUrl, story);
         console.log('[Cover] hero portrait generated:', !!coverImageDataUrl);
       } catch (err) { console.error('[Cover] hero portrait generation error:', err); }
     }

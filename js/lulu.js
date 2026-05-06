@@ -42,14 +42,14 @@ let _luluTokenExpiry = 0;
 async function luluGetToken() {
   if (_luluToken && Date.now() < _luluTokenExpiry) return _luluToken;
 
-  if (typeof LULU_CLIENT_ID === 'undefined' || LULU_CLIENT_ID.includes('XXX')) {
-    throw new Error('Lulu credentials not configured — set LULU_CLIENT_ID and LULU_CLIENT_SECRET in js/config.js');
-  }
+  // Lulu credentials are stored as Supabase Edge Function secrets — never in client JS.
+  // Direct browser calls to Lulu are also blocked by CORS; use the lulu-price edge function instead.
+  throw new Error('Direct Lulu auth is not supported from the browser. Use the lulu-price edge function.');
 
   const body = new URLSearchParams({
     grant_type:    'client_credentials',
-    client_id:     LULU_CLIENT_ID,
-    client_secret: LULU_CLIENT_SECRET,
+    client_id:     '',
+    client_secret: '',
   });
 
   const res = await fetch(

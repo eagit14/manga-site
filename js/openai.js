@@ -1,6 +1,26 @@
 // ── OpenAI: callOpenAI, generateImages ───────────────────
+// All OpenAI calls are proxied through the Supabase Edge Function 'openai-proxy'
+// so the API key never reaches the browser.
 
-async function callOpenAI(apiKey, data, _attempt = 1) {
+async function _openaiProxy(endpoint, bodyOrFormData, isFormData = false) {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('Not authenticated — please log in.');
+
+  const url     = `${SUPABASE_URL}/functions/v1/openai-proxy?endpoint=${endpoint}`;
+  const headers = { Authorization: `Bearer ${session.access_token}` };
+  let body;
+
+  if (isFormData) {
+    body = bodyOrFormData; // browser sets Content-Type + boundary automatically
+  } else {
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(bodyOrFormData);
+  }
+
+  return fetch(url, { method: 'POST', headers, body });
+}
+
+async function callOpenAI(data, _attempt = 1) {
   const medium      = data.medium || 'manga';
   const mediumLabel = medium === 'cartoon' ? 'cartoon' : 'manga';
   const genreLabel  = genreProfiles[data.genre]?.label  || data.genre;
@@ -57,50 +77,45 @@ Reply ONLY with a valid JSON object containing these fields:
   }
 }`;
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+  const messages = [
+    {
+      role: 'system',
+      content: `You are a talented and passionate ${mediumLabel} editor. You create narrative sheets in English for original ${mediumLabel} stories. Your style is vivid, evocative and gripping. You reply ONLY with valid JSON, no surrounding text.`,
     },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a talented and passionate ${mediumLabel} editor. You create narrative sheets in English for original ${mediumLabel} stories. Your style is vivid, evocative and gripping. You reply ONLY with valid JSON, no surrounding text.`,
-        },
-        {
-          role: 'user',
-          content: (_heroImageBase64 || (_char2ImageBase64 && char2Name))
-            ? [
-                { type: 'text', text: userPrompt },
-                ...(_heroImageBase64 ? [{ type: 'image_url', image_url: { url: `data:${_heroImageMime};base64,${_heroImageBase64}`, detail: 'low' } }] : []),
-                ...(_char2ImageBase64 && char2Name ? [{ type: 'image_url', image_url: { url: `data:${_char2ImageMime};base64,${_char2ImageBase64}`, detail: 'low' } }] : []),
-              ]
-            : userPrompt,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.92,
-      max_tokens: 2000,
-    }),
+    {
+      role: 'user',
+      content: (_heroImageBase64 || (_char2ImageBase64 && char2Name))
+        ? [
+            { type: 'text', text: userPrompt },
+            ...(_heroImageBase64 ? [{ type: 'image_url', image_url: { url: `data:${_heroImageMime};base64,${_heroImageBase64}`, detail: 'low' } }] : []),
+            ...(_char2ImageBase64 && char2Name ? [{ type: 'image_url', image_url: { url: `data:${_char2ImageMime};base64,${_char2ImageBase64}`, detail: 'low' } }] : []),
+          ]
+        : userPrompt,
+    },
+  ];
+
+  const res = await _openaiProxy('chat', {
+    model: 'gpt-4o-mini',
+    messages,
+    response_format: { type: 'json_object' },
+    temperature: 0.92,
+    max_tokens: 2000,
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const msg = err.error?.message || `Error ${res.status}`;
-    if (res.status === 401) throw new Error('Invalid API key. Check your key at platform.openai.com.');
+    if (res.status === 401) throw new Error('Invalid API key — contact support.');
     if (res.status === 429) {
       const isQuota = msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('billing');
-      if (isQuota) throw new Error('OpenAI quota exceeded — please add credits at platform.openai.com/billing.');
+      if (isQuota) throw new Error('OpenAI quota exceeded — please contact support.');
       if (_attempt < 4) {
         const waits = [30000, 65000, 90000];
         const wait = waits[_attempt - 1] || 65000;
         const msgEl = document.getElementById('loading-msg');
         if (msgEl) msgEl.textContent = `⏳ Rate limit — retrying in ${wait / 1000}s… (attempt ${_attempt}/3)`;
         await new Promise(r => setTimeout(r, wait));
-        return callOpenAI(apiKey, data, _attempt + 1);
+        return callOpenAI(data, _attempt + 1);
       }
       throw new Error('Rate limit reached after 3 retries. Please wait a minute then try again.');
     }
@@ -119,7 +134,6 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   const char2Name  = data.char2Name || null;
   const char2Desc  = (aiContent?.char2_face_desc || '').slice(0, 200);
 
-  // Hero face consistency (shared across all scenes)
   const rawFaceDesc = (aiContent?.hero_face_desc || '').slice(0, 250);
   const faceRef = _heroImageBase64 && rawFaceDesc
     ? `Hero face reference (reproduce exactly): ${rawFaceDesc}.`
@@ -164,7 +178,6 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
     const sceneTitle = ch.title ? `"${ch.title}"` : `Scene ${num}`;
     const sceneDetail = ch.description ? ` — ${ch.description}` : '';
 
-    // Per-scene medium and color
     const sceneMedium = ch.medium     || data.medium     || 'manga';
     const sceneColor  = ch.colorStyle || data.colorStyle || 'bw';
     const isCartoon   = sceneMedium === 'cartoon';
@@ -178,15 +191,12 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
           ? `Art style: Full-color professional anime/manga. Vibrant saturated colors, smooth cel-shading, crisp linework, richly detailed backgrounds with dramatic lighting.`
           : `Art style: Black-and-white manga. Clean ink linework, screentone shading, bold dynamic compositions, fully rendered backgrounds.`);
 
-    // Panel count based on description length
     const { n: panelCount, grid: panelGrid, flow: panelFlow } = _panelLayout((ch.description || '').length);
     const layoutStr = `PAGE LAYOUT: PORTRAIT orientation (taller than wide). ${panelGrid}. Each panel numbered 1–${panelCount} (small circle top-left). Thin white gutters. No title banner. Every panel has a fully detailed background.`;
 
-    // Decide which character photos to send
     const sceneText    = ((ch.title || '') + ' ' + (ch.description || '')).toLowerCase();
     const heroMentioned  = !!(hero && sceneText.includes(hero.toLowerCase()));
     const includeChar2   = !!(char2Name && sceneText.includes(char2Name.toLowerCase()));
-    // Skip hero photo only when char2 is explicitly mentioned and hero is not
     const includeHero  = !(includeChar2 && !heroMentioned);
     const char2Rule   = includeChar2
       ? `SECOND CHARACTER "${char2Name}" appears in this scene.${char2Desc ? ' Their appearance: ' + char2Desc : ''} Keep their face and appearance consistent.`
@@ -223,9 +233,6 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   return results;
 }
 
-// Generates one image and returns b64 string.
-// When a hero reference photo is loaded (_heroImageBase64), uses the Responses API
-// so the actual image is passed to gpt-image-1 — not just a text description.
 function _b64ToBlob(b64, mime) {
   const binary = atob(b64);
   const bytes  = new Uint8Array(binary.length);
@@ -233,7 +240,7 @@ function _b64ToBlob(b64, mime) {
   return new Blob([bytes], { type: mime || 'image/jpeg' });
 }
 
-async function _generateSingleImage(apiKey, prompt, quality, model, includeChar2 = false, includeHero = true, attempt = 1) {
+async function _generateSingleImage(prompt, quality, model, includeChar2 = false, includeHero = true, attempt = 1) {
   const _sleep = ms => new Promise(r => setTimeout(r, ms));
 
   const sendHero  = includeHero  && !!_heroImageBase64;
@@ -241,31 +248,22 @@ async function _generateSingleImage(apiKey, prompt, quality, model, includeChar2
 
   let res;
   if (model === 'dall-e-3') {
-    res = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json' }),
+    res = await _openaiProxy('image-generate', {
+      model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json',
     });
   } else if (sendHero || sendChar2) {
-    // Images edits API: pass only the relevant reference photos
     const form = new FormData();
-    form.append('model',   'gpt-image-1');
+    form.append('model',  'gpt-image-1');
     if (sendHero)  form.append('image[]', _b64ToBlob(_heroImageBase64,  _heroImageMime),  'hero.jpg');
     if (sendChar2) form.append('image[]', _b64ToBlob(_char2ImageBase64, _char2ImageMime), 'char2.jpg');
     form.append('prompt',  prompt);
     form.append('size',    '1024x1536');
     form.append('quality', quality);
     form.append('n',       '1');
-    res = await fetch('https://api.openai.com/v1/images/edits', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}` },
-      body: form,
-    });
+    res = await _openaiProxy('image-edit', form, true);
   } else {
-    res = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality }),
+    res = await _openaiProxy('image-generate', {
+      model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality,
     });
   }
 
@@ -273,7 +271,7 @@ async function _generateSingleImage(apiKey, prompt, quality, model, includeChar2
     const wait = attempt * 12000;
     console.warn(`[IMG] 429 — retrying in ${wait / 1000}s (attempt ${attempt})`);
     await _sleep(wait);
-    return _generateSingleImage(apiKey, prompt, quality, model, includeChar2, includeHero, attempt + 1);
+    return _generateSingleImage(prompt, quality, model, includeChar2, includeHero, attempt + 1);
   }
   if (!res.ok) {
     const errJson = await res.json().catch(() => ({}));
@@ -287,7 +285,6 @@ async function _generateSingleImage(apiKey, prompt, quality, model, includeChar2
 async function _uploadBase64ToStorage(b64, storyId, imageType) {
   if (!_supabase || !storyId) return null;
   try {
-    // Decode base64 → Uint8Array — no fetch(), no CORS
     const binary = atob(b64);
     const bytes  = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -301,7 +298,7 @@ async function _uploadBase64ToStorage(b64, storyId, imageType) {
 
     const { data: signData, error: signError } = await _supabase.storage
       .from('manga-images')
-      .createSignedUrl(path, 315360000); // ~10 years
+      .createSignedUrl(path, 315360000);
     if (signError) { console.error('[Storage] sign error:', signError.message); return null; }
     return signData.signedUrl;
   } catch (err) {
@@ -310,15 +307,14 @@ async function _uploadBase64ToStorage(b64, storyId, imageType) {
   }
 }
 
-async function generateImages(apiKey, prompts, storyId, quality = 'medium', model = 'gpt-image-1') {
+async function generateImages(prompts, storyId, quality = 'medium', model = 'gpt-image-1') {
   const _sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  // Generate sequentially to stay within gpt-image-1 rate limits
   for (let idx = 0; idx < prompts.length; idx++) {
     const promptObj = prompts[idx];
 
     try {
-      let b64 = await _generateSingleImage(apiKey, promptObj.prompt, quality, model, promptObj.includeChar2 || false, promptObj.includeHero !== false);
+      let b64 = await _generateSingleImage(promptObj.prompt, quality, model, promptObj.includeChar2 || false, promptObj.includeHero !== false);
       if (promptObj.hasBubbles && promptObj.dialogueLines?.length) {
         b64 = await overlayBubbles(b64, promptObj.panelCount || 4, promptObj.dialogueLines);
       }
@@ -350,23 +346,17 @@ async function generateImages(apiKey, prompts, storyId, quality = 'medium', mode
   }
 }
 
-// Fetches 2 short dialogue lines for a single scene when panel_lines aren't cached.
-async function fetchDialogueForScene(apiKey, sceneTitle, sceneDesc) {
-  if (!apiKey || apiKey.includes('YOUR_')) return [];
+async function fetchDialogueForScene(sceneTitle, sceneDesc) {
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{
-          role: 'user',
-          content: `Write 2 short speech bubble lines for this manga scene.\nScene: "${sceneTitle}${sceneDesc ? ' — ' + sceneDesc : ''}"\nRules: max 4 words each, correct natural English.\nReturn a JSON object: {"lines":["line1","line2"]}`,
-        }],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        max_tokens: 100,
-      }),
+    const res = await _openaiProxy('chat', {
+      model: 'gpt-4o-mini',
+      messages: [{
+        role: 'user',
+        content: `Write 2 short speech bubble lines for this manga scene.\nScene: "${sceneTitle}${sceneDesc ? ' — ' + sceneDesc : ''}"\nRules: max 4 words each, correct natural English.\nReturn a JSON object: {"lines":["line1","line2"]}`,
+      }],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 100,
     });
     if (!res.ok) return [];
     const json = await res.json();

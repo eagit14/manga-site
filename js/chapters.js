@@ -301,9 +301,6 @@ async function generateSceneImage(cid) {
     return;
   }
 
-  const apiKey = OPENAI_API_KEY;
-  if (!apiKey || apiKey.includes('YOUR_')) { alert('OpenAI API key not configured.'); return; }
-
   // Title required
   const titreVal = document.getElementById('f-titre')?.value.trim();
   if (!titreVal) {
@@ -374,11 +371,11 @@ async function generateSceneImage(cid) {
     // ── Fetch dialogue lines when not cached (e.g. editing existing story) ──
     if (promptObj.hasBubbles && !promptObj.dialogueLines?.length) {
       const ch = (data.chapters || []).find(c => c.num === sceneNum) || {};
-      promptObj.dialogueLines = await fetchDialogueForScene(apiKey, ch.title || `Scene ${sceneNum}`, ch.description || '');
+      promptObj.dialogueLines = await fetchDialogueForScene(ch.title || `Scene ${sceneNum}`, ch.description || '');
     }
 
     // ── Call OpenAI image API (passes hero photo when available) ──────
-    let b64 = await _generateSingleImage(apiKey, promptObj.prompt, quality, imgModel, promptObj.includeChar2 || false, promptObj.includeHero !== false);
+    let b64 = await _generateSingleImage(promptObj.prompt, quality, imgModel, promptObj.includeChar2 || false, promptObj.includeHero !== false);
     if (promptObj.hasBubbles && promptObj.dialogueLines?.length) {
       b64 = await overlayBubbles(b64, promptObj.panelCount || 4, promptObj.dialogueLines);
     }

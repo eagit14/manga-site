@@ -1,8 +1,6 @@
 // ── Generator: handleGenerate, saveMangaDraft, resetForm, copySynopsis ──
 
 async function handleGenerate() {
-  const apiKey = OPENAI_API_KEY;
-
   // ── Clear previous errors ──
   const errEl = document.getElementById('api-error-msg');
   errEl.classList.remove('show');
@@ -36,8 +34,6 @@ async function handleGenerate() {
     return;
   }
 
-  if (apiKey) localStorage.setItem('openai_key', apiKey);
-
   const data = {
     titre:      document.getElementById('f-titre').value.trim()     || 'Untitled',
     genre:      document.getElementById('f-genre').value,
@@ -55,25 +51,18 @@ async function handleGenerate() {
 
   document.getElementById('creator-form-card').style.display = 'none';
   document.getElementById('creator-loading').style.display = 'block';
-  document.getElementById('loading-msg').textContent = apiKey
-    ? '🤖 ChatGPT is writing your manga…'
-    : '✍️ Your inner mangaka is awakening…';
+  document.getElementById('loading-msg').textContent = '🤖 ChatGPT is writing your manga…';
 
   let aiContent = null;
-
-  if (apiKey) {
-    try {
-      aiContent = await callOpenAI(apiKey, data);
-    } catch (err) {
-      document.getElementById('creator-loading').style.display = 'none';
-      document.getElementById('creator-form-card').style.display = 'block';
-        errEl.textContent = `❌ ${err.message}`;
-      errEl.classList.add('show');
-      errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-  } else {
-    await new Promise(r => setTimeout(r, 2000));
+  try {
+    aiContent = await callOpenAI(data);
+  } catch (err) {
+    document.getElementById('creator-loading').style.display = 'none';
+    document.getElementById('creator-form-card').style.display = 'block';
+    errEl.textContent = `❌ ${err.message}`;
+    errEl.classList.add('show');
+    errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
   }
 
   window._lastAIContent = aiContent;
