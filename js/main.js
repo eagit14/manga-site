@@ -1,8 +1,10 @@
 // ── DOMContentLoaded init + keydown Escape listener ──────
 
-// Stash pending payment flags early, before auth resolves
+// Stash pending payment flags early, before auth resolves.
+// Stripe always appends ?session_id=... to the return URL, so we accept either
+// the explicit ?payment=success flag OR the presence of a Stripe session_id.
 const _params = new URLSearchParams(window.location.search);
-if (_params.get('payment') === 'success') {
+if (_params.get('payment') === 'success' || _params.get('session_id')) {
   history.replaceState(null, '', window.location.pathname);
   window._pendingPaymentStoryId = localStorage.getItem('_pendingPurchaseStoryId') || null;
   if (window._pendingPaymentStoryId) localStorage.removeItem('_pendingPurchaseStoryId');
