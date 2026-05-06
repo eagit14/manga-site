@@ -14,7 +14,7 @@ const TRANSLATIONS = {
     nav_top_films: 'Top Movies',
     nav_my_stories:'📊 My Stories',
     nav_create:    '✏️ Create',
-    nav_my_mangas: '🎌 My Mangas',
+    nav_my_mangas: '📚 My Picture Books',  // updated
 
     // User dropdown
     dropdown_profile: 'My Profile',
@@ -53,13 +53,13 @@ const TRANSLATIONS = {
     books_desc: 'The series that defined generations, shattered sales records, and turned millions of readers into lifelong fans. 📚',
     books_cta: 'Read now →',
 
-    // Data / mes mangas
+    // Data / my picture books
     data_label: '📊 Database',
-    data_title: 'My <span class="yellow">Mangas</span>',
+    data_title: 'My <span class="yellow">Picture Books</span>',
     data_stories: 'Stories',
     data_ai: 'AI-generated',
     data_genres: 'Different genres',
-    data_search_ph: '🔍 Search a manga…',
+    data_search_ph: '🔍 Search a story…',
     data_clear: '🗑 Clear all',
 
     // Top movies
@@ -70,9 +70,9 @@ const TRANSLATIONS = {
 
     // Creator
     creator_label: '✏️ Creative Studio',
-    creator_title: 'Create your <span class="yellow">Manga</span>!',
-    creator_desc: 'Got an idea brewing in your head? Describe your universe, your hero, your story — we\'ll generate a manga sheet worthy of the greatest Japanese publishers. 🖊️',
-    form_title_lbl: '📝 Your manga title',
+    creator_title: 'Create your <span class="yellow">Story Book</span>!',
+    creator_desc: 'Got an idea brewing in your head? Describe your hero, your scenes, your story — we\'ll generate an illustrated story book worthy of the greatest publishers. 🖊️',
+    form_title_lbl: '📝 Your story title',
     form_title_ph: 'e.g. Shadow of the Last Samurai, Neon Butterfly…',
     form_genre_lbl: '🎭 Genre',
     form_style_lbl: '🎨 Art style',
@@ -82,10 +82,12 @@ const TRANSLATIONS = {
     form_universe_ph: 'e.g. Dystopian Tokyo, medieval kingdom, high school…',
     form_herodesc_lbl: '✨ Describe your hero / heroine',
     form_herodesc_ph: 'e.g. A brilliant but lonely high school girl who hides a power she doesn\'t yet understand…',
-    form_photo_lbl: '📸 Hero face — reference photo',
+    form_photo_lbl: '📸 Hero photo',
     form_photo_upload: 'Click to upload a photo of your hero\'s face',
-    form_photo_hint: 'ChatGPT will analyse the face and reproduce it in the generated manga illustrations.',
+    form_photo_hint: 'Required — ChatGPT will analyse the face and reproduce it consistently in every illustration.',
     form_photo_remove: '✕ Remove',
+    err_hero_photo: '⚠ A hero face photo is required to generate images.',
+    form_char2_lbl: '📸 Another character photo',
     form_premise_lbl: '💡 Your pitch — the starting idea!',
     form_premise_ph: 'e.g. When her brother is captured by a secret organisation, she discovers that her recurring nightmares are actually visions of the future…',
     form_premise_hint: 'The more detail you add, the more epic the result! Describe the stakes, twists, atmosphere…',
@@ -97,7 +99,7 @@ const TRANSLATIONS = {
     form_ending_ph: 'e.g. After defeating the organisation, she discovers her brother was the mastermind all along… but she chooses to forgive him.',
     form_ending_hint: 'Describe how the story ends — this shapes the generated illustrations.',
     err_fin: '⚠ Please describe the ending.',
-    gen_btn: '🎨 Generate my Manga!',
+    gen_btn: '🎨 Generate my Story Book!',
     genre_options: [
       ['shonen',  'Shōnen (Action / Adventure)'],
       ['shojo',   'Shōjo (Romance / Emotions)'],
@@ -117,10 +119,10 @@ const TRANSLATIONS = {
       ['moderne',   'Modern & minimalist'],
     ],
 
-    // My Mangas
-    my_mangas_label: '🎌 Your Collection',
-    my_mangas_title: 'My <span class="red">Mangas</span>',
-    my_mangas_desc: 'All the manga stories you\'ve created — order any of them as a printed volume.',
+    // My Picture Books
+    my_mangas_label: '📚 Your Picture Books',
+    my_mangas_title: 'My <span class="red">Picture Books</span>',
+    my_mangas_desc: 'All the illustrated stories you\'ve created — order any of them as a printed picture book.',
 
     // Footer
     footer_tagline: 'The Art That Changed the World ♥ From 1814 to Infinity',
@@ -148,8 +150,8 @@ const TRANSLATIONS = {
     profile_save: '💾 Save',
 
     // Delete modal
-    delete_title: 'Delete Manga?',
-    delete_msg: 'This will permanently remove the manga and all its images.',
+    delete_title: 'Delete Story?',
+    delete_msg: 'This will permanently remove the story and all its images.',
     delete_cancel: 'Cancel',
     delete_btn: 'Delete',
   },
@@ -165,7 +167,7 @@ const TRANSLATIONS = {
     nav_top_films: 'Top Films',
     nav_my_stories:'📊 Mes Histoires',
     nav_create:    '✏️ Créer',
-    nav_my_mangas: '🎌 Mes Mangas',
+    nav_my_mangas: '📚 Mes Livres Illustrés',
 
     dropdown_profile: 'Mon Profil',
     dropdown_signout: 'Se déconnecter',
@@ -201,11 +203,11 @@ const TRANSLATIONS = {
     books_cta: 'Lire maintenant →',
 
     data_label: '📊 Base de données',
-    data_title: 'Mes <span class="yellow">Mangas</span>',
+    data_title: 'Mes <span class="yellow">Livres Illustrés</span>',
     data_stories: 'Histoires',
     data_ai: 'Générés avec IA',
     data_genres: 'Genres différents',
-    data_search_ph: '🔍 Rechercher un manga…',
+    data_search_ph: '🔍 Rechercher une histoire…',
     data_clear: '🗑 Tout effacer',
 
     movies_label: '🎬 Sur Grand Écran',
@@ -214,9 +216,9 @@ const TRANSLATIONS = {
     movies_cta: 'Regarder →',
 
     creator_label: '✏️ Studio Créatif',
-    creator_title: 'Créez votre <span class="yellow">Manga</span> !',
-    creator_desc: 'Une idée qui mijote dans votre tête ? Décrivez votre univers, votre héros, votre histoire — nous générerons une fiche manga digne des plus grands éditeurs japonais. 🖊️',
-    form_title_lbl: '📝 Titre de votre manga',
+    creator_title: 'Créez votre <span class="yellow">Livre Illustré</span> !',
+    creator_desc: 'Une idée qui mijote dans votre tête ? Décrivez votre héros, vos scènes, votre histoire — nous générerons un livre illustré digne des plus grands éditeurs. 🖊️',
+    form_title_lbl: '📝 Titre de votre histoire',
     form_title_ph: 'ex. Ombre du Dernier Samouraï, Papillon Néon…',
     form_genre_lbl: '🎭 Genre',
     form_style_lbl: '🎨 Style artistique',
@@ -226,10 +228,12 @@ const TRANSLATIONS = {
     form_universe_ph: 'ex. Tokyo dystopique, royaume médiéval, lycée…',
     form_herodesc_lbl: '✨ Décrivez votre héros / héroïne',
     form_herodesc_ph: 'ex. Une lycéenne brillante mais solitaire qui cache un pouvoir qu\'elle ne comprend pas encore…',
-    form_photo_lbl: '📸 Visage du héros — photo de référence',
+    form_photo_lbl: '📸 Photo du héros',
     form_photo_upload: 'Cliquez pour uploader une photo du visage de votre héros',
-    form_photo_hint: 'ChatGPT analysera le visage et le reproduira dans les illustrations manga générées.',
+    form_photo_hint: 'Obligatoire — ChatGPT analysera le visage et le reproduira dans chaque illustration générée.',
     form_photo_remove: '✕ Supprimer',
+    err_hero_photo: '⚠ Une photo du visage du héros est obligatoire pour générer les illustrations.',
+    form_char2_lbl: '📸 Photo d\'un autre personnage',
     form_premise_lbl: '💡 Votre pitch — l\'idée de départ !',
     form_premise_ph: 'ex. Quand son frère est capturé par une organisation secrète, elle découvre que ses cauchemars récurrents sont en réalité des visions du futur…',
     form_premise_hint: 'Plus vous ajoutez de détails, plus le résultat sera épique ! Décrivez les enjeux, rebondissements, atmosphère…',
@@ -241,7 +245,7 @@ const TRANSLATIONS = {
     form_ending_ph: 'ex. Après avoir vaincu l\'organisation, elle découvre que son frère en était le cerveau… mais elle choisit de lui pardonner.',
     form_ending_hint: 'Décrivez comment l\'histoire se termine — cela influence les illustrations générées.',
     err_fin: '⚠ Décrivez le final.',
-    gen_btn: '🎨 Générer mon Manga !',
+    gen_btn: '🎨 Générer mon Livre Illustré !',
     genre_options: [
       ['shonen',  'Shōnen (Action / Aventure)'],
       ['shojo',   'Shōjo (Romance / Émotions)'],
@@ -261,9 +265,9 @@ const TRANSLATIONS = {
       ['moderne',   'Moderne & minimaliste'],
     ],
 
-    my_mangas_label: '🎌 Votre Collection',
-    my_mangas_title: 'Mes <span class="red">Mangas</span>',
-    my_mangas_desc: 'Toutes les histoires manga que vous avez créées — commandez-les en volume imprimé.',
+    my_mangas_label: '📚 Vos Livres Illustrés',
+    my_mangas_title: 'Mes <span class="red">Livres Illustrés</span>',
+    my_mangas_desc: 'Toutes les histoires illustrées que vous avez créées — commandez-les en volume imprimé.',
 
     footer_tagline: 'L\'Art qui a Changé le Monde ♥ De 1814 à l\'Infini',
 
@@ -287,8 +291,8 @@ const TRANSLATIONS = {
     profile_country_lbl: 'Pays',
     profile_save: '💾 Enregistrer',
 
-    delete_title: 'Supprimer le Manga ?',
-    delete_msg: 'Cela supprimera définitivement le manga et toutes ses images.',
+    delete_title: 'Supprimer l\'Histoire ?',
+    delete_msg: 'Cela supprimera définitivement l\'histoire et toutes ses images.',
     delete_cancel: 'Annuler',
     delete_btn: 'Supprimer',
   },
@@ -304,7 +308,7 @@ const TRANSLATIONS = {
     nav_top_films: 'Top Películas',
     nav_my_stories:'📊 Mis Historias',
     nav_create:    '✏️ Crear',
-    nav_my_mangas: '🎌 Mis Mangas',
+    nav_my_mangas: '📚 Mis Libros Ilustrados',
 
     dropdown_profile: 'Mi Perfil',
     dropdown_signout: 'Cerrar sesión',
@@ -340,11 +344,11 @@ const TRANSLATIONS = {
     books_cta: 'Leer ahora →',
 
     data_label: '📊 Base de datos',
-    data_title: 'Mis <span class="yellow">Mangas</span>',
+    data_title: 'Mis <span class="yellow">Libros Ilustrados</span>',
     data_stories: 'Historias',
     data_ai: 'Generados con IA',
     data_genres: 'Géneros distintos',
-    data_search_ph: '🔍 Buscar un manga…',
+    data_search_ph: '🔍 Buscar una historia…',
     data_clear: '🗑 Borrar todo',
 
     movies_label: '🎬 En la Gran Pantalla',
@@ -353,9 +357,9 @@ const TRANSLATIONS = {
     movies_cta: 'Ver →',
 
     creator_label: '✏️ Estudio Creativo',
-    creator_title: '¡Crea tu <span class="yellow">Manga</span>!',
-    creator_desc: '¿Tienes una idea rondando por tu cabeza? Describe tu universo, tu héroe, tu historia — generaremos una ficha manga digna de los mejores editores japoneses. 🖊️',
-    form_title_lbl: '📝 Título de tu manga',
+    creator_title: '¡Crea tu <span class="yellow">Libro Ilustrado</span>!',
+    creator_desc: '¿Tienes una idea rondando por tu cabeza? Describe tu héroe, tus escenas, tu historia — generaremos un libro ilustrado digno de los mejores editores. 🖊️',
+    form_title_lbl: '📝 Título de tu historia',
     form_title_ph: 'ej. Sombra del Último Samurái, Mariposa Neón…',
     form_genre_lbl: '🎭 Género',
     form_style_lbl: '🎨 Estilo artístico',
@@ -365,10 +369,12 @@ const TRANSLATIONS = {
     form_universe_ph: 'ej. Tokio distópico, reino medieval, bachillerato…',
     form_herodesc_lbl: '✨ Describe a tu héroe / heroína',
     form_herodesc_ph: 'ej. Una estudiante brillante pero solitaria que esconde un poder que aún no comprende…',
-    form_photo_lbl: '📸 Rostro del héroe — foto de referencia',
+    form_photo_lbl: '📸 Foto del héroe',
     form_photo_upload: 'Haz clic para subir una foto del rostro de tu héroe',
-    form_photo_hint: 'ChatGPT analizará el rostro y lo reproducirá en las ilustraciones manga generadas.',
+    form_photo_hint: 'Obligatorio — ChatGPT analizará el rostro y lo reproducirá en cada ilustración generada.',
     form_photo_remove: '✕ Eliminar',
+    err_hero_photo: '⚠ Se requiere una foto del héroe para generar las ilustraciones.',
+    form_char2_lbl: '📸 Foto de otro personaje',
     form_premise_lbl: '💡 Tu pitch — ¡la idea de partida!',
     form_premise_ph: 'ej. Cuando su hermano es capturado por una organización secreta, ella descubre que sus pesadillas recurrentes son en realidad visiones del futuro…',
     form_premise_hint: '¡Cuantos más detalles añadas, más épico será el resultado! Describe las apuestas, giros, atmósfera…',
@@ -380,7 +386,7 @@ const TRANSLATIONS = {
     form_ending_ph: 'ej. Tras derrotar a la organización, descubre que su hermano era el cerebro… pero elige perdonarle.',
     form_ending_hint: 'Describe cómo termina la historia — esto da forma a las ilustraciones generadas.',
     err_fin: '⚠ Por favor describe el final.',
-    gen_btn: '🎨 ¡Generar mi Manga!',
+    gen_btn: '🎨 ¡Generar mi Libro Ilustrado!',
     genre_options: [
       ['shonen',  'Shōnen (Acción / Aventura)'],
       ['shojo',   'Shōjo (Romance / Emociones)'],
@@ -400,9 +406,9 @@ const TRANSLATIONS = {
       ['moderne',   'Moderno & minimalista'],
     ],
 
-    my_mangas_label: '🎌 Tu Colección',
-    my_mangas_title: 'Mis <span class="red">Mangas</span>',
-    my_mangas_desc: 'Todas las historias manga que has creado — pide cualquiera como volumen impreso.',
+    my_mangas_label: '📚 Tu Colección',
+    my_mangas_title: 'Mis <span class="red">Libros Ilustrados</span>',
+    my_mangas_desc: 'Todas las historias ilustradas que has creado — pide cualquiera como volumen impreso.',
 
     footer_tagline: 'El Arte que Cambió el Mundo ♥ De 1814 al Infinito',
 
@@ -426,8 +432,8 @@ const TRANSLATIONS = {
     profile_country_lbl: 'País',
     profile_save: '💾 Guardar',
 
-    delete_title: '¿Eliminar Manga?',
-    delete_msg: 'Esto eliminará permanentemente el manga y todas sus imágenes.',
+    delete_title: '¿Eliminar Historia?',
+    delete_msg: 'Esto eliminará permanentemente la historia y todas sus imágenes.',
     delete_cancel: 'Cancelar',
     delete_btn: 'Eliminar',
   },
@@ -546,13 +552,29 @@ function applyTranslations() {
   ph('f-premise',  'form_premise_ph');
   ph('f-fin',      'form_ending_ph');
 
-  // Photo upload
+  // Photo upload — hero
+  const heroPhotoLabel = document.getElementById('hero-photo-label');
+  if (heroPhotoLabel && T.form_photo_lbl) {
+    const star = heroPhotoLabel.querySelector('span');
+    heroPhotoLabel.textContent = T.form_photo_lbl + ' ';
+    if (star) heroPhotoLabel.appendChild(star);
+  }
   const uploadSpan = document.querySelector('#hero-upload-label span:last-child');
   if (uploadSpan && T.form_photo_upload) uploadSpan.textContent = T.form_photo_upload;
-  const photoHint = document.querySelector('#hero-upload-area + .form-hint');
+  const photoHint = document.querySelector('#hero-upload-area ~ .form-hint, #hero-upload-area + .form-hint');
   if (photoHint && T.form_photo_hint) photoHint.textContent = T.form_photo_hint;
-  const removeBtn = document.querySelector('.hero-upload-clear');
-  if (removeBtn && T.form_photo_remove) removeBtn.textContent = T.form_photo_remove;
+  document.querySelectorAll('.hero-upload-clear').forEach((btn, i) => {
+    if (i === 0 && T.form_photo_remove) btn.textContent = T.form_photo_remove;
+  });
+  set('#err-hero-photo', 'err_hero_photo');
+
+  // Photo upload — second character
+  const char2Label = document.getElementById('char2-photo-label');
+  if (char2Label && T.form_char2_lbl) {
+    const small = char2Label.querySelector('small');
+    char2Label.textContent = T.form_char2_lbl + ' ';
+    if (small) char2Label.appendChild(small);
+  }
 
   // Form hints & errors
   const hints = document.querySelectorAll('#creer .form-hint');
@@ -584,13 +606,6 @@ function applyTranslations() {
     genreSelect.innerHTML = T.genre_options.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
     genreSelect.value = cur;
   }
-  const styleSelect = document.getElementById('f-style');
-  if (styleSelect && T.style_options) {
-    const cur = styleSelect.value;
-    styleSelect.innerHTML = T.style_options.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
-    styleSelect.value = cur;
-  }
-
   // My Mangas section
   set('#my-mangas .section-label', 'my_mangas_label');
   set('#my-mangas .section-title', 'my_mangas_title');

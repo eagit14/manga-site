@@ -34,17 +34,31 @@ async function spendCredit() {
 function getUserCredits() { return _credits; }
 
 function _updateCreditDisplay() {
-  const badge = document.getElementById('credits-badge');
-  const count = document.getElementById('credits-count');
+  const badge      = document.getElementById('credits-badge');
+  const count      = document.getElementById('credits-count');
+  const badgeSave  = document.getElementById('credits-badge-save');
+  const countSave  = document.getElementById('credits-count-save');
   if (!badge || !count) return;
 
-  if (_credits === null) { badge.style.display = 'none'; return; }
+  if (_credits === null) {
+    badge.style.display = 'none';
+    if (badgeSave) badgeSave.style.display = 'none';
+    return;
+  }
+
+  const cls = _credits === 0 ? 'credits-badge credits-empty'
+            : _credits <= 5  ? 'credits-badge credits-low'
+            : 'credits-badge';
 
   badge.style.display = 'flex';
   count.textContent   = _credits;
-  badge.className = _credits === 0 ? 'credits-badge credits-empty'
-                  : _credits <= 5  ? 'credits-badge credits-low'
-                  : 'credits-badge';
+  badge.className     = cls;
+
+  if (badgeSave && countSave) {
+    badgeSave.style.display = 'flex';
+    countSave.textContent   = _credits;
+    badgeSave.className     = cls + ' credits-badge-save';
+  }
 
   // Gray out all scene generate buttons when depleted
   document.querySelectorAll('.scene-gen-img-btn').forEach(btn => {

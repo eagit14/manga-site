@@ -92,6 +92,8 @@ async function checkAdminStatus(userId) {
   if (supportLink2) supportLink2.style.display = window._isAdmin ? 'none' : '';
   if (adminSection) adminSection.style.display = window._isAdmin ? '' : 'none';
   if (surpriseBar)  surpriseBar.style.display  = window._isAdmin ? '' : 'none';
+  const imgModelGroup = document.getElementById('img-model-group');
+  if (imgModelGroup) imgModelGroup.style.display = window._isAdmin ? '' : 'none';
   if (window._isAdmin && typeof loadAllMangas === 'function') loadAllMangas();
 }
 
@@ -198,6 +200,22 @@ async function signInWithGoogle() {
   if (!_supabase) { alert('Supabase is not configured.'); return; }
   await _supabase.auth.signInWithOAuth({
     provider: 'google',
+    options:  { redirectTo: window.location.origin },
+  });
+}
+
+async function signInWithFacebook() {
+  if (!_supabase) { alert('Supabase is not configured.'); return; }
+  await _supabase.auth.signInWithOAuth({
+    provider: 'facebook',
+    options:  { redirectTo: window.location.origin },
+  });
+}
+
+async function signInWithApple() {
+  if (!_supabase) { alert('Supabase is not configured.'); return; }
+  await _supabase.auth.signInWithOAuth({
+    provider: 'apple',
     options:  { redirectTo: window.location.origin },
   });
 }
