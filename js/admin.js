@@ -1,4 +1,46 @@
-// ── Admin: loadAllMangas ─────────────────────────────────
+// ── Admin: loadAllMangas, settings ───────────────────────
+
+function loadSettingsForm() {
+  if (!window._isAdmin) return;
+  const physToggle = document.getElementById('setting-physical-enabled');
+  const credInput  = document.getElementById('setting-default-credits');
+  const styleArea  = document.getElementById('setting-art-style');
+  if (physToggle) physToggle.checked = window._appSettings?.physical_order_enabled !== false;
+  if (credInput)  credInput.value    = window._appSettings?.default_credits ?? 50;
+  if (styleArea)  styleArea.value    = window._appSettings?.default_art_style ?? '';
+}
+
+async function saveAppSettings() {
+  if (!_supabase || !window._isAdmin) return;
+  const btn = document.getElementById('admin-settings-save-btn');
+  const msg = document.getElementById('admin-settings-msg');
+  if (btn) btn.disabled = true;
+  if (msg) { msg.textContent = ''; msg.className = 'admin-settings-msg'; }
+
+  const updates = {
+    physical_order_enabled: document.getElementById('setting-physical-enabled')?.checked ?? true,
+    default_credits:        parseInt(document.getElementById('setting-default-credits')?.value) || 50,
+    default_art_style:      document.getElementById('setting-art-style')?.value ?? '',
+  };
+
+  const { error } = await _supabase
+    .from('settings')
+    .update(updates)
+    .eq('id', 'global');
+
+  if (btn) btn.disabled = false;
+  if (error) {
+    console.error('[Settings] save error:', error.message);
+    if (msg) { msg.textContent = '✗ ' + error.message; msg.className = 'admin-settings-msg error'; }
+    return;
+  }
+  Object.assign(window._appSettings, updates);
+  _applySettings();
+  if (msg) { msg.textContent = '✓ Saved'; msg.className = 'admin-settings-msg success'; }
+  setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
+}
+
+
 
 async function loadAllMangas() {
   const grid = document.getElementById('all-mangas-grid');

@@ -987,6 +987,46 @@ high contrast lighting</textarea>
     <p class="section-label">🛡️ Admin Panel</p>
     <h2 class="section-title">All <span class="red">Mangas</span></h2>
     <p class="section-desc">Every manga story generated across all users.</p>
+
+    <!-- Admin Settings -->
+    <div class="admin-settings-panel" id="admin-settings-panel">
+      <h3 class="admin-settings-title">⚙️ App Settings</h3>
+      <div class="admin-settings-form">
+
+        <div class="admin-setting-row">
+          <div class="admin-setting-label">
+            <span>🖨️ Physical orders enabled</span>
+            <small>Show / hide the "Order Physical" button on all story tiles</small>
+          </div>
+          <label class="admin-toggle">
+            <input type="checkbox" id="setting-physical-enabled" checked>
+            <span class="admin-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="admin-setting-row">
+          <div class="admin-setting-label">
+            <span>🎨 Default credits for new users</span>
+            <small>Credits assigned when a new account is first created</small>
+          </div>
+          <input type="number" id="setting-default-credits" class="admin-setting-input" min="0" max="9999" value="50">
+        </div>
+
+        <div class="admin-setting-row admin-setting-row-full">
+          <div class="admin-setting-label">
+            <span>🖼️ Default art style</span>
+            <small>Pre-filled in the creator form for every new story</small>
+          </div>
+          <textarea id="setting-art-style" class="admin-setting-textarea" rows="7"></textarea>
+        </div>
+
+        <div class="admin-settings-actions">
+          <span class="admin-settings-msg" id="admin-settings-msg"></span>
+          <button class="action-btn primary" id="admin-settings-save-btn" onclick="saveAppSettings()">💾 Save Settings</button>
+        </div>
+      </div>
+    </div>
+
     <div id="all-mangas-grid" class="my-mangas-grid"></div>
   </div>
 </section>
@@ -1334,6 +1374,7 @@ high contrast lighting</textarea>
 
 <script src="js/i18n.js?v=4"></script>
 <script src="js/config.js?v=4"></script>
+<script src="js/settings.js?v=1"></script>
 <script src="js/generator-data.js?v=3"></script>
 <script src="js/ui.js?v=10"></script>
 <script src="js/chapters.js?v=34"></script>

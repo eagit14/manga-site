@@ -95,6 +95,7 @@ async function checkAdminStatus(userId) {
   const imgModelGroup = document.getElementById('img-model-group');
   if (imgModelGroup) imgModelGroup.style.display = window._isAdmin ? '' : 'none';
   if (window._isAdmin && typeof loadAllMangas === 'function') loadAllMangas();
+  if (window._isAdmin && typeof loadSettingsForm === 'function') loadSettingsForm();
 }
 
 async function _processPendingPayment() {
@@ -121,14 +122,18 @@ function initAuth() {
     if (event === 'SIGNED_IN') {
       upsertUser(session.user);
       trackConnection(session.user.id);
-      checkAdminStatus(session.user.id);
-      _processPendingPayment();
-      loadUserCredits().then(_processPendingCreditsRefill);
+      loadAppSettings().then(() => {
+        checkAdminStatus(session.user.id);
+        _processPendingPayment();
+        loadUserCredits().then(_processPendingCreditsRefill);
+      });
     }
     if (event === 'INITIAL_SESSION' && session?.user) {
-      checkAdminStatus(session.user.id);
-      _processPendingPayment();
-      loadUserCredits().then(_processPendingCreditsRefill);
+      loadAppSettings().then(() => {
+        checkAdminStatus(session.user.id);
+        _processPendingPayment();
+        loadUserCredits().then(_processPendingCreditsRefill);
+      });
     }
     if (event === 'SIGNED_OUT') {
       window._isAdmin = false;

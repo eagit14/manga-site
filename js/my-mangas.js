@@ -109,12 +109,15 @@ async function loadMyMangas() {
           <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="viewCover('${storyIdSafe}')">📖 View Cover</button>
         </div>`;
     } else {
+      const physBtn = window._appSettings?.physical_order_enabled !== false
+        ? `<button class="manga-tile-physical-btn" onclick="${physicalCall}">🖨️ Order Physical</button>`
+        : '';
       actionBtn = `
         <div class="manga-tile-purchased-actions">
           <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">👁 View</button>
           <button class="manga-tile-view-btn" onclick="viewCover('${storyIdSafe}')">📖 View Cover</button>
           <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">🛒 Order Digital</button>
-          <button class="manga-tile-physical-btn" onclick="${physicalCall}">🖨️ Order Physical</button>
+          ${physBtn}
         </div>`;
     }
 

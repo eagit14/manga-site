@@ -13,11 +13,17 @@ async function loadUserCredits() {
     .eq('user_id', user.id)
     .maybeSingle();
 
+  const defaultCredits = window._appSettings?.default_credits ?? 50;
   if (error) {
     console.warn('[Credits] load error (table may not exist yet):', error.message);
-    _credits = 50;
+    _credits = defaultCredits;
+  } else if (data === null) {
+    // New user — initialize their credits row with the configured default
+    await _supabase.from('user_credits')
+      .upsert({ user_id: user.id, credits: defaultCredits }, { onConflict: 'user_id', ignoreDuplicates: true });
+    _credits = defaultCredits;
   } else {
-    _credits = data !== null ? data.credits : 50;
+    _credits = data.credits;
   }
   _updateCreditDisplay();
 }
