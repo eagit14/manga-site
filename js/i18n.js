@@ -154,6 +154,94 @@ const TRANSLATIONS = {
     delete_msg: 'This will permanently remove the story and all its images.',
     delete_cancel: 'Cancel',
     delete_btn: 'Delete',
+
+    // Login wall — tabs & buttons
+    lw_tab_signin: 'Sign In',
+    lw_tab_signup: 'Sign Up',
+    lw_email_ph: 'Email address',
+    lw_password_ph: 'Password',
+    lw_password_new_ph: 'Password (min. 6 characters)',
+    lw_confirm_ph: 'Confirm password',
+    lw_signin_btn: 'Sign In',
+    lw_signup_btn: 'Create Account',
+    lw_or: 'or continue with',
+
+    // Data toolbar
+    data_filter_all: 'All genres',
+
+    // Creator — extra UI
+    credits_left: 'credits left',
+    no_credits: 'No credits left —',
+    refill_link: 'Refill credits',
+    save_draft: '💾 Save',
+    form_char2_name_lbl: '👤 Character name',
+    form_char2_name_hint: '(mention in scenes to include)',
+    form_char2_name_ph: 'e.g. Maya, Sensei Riku, Uncle Kai…',
+    form_bubbles_lbl: '💬 Panel style',
+    form_bubbles_with: 'With speech bubbles',
+    form_bubbles_without: 'Illustrations only',
+    form_quality_lbl: '⚡ Image quality',
+    form_quality_draft: 'Draft — fastest & cheapest (~€0.01/image)',
+    form_quality_std: 'Standard — good quality (~€0.04/image)',
+    form_quality_hi: 'Premium — best quality (~€0.17/image)',
+    loading_text: '✍️ Your inner mangaka is awakening…',
+    surprise_text: '✨ No idea yet? Let fate decide.',
+    surprise_btn: '🎲 Surprise Me!',
+    edit_cancel: '✕ Cancel',
+
+    // My mangas empty state
+    my_mangas_empty: 'No stories yet — <a href="#creer">create your first one!</a>',
+
+    // Physical (Lulu) modal
+    physical_subtitle: '🖨️ Printed &amp; shipped by <strong>Lulu</strong>',
+    physical_format_lbl: 'Format',
+    physical_binding_lbl: 'Binding',
+    physical_interior_lbl: 'Interior',
+    physical_pages_lbl: 'Pages',
+    physical_fulfillment_lbl: 'Fulfillment',
+    physical_fulfillment_val: 'Lulu print-on-demand',
+    physical_delivery_lbl: 'Delivery',
+    physical_delivery_val: '7–14 business days',
+    physical_price_loading: 'Fetching Lulu price…',
+    physical_print_cost: 'Print cost (Lulu)',
+    physical_shipping_title: '📦 Shipping address',
+    physical_firstname_ph: 'First name',
+    physical_lastname_ph: 'Last name',
+    physical_addr1_ph: 'Address line 1',
+    physical_addr2_ph: 'Address line 2 (optional)',
+    physical_city_ph: 'City',
+    physical_postal_ph: 'Postal code',
+    physical_state_ph: 'State / Province',
+    physical_note: 'After payment your book is sent to Lulu for printing. A shipping confirmation will arrive at your email within 24 hours.',
+
+    // Duplicate modal
+    duplicate_title: 'Duplicate Story?',
+    duplicate_msg_prefix: 'Create a copy of',
+    duplicate_cancel: 'Cancel',
+    duplicate_btn: 'Duplicate',
+
+    // Remove scene modal
+    remove_scene_title: 'Remove Scene?',
+    remove_scene_prefix: 'Remove',
+    remove_scene_suffix: '? This cannot be undone.',
+    remove_scene_cancel: 'Cancel',
+    remove_scene_btn: 'Remove',
+
+    // Credits modal
+    credits_modal_title: 'Refill Image Credits',
+    credits_modal_desc: 'Get <strong>50 more image generations</strong> to keep building your story.',
+
+    // Support modal
+    support_modal_title: '💬 Contact Support',
+    support_title_lbl: 'Title',
+    support_title_ph: 'Brief summary of your issue…',
+    support_desc_lbl: 'Description',
+    support_desc_ph: 'Describe your issue in detail…',
+    support_cancel: 'Cancel',
+    support_submit: 'Send to Support',
+    support_success_msg: 'Your message has been sent! We\'ll get back to you soon.',
+    support_close: 'Close',
+    my_tickets_title: 'My Tickets',
   },
 
   // ─────────────────────────────────────────────
@@ -295,6 +383,94 @@ const TRANSLATIONS = {
     delete_msg: 'Cela supprimera définitivement l\'histoire et toutes ses images.',
     delete_cancel: 'Annuler',
     delete_btn: 'Supprimer',
+
+    // Login wall — tabs & buttons
+    lw_tab_signin: 'Se connecter',
+    lw_tab_signup: 'S\'inscrire',
+    lw_email_ph: 'Adresse e-mail',
+    lw_password_ph: 'Mot de passe',
+    lw_password_new_ph: 'Mot de passe (min. 6 caractères)',
+    lw_confirm_ph: 'Confirmer le mot de passe',
+    lw_signin_btn: 'Se connecter',
+    lw_signup_btn: 'Créer un compte',
+    lw_or: 'ou continuer avec',
+
+    // Data toolbar
+    data_filter_all: 'Tous les genres',
+
+    // Creator — extra UI
+    credits_left: 'crédits restants',
+    no_credits: 'Plus de crédits —',
+    refill_link: 'Recharger',
+    save_draft: '💾 Enregistrer',
+    form_char2_name_lbl: '👤 Nom du personnage',
+    form_char2_name_hint: '(mentionnez dans les scènes pour l\'inclure)',
+    form_char2_name_ph: 'ex. Maya, Sensei Riku, Oncle Kai…',
+    form_bubbles_lbl: '💬 Style de panneaux',
+    form_bubbles_with: 'Avec bulles de dialogue',
+    form_bubbles_without: 'Illustrations uniquement',
+    form_quality_lbl: '⚡ Qualité des images',
+    form_quality_draft: 'Brouillon — plus rapide & économique (~0,01€/image)',
+    form_quality_std: 'Standard — bonne qualité (~0,04€/image)',
+    form_quality_hi: 'Premium — meilleure qualité (~0,17€/image)',
+    loading_text: '✍️ Votre mangaka intérieur s\'éveille…',
+    surprise_text: '✨ Pas encore d\'idée ? Laissez le destin décider.',
+    surprise_btn: '🎲 Surprenez-moi !',
+    edit_cancel: '✕ Annuler',
+
+    // My mangas empty state
+    my_mangas_empty: 'Aucune histoire pour l\'instant — <a href="#creer">créez la première !</a>',
+
+    // Physical (Lulu) modal
+    physical_subtitle: '🖨️ Imprimé &amp; expédié par <strong>Lulu</strong>',
+    physical_format_lbl: 'Format',
+    physical_binding_lbl: 'Reliure',
+    physical_interior_lbl: 'Intérieur',
+    physical_pages_lbl: 'Pages',
+    physical_fulfillment_lbl: 'Impression',
+    physical_fulfillment_val: 'Impression à la demande Lulu',
+    physical_delivery_lbl: 'Livraison',
+    physical_delivery_val: '7–14 jours ouvrables',
+    physical_price_loading: 'Récupération du prix Lulu…',
+    physical_print_cost: 'Coût d\'impression (Lulu)',
+    physical_shipping_title: '📦 Adresse de livraison',
+    physical_firstname_ph: 'Prénom',
+    physical_lastname_ph: 'Nom',
+    physical_addr1_ph: 'Adresse ligne 1',
+    physical_addr2_ph: 'Adresse ligne 2 (optionnel)',
+    physical_city_ph: 'Ville',
+    physical_postal_ph: 'Code postal',
+    physical_state_ph: 'État / Province',
+    physical_note: 'Après paiement, votre livre est envoyé à Lulu pour impression. Une confirmation d\'expédition arrivera à votre e-mail sous 24 heures.',
+
+    // Duplicate modal
+    duplicate_title: 'Dupliquer l\'Histoire ?',
+    duplicate_msg_prefix: 'Créer une copie de',
+    duplicate_cancel: 'Annuler',
+    duplicate_btn: 'Dupliquer',
+
+    // Remove scene modal
+    remove_scene_title: 'Supprimer la scène ?',
+    remove_scene_prefix: 'Supprimer',
+    remove_scene_suffix: ' ? Cette action est irréversible.',
+    remove_scene_cancel: 'Annuler',
+    remove_scene_btn: 'Supprimer',
+
+    // Credits modal
+    credits_modal_title: 'Recharger les crédits d\'image',
+    credits_modal_desc: 'Obtenez <strong>50 générations d\'images supplémentaires</strong> pour continuer votre histoire.',
+
+    // Support modal
+    support_modal_title: '💬 Contacter le Support',
+    support_title_lbl: 'Titre',
+    support_title_ph: 'Résumé bref de votre problème…',
+    support_desc_lbl: 'Description',
+    support_desc_ph: 'Décrivez votre problème en détail…',
+    support_cancel: 'Annuler',
+    support_submit: 'Envoyer au Support',
+    support_success_msg: 'Votre message a été envoyé ! Nous vous répondrons bientôt.',
+    support_close: 'Fermer',
+    my_tickets_title: 'Mes Tickets',
   },
 
   // ─────────────────────────────────────────────
@@ -436,6 +612,94 @@ const TRANSLATIONS = {
     delete_msg: 'Esto eliminará permanentemente la historia y todas sus imágenes.',
     delete_cancel: 'Cancelar',
     delete_btn: 'Eliminar',
+
+    // Login wall — tabs & buttons
+    lw_tab_signin: 'Iniciar sesión',
+    lw_tab_signup: 'Registrarse',
+    lw_email_ph: 'Correo electrónico',
+    lw_password_ph: 'Contraseña',
+    lw_password_new_ph: 'Contraseña (mín. 6 caracteres)',
+    lw_confirm_ph: 'Confirmar contraseña',
+    lw_signin_btn: 'Iniciar sesión',
+    lw_signup_btn: 'Crear cuenta',
+    lw_or: 'o continuar con',
+
+    // Data toolbar
+    data_filter_all: 'Todos los géneros',
+
+    // Creator — extra UI
+    credits_left: 'créditos restantes',
+    no_credits: 'Sin créditos —',
+    refill_link: 'Recargar',
+    save_draft: '💾 Guardar',
+    form_char2_name_lbl: '👤 Nombre del personaje',
+    form_char2_name_hint: '(mencionar en las escenas para incluirlo)',
+    form_char2_name_ph: 'ej. Maya, Sensei Riku, Tío Kai…',
+    form_bubbles_lbl: '💬 Estilo de panel',
+    form_bubbles_with: 'Con bocadillos de diálogo',
+    form_bubbles_without: 'Solo ilustraciones',
+    form_quality_lbl: '⚡ Calidad de imagen',
+    form_quality_draft: 'Borrador — más rápido y barato (~€0,01/imagen)',
+    form_quality_std: 'Estándar — buena calidad (~€0,04/imagen)',
+    form_quality_hi: 'Premium — mejor calidad (~€0,17/imagen)',
+    loading_text: '✍️ Tu mangaka interior está despertando…',
+    surprise_text: '✨ ¿Sin ideas aún? Deja que el destino decida.',
+    surprise_btn: '🎲 ¡Sorpréndeme!',
+    edit_cancel: '✕ Cancelar',
+
+    // My mangas empty state
+    my_mangas_empty: 'Sin historias aún — <a href="#creer">¡crea la primera!</a>',
+
+    // Physical (Lulu) modal
+    physical_subtitle: '🖨️ Impreso &amp; enviado por <strong>Lulu</strong>',
+    physical_format_lbl: 'Formato',
+    physical_binding_lbl: 'Encuadernación',
+    physical_interior_lbl: 'Interior',
+    physical_pages_lbl: 'Páginas',
+    physical_fulfillment_lbl: 'Impresión',
+    physical_fulfillment_val: 'Impresión bajo demanda Lulu',
+    physical_delivery_lbl: 'Entrega',
+    physical_delivery_val: '7–14 días hábiles',
+    physical_price_loading: 'Obteniendo precio de Lulu…',
+    physical_print_cost: 'Coste de impresión (Lulu)',
+    physical_shipping_title: '📦 Dirección de envío',
+    physical_firstname_ph: 'Nombre',
+    physical_lastname_ph: 'Apellido',
+    physical_addr1_ph: 'Dirección línea 1',
+    physical_addr2_ph: 'Dirección línea 2 (opcional)',
+    physical_city_ph: 'Ciudad',
+    physical_postal_ph: 'Código postal',
+    physical_state_ph: 'Estado / Provincia',
+    physical_note: 'Tras el pago, tu libro se envía a Lulu para impresión. Una confirmación de envío llegará a tu correo en 24 horas.',
+
+    // Duplicate modal
+    duplicate_title: '¿Duplicar Historia?',
+    duplicate_msg_prefix: 'Crear una copia de',
+    duplicate_cancel: 'Cancelar',
+    duplicate_btn: 'Duplicar',
+
+    // Remove scene modal
+    remove_scene_title: '¿Eliminar escena?',
+    remove_scene_prefix: 'Eliminar',
+    remove_scene_suffix: '? Esta acción no se puede deshacer.',
+    remove_scene_cancel: 'Cancelar',
+    remove_scene_btn: 'Eliminar',
+
+    // Credits modal
+    credits_modal_title: 'Recargar créditos de imagen',
+    credits_modal_desc: 'Obtén <strong>50 generaciones de imagen más</strong> para seguir creando tu historia.',
+
+    // Support modal
+    support_modal_title: '💬 Contactar Soporte',
+    support_title_lbl: 'Título',
+    support_title_ph: 'Resumen breve de tu problema…',
+    support_desc_lbl: 'Descripción',
+    support_desc_ph: 'Describe tu problema en detalle…',
+    support_cancel: 'Cancelar',
+    support_submit: 'Enviar al Soporte',
+    support_success_msg: '¡Tu mensaje ha sido enviado! Te responderemos pronto.',
+    support_close: 'Cerrar',
+    my_tickets_title: 'Mis Tickets',
   },
 };
 
@@ -653,7 +917,173 @@ function applyTranslations() {
   const deleteBtn = document.getElementById('delete-confirm-btn');
   if (deleteBtn && T.delete_btn) deleteBtn.textContent = T.delete_btn;
 
-  // Active flag
+  // ── Login wall ────────────────────────────────────────
+  const lwTabSignin = document.getElementById('lw-tab-signin');
+  if (lwTabSignin && T.lw_tab_signin) lwTabSignin.textContent = T.lw_tab_signin;
+  const lwTabSignup = document.getElementById('lw-tab-signup');
+  if (lwTabSignup && T.lw_tab_signup) lwTabSignup.textContent = T.lw_tab_signup;
+  ph('lw-email',        'lw_email_ph');
+  ph('lw-password',     'lw_password_ph');
+  ph('lw-reg-email',    'lw_email_ph');
+  ph('lw-reg-password', 'lw_password_new_ph');
+  ph('lw-reg-confirm',  'lw_confirm_ph');
+  const lwSigninBtn = document.getElementById('lw-signin-btn');
+  if (lwSigninBtn && T.lw_signin_btn) lwSigninBtn.textContent = T.lw_signin_btn;
+  const lwSignupBtn = document.getElementById('lw-signup-btn');
+  if (lwSignupBtn && T.lw_signup_btn) lwSignupBtn.textContent = T.lw_signup_btn;
+  const lwDividerSpan = document.querySelector('.lw-divider span');
+  if (lwDividerSpan && T.lw_or) lwDividerSpan.textContent = T.lw_or;
+
+  // ── Data filter ──────────────────────────────────────
+  const dataFilterAllOpt = document.querySelector('#data-filter option[value=""]');
+  if (dataFilterAllOpt && T.data_filter_all) dataFilterAllOpt.textContent = T.data_filter_all;
+
+  // ── Creator extras ───────────────────────────────────
+  // Credits badge "N credits left"
+  const creditsBadge = document.getElementById('credits-badge');
+  const creditsCount = document.getElementById('credits-count');
+  if (creditsBadge && creditsCount && T.credits_left) {
+    const n = creditsCount.textContent;
+    creditsBadge.innerHTML = `<span id="credits-count">${n}</span> ${T.credits_left}`;
+  }
+  const creditsBadgeSave = document.getElementById('credits-badge-save');
+  const creditsCountSave = document.getElementById('credits-count-save');
+  if (creditsBadgeSave && creditsCountSave && T.credits_left) {
+    const n = creditsCountSave.textContent;
+    creditsBadgeSave.innerHTML = `<span id="credits-count-save">${n}</span> ${T.credits_left}`;
+  }
+  // "No credits left — Refill credits"
+  const noCreditsSpan = document.querySelector('#credit-refill-prompt > span');
+  if (noCreditsSpan && T.no_credits) noCreditsSpan.textContent = T.no_credits;
+  const refillLinkEl = document.querySelector('#credit-refill-prompt .refill-link');
+  if (refillLinkEl && T.refill_link) refillLinkEl.textContent = T.refill_link;
+  // Save draft button
+  const saveDraftBtn = document.getElementById('save-draft-btn');
+  if (saveDraftBtn && T.save_draft) saveDraftBtn.textContent = T.save_draft;
+  // Second character name label + hint + placeholder
+  const char2NameLabel = document.querySelector('label[for="f-char2-name"]');
+  if (char2NameLabel && T.form_char2_name_lbl) {
+    const small = char2NameLabel.querySelector('small');
+    char2NameLabel.textContent = T.form_char2_name_lbl + ' ';
+    if (small) { small.textContent = T.form_char2_name_hint || small.textContent; char2NameLabel.appendChild(small); }
+  }
+  ph('f-char2-name', 'form_char2_name_ph');
+  // Panel style select
+  set('label[for="f-bubbles"]', 'form_bubbles_lbl');
+  const bubblesSelect = document.getElementById('f-bubbles');
+  if (bubblesSelect) {
+    if (bubblesSelect.options[0] && T.form_bubbles_with)    bubblesSelect.options[0].textContent = T.form_bubbles_with;
+    if (bubblesSelect.options[1] && T.form_bubbles_without) bubblesSelect.options[1].textContent = T.form_bubbles_without;
+  }
+  // Image quality select
+  set('label[for="f-img-quality"]', 'form_quality_lbl');
+  const qualitySelect = document.getElementById('f-img-quality');
+  if (qualitySelect) {
+    if (qualitySelect.options[0] && T.form_quality_draft) qualitySelect.options[0].textContent = T.form_quality_draft;
+    if (qualitySelect.options[1] && T.form_quality_std)   qualitySelect.options[1].textContent = T.form_quality_std;
+    if (qualitySelect.options[2] && T.form_quality_hi)    qualitySelect.options[2].textContent = T.form_quality_hi;
+  }
+  // Loading message
+  const loadingMsg = document.getElementById('loading-msg');
+  if (loadingMsg && T.loading_text) loadingMsg.textContent = T.loading_text;
+  // Surprise bar
+  const surpriseTextEl = document.querySelector('.surprise-bar-text');
+  if (surpriseTextEl && T.surprise_text) surpriseTextEl.textContent = T.surprise_text;
+  const surpriseBtnEl = document.querySelector('.surprise-btn');
+  if (surpriseBtnEl && T.surprise_btn) surpriseBtnEl.textContent = T.surprise_btn;
+  // Edit mode cancel
+  const editCancelBtn = document.querySelector('.edit-cancel-btn');
+  if (editCancelBtn && T.edit_cancel) editCancelBtn.textContent = T.edit_cancel;
+
+  // ── My mangas empty state ────────────────────────────
+  const myMangasEmptyP = document.querySelector('#my-mangas-empty p');
+  if (myMangasEmptyP && T.my_mangas_empty) myMangasEmptyP.innerHTML = T.my_mangas_empty;
+
+  // ── Physical (Lulu) modal ────────────────────────────
+  const physSubtitle = document.querySelector('.physical-subtitle');
+  if (physSubtitle && T.physical_subtitle) physSubtitle.innerHTML = T.physical_subtitle;
+  // Spec row labels
+  const specRowLabels = document.querySelectorAll('.physical-spec-row span:first-child');
+  const specLabelKeys = ['physical_format_lbl','physical_binding_lbl','physical_interior_lbl','physical_pages_lbl','physical_fulfillment_lbl','physical_delivery_lbl'];
+  specRowLabels.forEach((el, i) => { if (T[specLabelKeys[i]]) el.textContent = T[specLabelKeys[i]]; });
+  // Spec row values (fulfillment=4, delivery=5)
+  const specRowVals = document.querySelectorAll('.physical-spec-row span:last-child');
+  if (specRowVals[4] && T.physical_fulfillment_val) specRowVals[4].textContent = T.physical_fulfillment_val;
+  if (specRowVals[5] && T.physical_delivery_val)    specRowVals[5].textContent = T.physical_delivery_val;
+  // Price loading label
+  const priceLodingEl = document.querySelector('.physical-price-loading');
+  if (priceLodingEl && T.physical_price_loading) {
+    const spinner = priceLodingEl.querySelector('.spinner-small');
+    priceLodingEl.textContent = ' ' + T.physical_price_loading;
+    if (spinner) priceLodingEl.insertBefore(spinner, priceLodingEl.firstChild);
+  }
+  const printCostLbl = document.querySelector('.physical-price-label');
+  if (printCostLbl && T.physical_print_cost) printCostLbl.textContent = T.physical_print_cost;
+  // Shipping section
+  const physShippingTitle = document.querySelector('.physical-section-title');
+  if (physShippingTitle && T.physical_shipping_title) physShippingTitle.textContent = T.physical_shipping_title;
+  ph('ps-firstname', 'physical_firstname_ph');
+  ph('ps-lastname',  'physical_lastname_ph');
+  ph('ps-addr1',     'physical_addr1_ph');
+  ph('ps-addr2',     'physical_addr2_ph');
+  ph('ps-city',      'physical_city_ph');
+  ph('ps-postal',    'physical_postal_ph');
+  ph('ps-state',     'physical_state_ph');
+  const physNoteEl = document.querySelector('.physical-note');
+  if (physNoteEl && T.physical_note) physNoteEl.textContent = T.physical_note;
+
+  // ── Duplicate modal ──────────────────────────────────
+  set('#duplicate-modal .delete-confirm-title', 'duplicate_title');
+  const dupMsgEl = document.querySelector('#duplicate-modal .delete-confirm-msg');
+  if (dupMsgEl && T.duplicate_msg_prefix) {
+    const strong = dupMsgEl.querySelector('strong');
+    const name = strong ? strong.textContent : '';
+    dupMsgEl.innerHTML = `${T.duplicate_msg_prefix} <strong id="duplicate-confirm-name">${name}</strong>?`;
+  }
+  const dupCancelBtn = document.querySelector('#duplicate-modal .delete-confirm-actions .action-btn:first-child');
+  if (dupCancelBtn && T.duplicate_cancel) dupCancelBtn.textContent = T.duplicate_cancel;
+  const dupConfirmBtn = document.getElementById('duplicate-confirm-btn');
+  if (dupConfirmBtn && T.duplicate_btn) dupConfirmBtn.textContent = T.duplicate_btn;
+
+  // ── Remove scene modal ───────────────────────────────
+  set('#remove-scene-modal .delete-confirm-title', 'remove_scene_title');
+  const removeSceneMsgEl = document.querySelector('#remove-scene-modal .delete-confirm-msg');
+  if (removeSceneMsgEl) {
+    const strong = removeSceneMsgEl.querySelector('strong');
+    const label = strong ? strong.textContent : '';
+    const prefix = T.remove_scene_prefix || 'Remove';
+    const suffix = T.remove_scene_suffix || '? This cannot be undone.';
+    removeSceneMsgEl.innerHTML = `${prefix} <strong id="remove-scene-label">${label}</strong>${suffix}`;
+  }
+  const removeSceneCancelBtn = document.querySelector('#remove-scene-modal .delete-confirm-actions .action-btn:first-child');
+  if (removeSceneCancelBtn && T.remove_scene_cancel) removeSceneCancelBtn.textContent = T.remove_scene_cancel;
+  const removeSceneActionBtn = document.querySelector('#remove-scene-modal .delete-confirm-actions .action-btn:last-child');
+  if (removeSceneActionBtn && T.remove_scene_btn) removeSceneActionBtn.textContent = T.remove_scene_btn;
+
+  // ── Credits modal ─────────────────────────────────────
+  const creditsModalTitle = document.querySelector('.credits-modal-title');
+  if (creditsModalTitle && T.credits_modal_title) creditsModalTitle.textContent = T.credits_modal_title;
+  const creditsModalDesc = document.querySelector('.credits-modal-desc');
+  if (creditsModalDesc && T.credits_modal_desc) creditsModalDesc.innerHTML = T.credits_modal_desc;
+
+  // ── Support modal ─────────────────────────────────────
+  set('.support-modal-title', 'support_modal_title');
+  const supportFormLabels = document.querySelectorAll('#support-form .support-label');
+  if (supportFormLabels[0] && T.support_title_lbl) supportFormLabels[0].textContent = T.support_title_lbl;
+  if (supportFormLabels[1] && T.support_desc_lbl)  supportFormLabels[1].textContent = T.support_desc_lbl;
+  ph('support-title-input', 'support_title_ph');
+  ph('support-desc-input',  'support_desc_ph');
+  const supportCancelBtn = document.querySelector('.support-cancel-btn');
+  if (supportCancelBtn && T.support_cancel) supportCancelBtn.textContent = T.support_cancel;
+  const supportSubmitBtn = document.getElementById('support-submit-btn');
+  if (supportSubmitBtn && T.support_submit) supportSubmitBtn.textContent = T.support_submit;
+  const supportSuccessP = document.querySelector('#support-success p');
+  if (supportSuccessP && T.support_success_msg) supportSuccessP.textContent = T.support_success_msg;
+  const supportCloseBtn = document.querySelector('#support-success .support-submit-btn');
+  if (supportCloseBtn && T.support_close) supportCloseBtn.textContent = T.support_close;
+  set('.my-tickets-title', 'my_tickets_title');
+
+  // ── Active flag ───────────────────────────────────────
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
