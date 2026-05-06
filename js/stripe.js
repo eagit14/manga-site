@@ -47,7 +47,10 @@ async function _openModal(title, grad, imgs, storyId) {
   document.getElementById('modal-title').textContent = title;
 
   window._currentStoryId = storyId || null;
-  if (storyId) localStorage.setItem('_pendingPurchaseStoryId', storyId);
+  if (storyId) {
+    localStorage.setItem('_pendingPurchaseStoryId', storyId);
+    localStorage.setItem('_pendingOrderType', 'digital');
+  }
 
   // Check if already purchased
   let purchased = false;
@@ -118,6 +121,13 @@ async function applyPromoCode() {
 
     if (data?.success) {
       _promoMsg(msg, '🎉 Code applied! Your manga is unlocked.', 'success');
+      saveOrder({
+        orderType:       'promo',
+        storyId,
+        amountUsd:       0,
+        paymentProvider: 'promo',
+        promoCode:       code,
+      });
       setTimeout(() => {
         _updateModalPurchaseState(true);
         loadMyMangas();

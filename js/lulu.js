@@ -55,25 +55,21 @@ function _luluEstimate(pageCount) {
   return LULU_BASE_COST + pageCount * LULU_PER_PAGE;
 }
 
-// Try Lulu API; fall back to published formula on CORS / network error.
+// Calls the local Node proxy (/api/lulu/price) which forwards to Lulu server-side.
+// Falls back to the published pricing formula if the proxy is unavailable.
 async function luluFetchPrice(numScenes) {
   const pageCount = _luluPageCount(numScenes);
 
   try {
-    const token = await luluGetToken();
-    const res = await fetch(`${LULU_API}/print-jobs/v1/costs/`, {
+    const res = await fetch('/api/lulu/price', {
       method:  'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         line_items: [{ page_count: pageCount, pod_package_id: LULU_POD_PACKAGE, quantity: 1 }],
-        // US address used as a reference for the estimate
         shipping_address: {
-          name: 'Preview',
-          street1: '123 Main St',
-          city: 'New York',
-          state_code: 'NY',
-          postcode: '10001',
-          country_code: 'US',
+          name: 'Preview', street1: '123 Main St',
+          city: 'New York', state_code: 'NY',
+          postcode: '10001', country_code: 'US',
           phone_number: '5555550100',
         },
         shipping_level: 'GROUND',
@@ -81,13 +77,14 @@ async function luluFetchPrice(numScenes) {
     });
 
     if (res.ok) {
-      const data     = await res.json();
-      const line     = data.line_items?.[0];
-      const printCost  = parseFloat(line?.cost_excl_discounts || line?.unit_tier_price || 0);
-      const shipping   = parseFloat(data.shipping_cost?.total_cost_excl_tax || 0);
-      return { printCost, shipping, pageCount, source: 'api' };
+      const data      = await res.json();
+      if (data.error) throw new Error(data.error);
+      const line      = data.line_items?.[0];
+      const printCost = parseFloat(line?.cost_excl_discounts || line?.unit_tier_price || 0);
+      const shipping  = parseFloat(data.shipping_cost?.total_cost_excl_tax || 0);
+      if (printCost > 0) return { printCost, shipping, pageCount, source: 'api' };
     }
-  } catch (_) { /* fall through to estimate */ }
+  } catch (_) { /* proxy not running or credentials missing — fall through */ }
 
   // Formula fallback
   const printCost = _luluEstimate(pageCount);
@@ -111,7 +108,7 @@ async function luluCalculateCost(pageCount, shippingAddress) {
   return res.json();
 }
 
-async function luluCreatePrintJob({ title, coverUrl, interiorUrl, pageCount, shippingAddress, contactEmail }) {
+async function luluCreatePrintJob({ title, coverUrl, interiorUrl, pageCount, shippingAddress, contactEmail, storyId }) {
   const token = await luluGetToken();
   const res = await fetch(`${LULU_API}/print-jobs/v1/`, {
     method:  'POST',
@@ -130,7 +127,22 @@ async function luluCreatePrintJob({ title, coverUrl, interiorUrl, pageCount, shi
     }),
   });
   if (!res.ok) throw new Error(`Lulu print job failed (${res.status}): ${await res.text()}`);
-  return res.json();
+  const job = await res.json();
+
+  // Record the physical order
+  const printCost = _luluEstimate(pageCount || _luluPageCount(_physicalOpts._numScenes || 4));
+  await saveOrder({
+    orderType:       'physical',
+    storyId:         storyId || _physicalOpts._storyId || null,
+    storyTitle:      title,
+    amountUsd:       printCost,
+    paymentProvider: 'lulu',
+    pageCount:       pageCount || null,
+    luluPrintJobId:  job.id ? String(job.id) : null,
+    shippingAddress,
+  });
+
+  return job;
 }
 
 // ── Physical order modal controller ───────────────────
@@ -177,6 +189,9 @@ async function openPhysicalOrder(opts = {}) {
   // Page count spec
   const pageCount = _luluPageCount(numScenes);
   document.getElementById('physical-spec-pages').textContent = `${pageCount} pages`;
+
+  // Tag pending order type so markMangaPurchased knows this was physical
+  localStorage.setItem('_pendingOrderType', 'physical');
 
   // Show modal with loading price
   _showPriceLoading(true);

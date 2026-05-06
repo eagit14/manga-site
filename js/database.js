@@ -22,6 +22,9 @@ async function saveStoryToSupabase(data, aiContent, grad) {
         title:          data.titre    || 'Untitled',
         genre:          data.genre,
         art_style:      data.style,
+        medium:         data.medium        || 'manga',
+        color_style:    data.colorStyle    || 'bw',
+        show_bubbles:   data.bubbles !== false,
         hero_name:      data.heros    || null,
         hero_desc:      data.heroDesc || null,
         universe:       data.univers  || null,
@@ -30,7 +33,10 @@ async function saveStoryToSupabase(data, aiContent, grad) {
         synopsis:       aiContent?.synopsis         || null,
         tagline:        aiContent?.tagline          || null,
         hero_ai_desc:   aiContent?.hero_description || null,
+        hero_face_desc: aiContent?.hero_face_desc   || null,
         universe_desc:  aiContent?.universe_desc    || null,
+        char2_name:     data.char2Name              || null,
+        char2_face_desc: aiContent?.char2_face_desc || null,
         cover_gradient: grad || null,
         updated_at:     new Date().toISOString(),
       })
@@ -51,6 +57,8 @@ async function saveStoryToSupabase(data, aiContent, grad) {
         chapter_num: ch.num,
         title:       ch.title       || null,
         description: ch.description || null,
+        medium:      ch.medium      || 'manga',
+        color_style: ch.colorStyle  || 'bw',
       }));
       const { error: chapErr } = await _supabase.from('manga_chapters').insert(chapterRows);
       if (chapErr) console.error('[DB] manga_chapters insert error:', chapErr.code, chapErr.message);
@@ -73,6 +81,9 @@ async function updateStoryInSupabase(storyId, data, aiContent, grad, keepImages 
         title:          data.titre    || 'Untitled',
         genre:          data.genre,
         art_style:      data.style,
+        medium:         data.medium        || 'manga',
+        color_style:    data.colorStyle    || 'bw',
+        show_bubbles:   data.bubbles !== false,
         hero_name:      data.heros    || null,
         hero_desc:      data.heroDesc || null,
         universe:       data.univers  || null,
@@ -81,7 +92,10 @@ async function updateStoryInSupabase(storyId, data, aiContent, grad, keepImages 
         synopsis:       aiContent?.synopsis         || null,
         tagline:        aiContent?.tagline          || null,
         hero_ai_desc:   aiContent?.hero_description || null,
+        hero_face_desc: aiContent?.hero_face_desc   || null,
         universe_desc:  aiContent?.universe_desc    || null,
+        char2_name:     data.char2Name              || null,
+        char2_face_desc: aiContent?.char2_face_desc || null,
         cover_gradient: grad || null,
         updated_at:     new Date().toISOString(),
       })
@@ -92,14 +106,18 @@ async function updateStoryInSupabase(storyId, data, aiContent, grad, keepImages 
     // Replace chapters
     await _supabase.from('manga_chapters').delete().eq('story_id', storyId);
     if (data.chapters && data.chapters.length > 0) {
-      await _supabase.from('manga_chapters').insert(
+      const { error: chapErr } = await _supabase.from('manga_chapters').insert(
         data.chapters.map(ch => ({
           story_id:    storyId,
           chapter_num: ch.num,
           title:       ch.title       || null,
           description: ch.description || null,
+          medium:      ch.medium      || 'manga',
+          color_style: ch.colorStyle  || 'bw',
         }))
       );
+      if (chapErr) console.error('[DB] manga_chapters update error:', chapErr.code, chapErr.message);
+      else console.log('[DB] Chapters updated ✓ count:', data.chapters.length);
     }
 
     // Remove old images so fresh ones are generated (skip on draft-only saves)
@@ -119,14 +137,57 @@ async function updateStoryInSupabase(storyId, data, aiContent, grad, keepImages 
   }
 }
 
+async function saveOrder({ orderType, storyId, storyTitle, amountUsd, paymentProvider, promoCode, pageCount, luluPrintJobId, shippingAddress }) {
+  if (!_supabase) return null;
+  try {
+    const { data: { user } } = await _supabase.auth.getUser();
+    const { data, error } = await _supabase.from('orders').insert({
+      user_id:           user?.id            || null,
+      story_id:          storyId             || null,
+      order_type:        orderType,
+      status:            'completed',
+      amount_usd:        amountUsd           ?? null,
+      payment_provider:  paymentProvider     || null,
+      promo_code:        promoCode           || null,
+      story_title:       storyTitle          || null,
+      page_count:        pageCount           || null,
+      lulu_print_job_id: luluPrintJobId      || null,
+      shipping_address:  shippingAddress     || null,
+    }).select('id').single();
+    if (error) { console.error('[DB] saveOrder error:', error.message); return null; }
+    console.log('[DB] Order saved ✓ id:', data.id, 'type:', orderType);
+    return data.id;
+  } catch (err) {
+    console.error('[DB] saveOrder unexpected error:', err);
+    return null;
+  }
+}
+
 async function markMangaPurchased(storyId) {
   if (!_supabase || !storyId) return;
+
+  // Determine order type from the pending flag set when the payment modal was opened
+  const orderType = localStorage.getItem('_pendingOrderType') || 'digital';
+  localStorage.removeItem('_pendingOrderType');
+
+  // Fetch story title for the order record
+  const { data: story } = await _supabase
+    .from('manga_stories').select('title').eq('id', storyId).single();
+
   const { error } = await _supabase
     .from('manga_stories')
     .update({ purchased_at: new Date().toISOString() })
     .eq('id', storyId);
   if (error) console.error('[DB] markMangaPurchased error:', error.message);
-  else console.log('[DB] Story marked as purchased ✓', storyId);
+  else {
+    console.log('[DB] Story marked as purchased ✓', storyId);
+    await saveOrder({
+      orderType,
+      storyId,
+      storyTitle:      story?.title || null,
+      paymentProvider: 'stripe',
+    });
+  }
 }
 
 async function deleteManga(storyId) {
