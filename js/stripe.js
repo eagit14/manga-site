@@ -124,7 +124,7 @@ async function applyPromoCode() {
       saveOrder({
         orderType:       'promo',
         storyId,
-        amountUsd:       0,
+        amount:          0,
         paymentProvider: 'promo',
         promoCode:       code,
       });

@@ -137,22 +137,22 @@ async function updateStoryInSupabase(storyId, data, aiContent, grad, keepImages 
   }
 }
 
-async function saveOrder({ orderType, storyId, storyTitle, amountUsd, paymentProvider, promoCode, pageCount, luluPrintJobId, shippingAddress }) {
+async function saveOrder({ orderType, storyId, storyTitle, amount, paymentProvider, promoCode, pageCount, luluPrintJobId, shippingAddress }) {
   if (!_supabase) return null;
   try {
     const { data: { user } } = await _supabase.auth.getUser();
     const { data, error } = await _supabase.from('orders').insert({
-      user_id:           user?.id            || null,
-      story_id:          storyId             || null,
+      user_id:           user?.id        || null,
+      story_id:          storyId         || null,
       order_type:        orderType,
       status:            'completed',
-      amount_usd:        amountUsd           ?? null,
-      payment_provider:  paymentProvider     || null,
-      promo_code:        promoCode           || null,
-      story_title:       storyTitle          || null,
-      page_count:        pageCount           || null,
-      lulu_print_job_id: luluPrintJobId      || null,
-      shipping_address:  shippingAddress     || null,
+      amount:            amount          ?? null,
+      payment_provider:  paymentProvider || null,
+      promo_code:        promoCode       || null,
+      story_title:       storyTitle      || null,
+      page_count:        pageCount       || null,
+      lulu_print_job_id: luluPrintJobId  || null,
+      shipping_address:  shippingAddress || null,
     }).select('id').single();
     if (error) { console.error('[DB] saveOrder error:', error.message); return null; }
     console.log('[DB] Order saved ✓ id:', data.id, 'type:', orderType);
@@ -166,11 +166,11 @@ async function saveOrder({ orderType, storyId, storyTitle, amountUsd, paymentPro
 async function markMangaPurchased(storyId) {
   if (!_supabase || !storyId) return;
 
-  // Determine order type from the pending flag set when the payment modal was opened
-  const orderType = localStorage.getItem('_pendingOrderType') || 'digital';
+  const orderType       = localStorage.getItem('_pendingOrderType')      || 'digital';
+  const shippingAddress = localStorage.getItem('_pendingShippingAddress') || null;
   localStorage.removeItem('_pendingOrderType');
+  localStorage.removeItem('_pendingShippingAddress');
 
-  // Fetch story title for the order record
   const { data: story } = await _supabase
     .from('manga_stories').select('title').eq('id', storyId).single();
 
@@ -184,8 +184,9 @@ async function markMangaPurchased(storyId) {
     await saveOrder({
       orderType,
       storyId,
-      storyTitle:      story?.title || null,
+      storyTitle:      story?.title    || null,
       paymentProvider: 'stripe',
+      shippingAddress: shippingAddress || null,
     });
   }
 }

@@ -136,7 +136,7 @@ async function luluCreatePrintJob({ title, coverUrl, interiorUrl, pageCount, shi
     orderType:       'physical',
     storyId:         storyId || _physicalOpts._storyId || null,
     storyTitle:      title,
-    amountUsd:       printCost,
+    amount:          printCost,
     paymentProvider: 'lulu',
     pageCount:       pageCount || null,
     luluPrintJobId:  job.id ? String(job.id) : null,
@@ -179,6 +179,19 @@ function _populateShippingForm(p) {
   s('ps-country',   p.country);
 }
 
+function _saveShippingToStorage() {
+  const v = id => document.getElementById(id)?.value.trim() || '';
+  const parts = [
+    `${v('ps-firstname')} ${v('ps-lastname')}`.trim(),
+    v('ps-addr1'),
+    v('ps-addr2'),
+    v('ps-city'),
+    v('ps-postal'),
+    v('ps-country'),
+  ].filter(Boolean);
+  if (parts.length) localStorage.setItem('_pendingShippingAddress', parts.join(', '));
+}
+
 function _getShippingFromForm() {
   const v = id => document.getElementById(id)?.value.trim() || '';
   return {
@@ -213,8 +226,11 @@ async function openPhysicalOrder(opts = {}) {
     return;
   }
 
-  // Pre-fill shipping form with profile data (user can still edit)
+  // Pre-fill shipping form and persist address to localStorage (survives Stripe redirect)
   _populateShippingForm(profile);
+  _saveShippingToStorage();
+  ['ps-firstname','ps-lastname','ps-addr1','ps-addr2','ps-city','ps-postal','ps-country']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.oninput = _saveShippingToStorage; });
 
   _physicalOpts = {
     ...opts,
