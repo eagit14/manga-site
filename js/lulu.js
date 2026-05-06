@@ -151,6 +151,22 @@ async function luluCreatePrintJob({ title, coverUrl, interiorUrl, pageCount, shi
 
 let _physicalOpts = {};
 
+async function _getShippingProfile() {
+  if (!_supabase) return null;
+  const { data: { user } } = await _supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await _supabase
+    .from('users')
+    .select('first_name, last_name, address_line1, city, postal_code, country')
+    .eq('id', user.id)
+    .single();
+  return data || null;
+}
+
+function _isShippingComplete(p) {
+  return !!(p && p.first_name && p.last_name && p.address_line1 && p.city && p.postal_code && p.country);
+}
+
 async function openPhysicalOrder(opts = {}) {
   const data      = window._lastMangaData;
   const grad      = opts.grad     || window._lastGrad || 'linear-gradient(135deg,#1a0505,#c0392b)';
@@ -159,6 +175,18 @@ async function openPhysicalOrder(opts = {}) {
   const thumbUrl  = opts.thumbUrl || null;
 
   if (!opts.title && !data) { alert('Please generate a manga first.'); return; }
+
+  // Require a complete shipping address before proceeding
+  const profile = await _getShippingProfile();
+  if (!_isShippingComplete(profile)) {
+    await openProfile();
+    const msg = document.getElementById('profile-save-msg');
+    if (msg) {
+      msg.textContent = '⚠ Please fill in your shipping address (first name, last name, address, city, postal code and country) then try ordering again.';
+      msg.className = 'profile-save-msg error';
+    }
+    return;
+  }
 
   _physicalOpts = {
     ...opts,
