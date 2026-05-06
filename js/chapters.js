@@ -22,6 +22,39 @@ function addChapter() {
         </svg>
       </span>
       <span class="chapter-entry-num">Sc. ${num}</span>
+      <div class="scene-medium-toggle" id="scene-medium-toggle-${cid}">
+        <button type="button" class="scene-medium-btn active" id="scene-medium-manga-${cid}" onclick="_setSceneMedium(${cid},'manga')" title="Manga style">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/>
+            <rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>
+          </svg>
+        </button>
+        <button type="button" class="scene-medium-btn" id="scene-medium-cartoon-${cid}" onclick="_setSceneMedium(${cid},'cartoon')" title="Cartoon style">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+        </button>
+      </div>
+      <div class="scene-medium-toggle" id="scene-color-toggle-${cid}">
+        <button type="button" class="scene-medium-btn active" id="scene-color-bw-${cid}" onclick="_setSceneColor(${cid},'bw')" title="Black &amp; White">
+          <svg width="13" height="13" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor"/>
+            <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <button type="button" class="scene-medium-btn" id="scene-color-color-${cid}" onclick="_setSceneColor(${cid},'color')" title="Full Color">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="8.5" cy="10" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="12" cy="7.5" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="15.5" cy="10" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="15.5" cy="14" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="8.5" cy="14" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+      </div>
       <input class="form-input chapter-title-input" id="ch-title-${cid}" type="text" placeholder="Scene title…" maxlength="80" />
       <div class="scene-thumb" id="scene-thumb-${cid}" style="display:none" title="Hover to preview">
         <img id="scene-thumb-img-${cid}" alt="" />
@@ -31,6 +64,7 @@ function addChapter() {
         </div>
       </div>
       <button type="button" class="scene-gen-img-btn" id="scene-gen-btn-${cid}" onclick="generateSceneImage(${cid})">🎨 Generate</button>
+      <span class="scene-gen-msg" id="scene-gen-msg-${cid}"></span>
       <input type="file" id="scene-attach-input-${cid}" accept="image/*" style="display:none" onchange="_handleSceneAttach(${cid}, this)" />
       <button type="button" class="scene-attach-btn" id="scene-attach-btn-${cid}" onclick="attachSceneImage(${cid})" title="Attach image">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -43,6 +77,7 @@ function addChapter() {
   list.appendChild(div);
   updateChapterUI();
   _initChapterDrag();
+  div.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ── Drag-and-drop reordering ──────────────────────────
@@ -156,9 +191,30 @@ function _initChapterDrag() {
   });
 }
 
+let _pendingRemoveCid = null;
+
 function removeChapter(cid) {
-  const el = document.getElementById(`chapter-entry-${cid}`);
+  _pendingRemoveCid = cid;
+  const entry = document.getElementById(`chapter-entry-${cid}`);
+  const badge = entry?.querySelector('.chapter-entry-num');
+  const label = badge?.textContent || 'this scene';
+  const titleEl = entry?.querySelector('.chapter-title-input');
+  const title = titleEl?.value?.trim();
+  document.getElementById('remove-scene-label').textContent = title ? `${label} — "${title}"` : label;
+  document.getElementById('remove-scene-modal').style.display = 'flex';
+}
+
+function closeRemoveSceneModal() {
+  _pendingRemoveCid = null;
+  document.getElementById('remove-scene-modal').style.display = 'none';
+}
+
+function _executeRemoveChapter() {
+  if (_pendingRemoveCid === null) return;
+  const el = document.getElementById(`chapter-entry-${_pendingRemoveCid}`);
   if (el) el.remove();
+  _pendingRemoveCid = null;
+  document.getElementById('remove-scene-modal').style.display = 'none';
   updateChapterUI();
   renumberChapters();
 }
@@ -177,6 +233,26 @@ function updateChapterUI() {
   btn.disabled = count >= 20;
 }
 
+function _setSceneMedium(cid, medium) {
+  document.getElementById(`scene-medium-manga-${cid}`)?.classList.toggle('active', medium === 'manga');
+  document.getElementById(`scene-medium-cartoon-${cid}`)?.classList.toggle('active', medium === 'cartoon');
+}
+
+function _getSceneMedium(entry) {
+  const cartoonBtn = entry.querySelector('[id^="scene-medium-cartoon-"]');
+  return cartoonBtn?.classList.contains('active') ? 'cartoon' : 'manga';
+}
+
+function _setSceneColor(cid, colorStyle) {
+  document.getElementById(`scene-color-bw-${cid}`)?.classList.toggle('active', colorStyle === 'bw');
+  document.getElementById(`scene-color-color-${cid}`)?.classList.toggle('active', colorStyle === 'color');
+}
+
+function _getSceneColor(entry) {
+  const colorBtn = entry.querySelector('[id^="scene-color-color-"]');
+  return colorBtn?.classList.contains('active') ? 'color' : 'bw';
+}
+
 function getChaptersData() {
   const chapters = [];
   document.querySelectorAll('.chapter-entry').forEach((el, i) => {
@@ -186,6 +262,8 @@ function getChaptersData() {
       num:         i + 1,
       title:       titleEl ? titleEl.value.trim() : '',
       description: descEl  ? descEl.value.trim()  : '',
+      medium:      _getSceneMedium(el),
+      colorStyle:  _getSceneColor(el),
     });
   });
   return chapters;
@@ -226,6 +304,24 @@ async function generateSceneImage(cid) {
   const apiKey = OPENAI_API_KEY;
   if (!apiKey || apiKey.includes('YOUR_')) { alert('OpenAI API key not configured.'); return; }
 
+  // Title required
+  const titreVal = document.getElementById('f-titre')?.value.trim();
+  if (!titreVal) {
+    const titreErr = document.getElementById('err-titre');
+    if (titreErr) titreErr.classList.add('show');
+    document.getElementById('f-titre')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('f-titre')?.focus();
+    return;
+  }
+
+  // Hero photo required
+  if (!_heroImageBase64) {
+    const heroPhotoErr = document.getElementById('err-hero-photo');
+    if (heroPhotoErr) heroPhotoErr.classList.add('show');
+    document.getElementById('hero-upload-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
   // Credit check
   const currentCredits = getUserCredits();
   if (currentCredits !== null && currentCredits <= 0) {
@@ -235,14 +331,16 @@ async function generateSceneImage(cid) {
 
   // Build story context from current form values
   const data = {
-    titre:      document.getElementById('f-titre')?.value.trim()     || '',
-    genre:      document.getElementById('f-genre')?.value            || 'shonen',
-    style:      document.getElementById('f-style')?.value            || 'dynamique',
-    heros:      document.getElementById('f-heros')?.value.trim()     || '',
-    heroDesc:   document.getElementById('f-hero-desc')?.value.trim() || '',
-    univers:    document.getElementById('f-univers')?.value.trim()   || '',
-    colorStyle: document.getElementById('f-color-style')?.value      || 'bw',
-    bubbles:    document.getElementById('f-bubbles')?.value          !== 'no',
+    titre:      document.getElementById('f-titre')?.value.trim()      || '',
+    genre:      document.getElementById('f-genre')?.value             || 'shonen',
+    style:      document.getElementById('f-style')?.value             || 'dynamique',
+    heros:      document.getElementById('f-heros')?.value.trim()      || '',
+    heroDesc:   document.getElementById('f-hero-desc')?.value.trim()  || '',
+    univers:    document.getElementById('f-univers')?.value.trim()    || '',
+    colorStyle: _getSceneColor(entry),
+    bubbles:    document.getElementById('f-bubbles')?.value           !== 'no',
+    medium:     _getSceneMedium(entry),
+    char2Name:  document.getElementById('f-char2-name')?.value.trim() || null,
     chapters:   getChaptersData(),
   };
   const imgModel    = getImgModel();
@@ -257,18 +355,12 @@ async function generateSceneImage(cid) {
   const promptObj   = allPrompts.find(p => p.chapterNum === sceneNum) || allPrompts[0];
   if (!promptObj) { alert('Could not build prompt for this scene.'); return; }
 
-  // ── Build request body ─────────────────────────
-  let reqBody;
-  if (imgModel === 'dall-e-3') {
-    reqBody = { model: 'dall-e-3', prompt: promptObj.prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json' };
-  } else {
-    reqBody = { model: 'gpt-image-1', prompt: promptObj.prompt, n: 1, size: '1024x1536', quality };
-  }
-
   // ── Loading state ──────────────────────────────────
-  const origLabel = btn.textContent;
-  btn.disabled    = true;
-  btn.textContent = '⏳';
+  const origLabel  = btn.textContent;
+  const msgEl      = document.getElementById(`scene-gen-msg-${cid}`);
+  btn.disabled     = true;
+  btn.textContent  = '⏳';
+  if (msgEl) msgEl.textContent = 'Generating…';
 
   // Clear old thumbnail immediately so stale image doesn't linger
   const _oldThumb    = document.getElementById(`scene-thumb-${cid}`);
@@ -279,20 +371,17 @@ async function generateSceneImage(cid) {
   if (_oldPopupImg) _oldPopupImg.src = '';
 
   try {
-    // ── Call OpenAI image API ──────────────────────
-    const res = await fetch('https://api.openai.com/v1/images/generations', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify(reqBody),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    // ── Fetch dialogue lines when not cached (e.g. editing existing story) ──
+    if (promptObj.hasBubbles && !promptObj.dialogueLines?.length) {
+      const ch = (data.chapters || []).find(c => c.num === sceneNum) || {};
+      promptObj.dialogueLines = await fetchDialogueForScene(apiKey, ch.title || `Scene ${sceneNum}`, ch.description || '');
     }
 
-    const json = await res.json();
-    const b64  = json.data[0].b64_json;
+    // ── Call OpenAI image API (passes hero photo when available) ──────
+    let b64 = await _generateSingleImage(apiKey, promptObj.prompt, quality, imgModel, promptObj.includeChar2 || false, promptObj.includeHero !== false);
+    if (promptObj.hasBubbles && promptObj.dialogueLines?.length) {
+      b64 = await overlayBubbles(b64, promptObj.panelCount || 4, promptObj.dialogueLines);
+    }
 
     // Show thumbnail immediately from local base64
     showScenePreview(cid, `data:image/png;base64,${b64}`);
@@ -311,6 +400,11 @@ async function generateSceneImage(cid) {
         .eq('chapter_num', sceneNum);
 
       await saveImageToSupabase(storyId, 'chapter', sceneNum, permanentUrl, promptObj.prompt);
+
+      // Regenerate cached cover PDF in the background
+      if (typeof _triggerCoverPreGeneration === 'function') {
+        _triggerCoverPreGeneration(storyId).catch(err => console.error('[Cover] trigger failed:', err));
+      }
 
       // Keep the viewer URL map in sync so View button shows fresh images
       if (window._tileImageUrls) {
@@ -351,6 +445,7 @@ async function generateSceneImage(cid) {
   } finally {
     btn.disabled    = false;
     btn.textContent = origLabel;
+    if (msgEl) msgEl.textContent = '';
   }
 }
 
@@ -408,6 +503,11 @@ async function _handleSceneAttach(cid, input) {
         .eq('image_type',  'chapter')
         .eq('chapter_num', sceneNum);
       await saveImageToSupabase(storyId, 'chapter', sceneNum, permanentUrl, null);
+
+      // Regenerate cached cover PDF in the background
+      if (typeof _triggerCoverPreGeneration === 'function') {
+        _triggerCoverPreGeneration(storyId).catch(err => console.error('[Cover] trigger failed:', err));
+      }
 
       // Keep viewer URL map in sync
       if (window._tileImageUrls) {

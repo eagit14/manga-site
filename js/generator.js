@@ -8,8 +8,26 @@ async function handleGenerate() {
   errEl.classList.remove('show');
   document.getElementById('chapters-list').classList.remove('field-error');
   document.getElementById('err-chapters').classList.remove('show');
+  const heroPhotoErr = document.getElementById('err-hero-photo');
+  if (heroPhotoErr) heroPhotoErr.classList.remove('show');
+  const titreErr = document.getElementById('err-titre');
+  if (titreErr) titreErr.classList.remove('show');
 
   // ── Validation ──
+  const titreVal = document.getElementById('f-titre')?.value.trim();
+  if (!titreVal) {
+    if (titreErr) titreErr.classList.add('show');
+    document.getElementById('f-titre')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('f-titre')?.focus();
+    return;
+  }
+
+  if (!_heroImageBase64) {
+    if (heroPhotoErr) heroPhotoErr.classList.add('show');
+    document.getElementById('hero-upload-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
   const chaptersVal = getChaptersData();
   if (chaptersVal.length === 0) {
     document.getElementById('chapters-list').classList.add('field-error');
@@ -27,10 +45,12 @@ async function handleGenerate() {
     heros:      document.getElementById('f-heros').value.trim(),
     heroDesc:   document.getElementById('f-hero-desc').value.trim(),
     univers:    document.getElementById('f-univers').value.trim(),
+    char2Name:  document.getElementById('f-char2-name')?.value.trim() || null,
     chapters:   chaptersVal,
     colorStyle:  document.getElementById('f-color-style').value,
     bubbles:     document.getElementById('f-bubbles').value !== 'no',
     imgQuality:  document.getElementById('f-img-quality').value,
+    medium:      'manga',
   };
 
   document.getElementById('creator-form-card').style.display = 'none';
@@ -70,10 +90,17 @@ async function handleGenerate() {
   window._lastStoryId  = storyId || null;
   window._lastMangaData = data;
 
-  // Save hero face image
-  if (_heroImageBase64 && storyId) {
+  // Save hero face image (only when the user just attached/changed it)
+  if (_heroImageBase64 && storyId && _heroImageDirty) {
+    if (_supabase) await _supabase.from('manga_images').delete().eq('story_id', storyId).eq('image_type', 'hero');
     const heroUrl = await _uploadBase64ToStorage(_heroImageBase64, storyId, 'hero-face');
-    if (heroUrl) await saveImageToSupabase(storyId, 'hero', null, heroUrl, null);
+    if (heroUrl) { await saveImageToSupabase(storyId, 'hero', null, heroUrl, null); _heroImageDirty = false; }
+  }
+  // Save second character image (only when the user just attached/changed it)
+  if (_char2ImageBase64 && storyId && _char2ImageDirty) {
+    if (_supabase) await _supabase.from('manga_images').delete().eq('story_id', storyId).eq('image_type', 'char2');
+    const char2Url = await _uploadBase64ToStorage(_char2ImageBase64, storyId, 'char2-face');
+    if (char2Url) { await saveImageToSupabase(storyId, 'char2', null, char2Url, null); _char2ImageDirty = false; }
   }
 
   document.getElementById('creator-loading').style.display = 'none';
@@ -96,10 +123,12 @@ async function saveMangaDraft() {
     heros:      document.getElementById('f-heros').value.trim(),
     heroDesc:   document.getElementById('f-hero-desc').value.trim(),
     univers:    document.getElementById('f-univers').value.trim(),
+    char2Name:  document.getElementById('f-char2-name')?.value.trim() || null,
     chapters:   getChaptersData(),
     colorStyle:  document.getElementById('f-color-style').value,
     bubbles:     document.getElementById('f-bubbles').value !== 'no',
     imgQuality:  document.getElementById('f-img-quality').value,
+    medium:      'manga',
   };
   const grad = coverGrads[data.genre] || coverGrads.shonen;
 
@@ -115,21 +144,15 @@ async function saveMangaDraft() {
     }
   }
 
-  console.log('[Save] storyId:', storyId, '| _heroImageBase64 set:', !!_heroImageBase64);
-  if (storyId && _heroImageBase64) {
-    if (_supabase) {
-      const { error: delErr } = await _supabase.from('manga_images').delete()
-        .eq('story_id', storyId).eq('image_type', 'hero');
-      if (delErr) console.warn('[Save] hero delete error:', delErr.message);
-    }
+  if (storyId && _heroImageBase64 && _heroImageDirty) {
+    if (_supabase) await _supabase.from('manga_images').delete().eq('story_id', storyId).eq('image_type', 'hero');
     const heroUrl = await _uploadBase64ToStorage(_heroImageBase64, storyId, 'hero-face');
-    console.log('[Save] hero upload url:', heroUrl);
-    if (heroUrl) {
-      await saveImageToSupabase(storyId, 'hero', null, heroUrl, null);
-      console.log('[Save] hero image saved ✓');
-    }
-  } else {
-    console.log('[Save] skipping hero save — storyId or _heroImageBase64 missing');
+    if (heroUrl) { await saveImageToSupabase(storyId, 'hero', null, heroUrl, null); _heroImageDirty = false; }
+  }
+  if (storyId && _char2ImageBase64 && _char2ImageDirty) {
+    if (_supabase) await _supabase.from('manga_images').delete().eq('story_id', storyId).eq('image_type', 'char2');
+    const char2Url = await _uploadBase64ToStorage(_char2ImageBase64, storyId, 'char2-face');
+    if (char2Url) { await saveImageToSupabase(storyId, 'char2', null, char2Url, null); _char2ImageDirty = false; }
   }
 
   saveBtn.disabled = false;
@@ -147,6 +170,7 @@ async function saveMangaDraft() {
 
 function resetForm() {
   clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
+  clearChar2Image({ preventDefault: () => {}, stopPropagation: () => {} });
   cancelEdit();
   document.getElementById('creator-form-card').style.display = 'block';
   document.getElementById('creator-form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -169,10 +193,10 @@ async function openEditForm(storyId) {
   try {
     const [{ data: story }, { data: chapters }] = await Promise.all([
       _supabase.from('manga_stories')
-        .select('title, genre, art_style, hero_name, hero_desc, universe, pitch, ending')
+        .select('title, genre, art_style, medium, color_style, show_bubbles, hero_name, hero_desc, universe, pitch, ending, synopsis, tagline, hero_ai_desc, hero_face_desc, universe_desc, char2_name, char2_face_desc')
         .eq('id', storyId).single(),
       _supabase.from('manga_chapters')
-        .select('chapter_num, title, description')
+        .select('*')
         .eq('story_id', storyId)
         .order('chapter_num', { ascending: true }),
     ]);
@@ -180,12 +204,28 @@ async function openEditForm(storyId) {
     if (!story) return;
 
     // Fill form fields
-    document.getElementById('f-titre').value     = story.title     || '';
-    document.getElementById('f-genre').value     = story.genre     || 'shonen';
-    document.getElementById('f-style').value     = story.art_style || 'dynamique';
-    document.getElementById('f-heros').value     = story.hero_name || '';
-    document.getElementById('f-hero-desc').value = story.hero_desc || '';
-    document.getElementById('f-univers').value   = story.universe  || '';
+    document.getElementById('f-titre').value       = story.title       || '';
+    document.getElementById('f-genre').value       = story.genre       || 'shonen';
+    const _oldStyleValues = new Set(['dynamique','elegant','sombre','doux','retro','moderne']);
+    const _defaultStyle = `manga\nscreen tones\ninked line art\ndynamic panel layout\nspeed lines / radial lines\nhigh contrast lighting`;
+    document.getElementById('f-style').value = (_oldStyleValues.has(story.art_style) || !story.art_style) ? _defaultStyle : story.art_style;
+    document.getElementById('f-color-style').value = story.color_style || 'bw';
+    document.getElementById('f-bubbles').value     = story.show_bubbles === false ? 'no' : 'yes';
+    document.getElementById('f-heros').value       = story.hero_name   || '';
+    document.getElementById('f-hero-desc').value   = story.hero_desc   || '';
+    document.getElementById('f-univers').value     = story.universe    || '';
+    const char2NameEl = document.getElementById('f-char2-name');
+    if (char2NameEl) char2NameEl.value = story.char2_name || '';
+
+    // Restore AI content so face descs are available for image generation
+    window._lastAIContent = {
+      synopsis:        story.synopsis        || null,
+      tagline:         story.tagline         || null,
+      hero_description:story.hero_ai_desc    || null,
+      hero_face_desc:  story.hero_face_desc  || null,
+      universe_desc:   story.universe_desc   || null,
+      char2_face_desc: story.char2_face_desc || null,
+    };
 
     // Replace chapters
     document.querySelectorAll('.chapter-entry').forEach(el => el.remove());
@@ -194,10 +234,13 @@ async function openEditForm(storyId) {
     document.querySelectorAll('.chapter-entry').forEach((entry, i) => {
       const ch = (chapters || [])[i];
       if (!ch) return;
+      const cid = entry.id.replace('chapter-entry-', '');
       const t = entry.querySelector('.chapter-title-input');
       const d = entry.querySelector('.chapter-desc-input');
       if (t) t.value = ch.title       || '';
       if (d) d.value = ch.description || '';
+      _setSceneMedium(cid, ch.medium      || 'manga');
+      _setSceneColor(cid,  ch.color_style || 'bw');
     });
 
     // Restore existing scene images into entry previews
@@ -250,6 +293,37 @@ async function openEditForm(storyId) {
         console.log('[Edit] hero image restored ✓');
       } catch (e) {
         console.warn('[Edit] hero image fetch failed:', e.message);
+      }
+    }
+
+    // Restore char2 image if saved
+    clearChar2Image({ preventDefault: () => {}, stopPropagation: () => {} });
+    const { data: char2Rows } = await _supabase
+      .from('manga_images').select('image_url')
+      .eq('story_id', storyId).eq('image_type', 'char2').limit(1);
+    const char2Url = char2Rows?.[0]?.image_url ?? null;
+    if (char2Url) {
+      try {
+        const res  = await fetch(char2Url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        _char2ImageMime = blob.type || 'image/png';
+        await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = e => {
+            const dataUrl = e.target.result;
+            _char2ImageBase64 = dataUrl.split(',')[1];
+            document.getElementById('char2-upload-thumb').src        = dataUrl;
+            document.getElementById('char2-upload-name').textContent = 'Saved character image';
+            document.getElementById('char2-upload-preview').style.display = 'flex';
+            document.getElementById('char2-upload-label').style.display   = 'none';
+            resolve();
+          };
+          reader.onerror = resolve;
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.warn('[Edit] char2 image fetch failed:', e.message);
       }
     }
 
@@ -368,7 +442,8 @@ function surpriseMe() {
   document.getElementById('f-premise').value   = seed.pitch;
   document.getElementById('f-fin').value       = seed.ending;
   document.getElementById('f-genre').value     = seed.genre;
-  document.getElementById('f-style').value     = seed.style;
+  // Keep default art style text regardless of seed style key
+  // (seed.style was an old select value like 'sombre'; textarea uses free text)
 
   // Clear existing chapters and add the seed chapter
   document.querySelectorAll('.chapter-entry').forEach(el => el.remove());

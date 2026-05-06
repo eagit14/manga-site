@@ -14,7 +14,7 @@ async function loadMyMangas() {
 
   const { data: stories, error } = await _supabase
     .from('manga_stories')
-    .select('id, title, genre, cover_gradient, created_at, tagline, purchased_at')
+    .select('id, title, genre, cover_gradient, created_at, tagline, purchased_at, color_style')
     .or(`user_id.eq.${user.id},user_id.is.null`)
     .order('updated_at', { ascending: false })
     .order('created_at', { ascending: false });
@@ -51,8 +51,8 @@ async function loadMyMangas() {
   const imgMap = {};
   (images || []).forEach(img => {
     if (!imgMap[img.story_id]) imgMap[img.story_id] = { chapters: {} };
-    if (img.image_type === 'chapter') {
-      imgMap[img.story_id].chapters[img.chapter_num ?? 0] = img.image_url;
+    if (img.image_type === 'chapter' && img.chapter_num > 0) {
+      imgMap[img.story_id].chapters[img.chapter_num] = img.image_url;
     } else {
       imgMap[img.story_id][img.image_type] = img.image_url;
     }
@@ -95,7 +95,8 @@ async function loadMyMangas() {
 
     const gradSafe     = grad.replace(/'/g, "\\'");
     const thumbSafe    = (sceneUrls[0] || '').replace(/'/g, "\\'");
-    const physicalCall = `openPhysicalOrder({storyId:'${storyIdSafe}',title:'${titleSafe}',grad:'${gradSafe}',numScenes:${allUrls.length},thumbUrl:'${thumbSafe}'})`;
+    const colorStyleSafe = (story.color_style || 'bw').replace(/'/g, "\\'");
+    const physicalCall = `openPhysicalOrder({storyId:'${storyIdSafe}',title:'${titleSafe}',grad:'${gradSafe}',numScenes:${allUrls.length},thumbUrl:'${thumbSafe}',colorStyle:'${colorStyleSafe}'})`;
 
     let actionBtn;
     if (!allImagesReady) {
@@ -105,11 +106,13 @@ async function loadMyMangas() {
         <div class="manga-tile-purchased-actions">
           <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', true)">👁 View</button>
           <button class="manga-tile-export-btn" onclick="exportMangaPDF('${storyIdSafe}', '${titleSafe}', this)">📄 Export PDF</button>
+          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="viewCover('${storyIdSafe}')">📖 View Cover</button>
         </div>`;
     } else {
       actionBtn = `
         <div class="manga-tile-purchased-actions">
-          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">👁 View</button>
+          <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">👁 View</button>
+          <button class="manga-tile-view-btn" onclick="viewCover('${storyIdSafe}')">📖 View Cover</button>
           <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">🛒 Order Digital</button>
           <button class="manga-tile-physical-btn" onclick="${physicalCall}">🖨️ Order Physical</button>
         </div>`;
@@ -141,6 +144,7 @@ async function loadMyMangas() {
           <div class="manga-tile-title">${story.title || 'Untitled'}</div>
           <div class="manga-tile-meta">
             <span class="manga-tile-genre" style="background:${genreColor}">${genreLabel}</span>
+            <span class="manga-tile-pages">${expectedScenes} pages</span>
             <span class="manga-tile-date">${date}</span>
           </div>
           ${story.tagline ? `<p style="font-size:.78rem;color:var(--muted);line-height:1.5;margin-top:.25rem">${story.tagline}</p>` : ''}

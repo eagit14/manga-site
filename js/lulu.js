@@ -7,13 +7,34 @@
 
 const LULU_API = 'https://api.lulu.com';
 
-// 6"×9" full-color standard perfect-bound matte cover
-const LULU_POD_PACKAGE = '0600X0900FCSTDPBK060UW444MXX';
+// Lulu Direct API: only Perfect Bound (PB) is available via their POD API.
+// Valid confirmed format: 0600X0900.{BW|FC}.STD.PB.060UW444.GXX (6"×9", min 32 pages, even).
 
-// Lulu published wholesale pricing for 6"×9" full color (as of 2024)
-const LULU_BASE_COST    = 3.47;   // USD, binding + setup
-const LULU_PER_PAGE     = 0.15;   // USD per interior page, full color
-const LULU_MIN_PAGES    = 24;     // minimum for perfect bound
+function _isColorStyle(colorStyle) {
+  return colorStyle === 'color' || colorStyle === 'fc';
+}
+
+function _luluPodPackage(_numScenes, colorStyle) {
+  const ink = _isColorStyle(colorStyle) ? 'FC' : 'BW';
+  return `0600X0900.${ink}.STD.PB.060UW444.GXX`; // 6"×9" perfect bound
+}
+
+// Trim dimensions in mm for jsPDF
+function _luluTrimMM(_numScenes) {
+  return { W: 152.4, H: 228.6 }; // 6" × 9"
+}
+
+// Lulu published wholesale pricing (approximate fallback estimates)
+const LULU_PRICING = {
+  pb_fc: { base: 3.47, perPage: 0.15 }, // perfect bound full color
+  pb_bw: { base: 2.29, perPage: 0.013 },// perfect bound B&W
+};
+
+function _luluEstimateForStyle(pageCount, _numScenes, colorStyle) {
+  const key = 'pb_' + (_isColorStyle(colorStyle) ? 'fc' : 'bw');
+  const p = LULU_PRICING[key];
+  return p.base + pageCount * p.perPage;
+}
 
 let _luluToken       = null;
 let _luluTokenExpiry = 0;
@@ -47,18 +68,19 @@ async function luluGetToken() {
 // ── Price helpers ──────────────────────────────────────
 
 function _luluPageCount(numScenes) {
-  // +2 for front cover and back cover pages
-  const pages = Math.max(LULU_MIN_PAGES, numScenes + 2);
-  return pages % 2 === 0 ? pages : pages + 1; // must be even
+  // Perfect bound 6"×9": min 32 pages, must be even
+  const raw   = numScenes + 2; // +2 for front and back cover
+  const pages = Math.max(32, raw);
+  return pages % 2 === 0 ? pages : pages + 1;
 }
 
-function _luluEstimate(pageCount) {
-  return LULU_BASE_COST + pageCount * LULU_PER_PAGE;
+function _luluEstimate(pageCount, numScenes, colorStyle) {
+  return _luluEstimateForStyle(pageCount, numScenes, colorStyle);
 }
 
 // Calls the lulu-price Supabase Edge Function (avoids browser CORS block on Lulu's auth endpoint).
 // Falls back to the published pricing formula if the Edge Function is unavailable.
-async function luluFetchPrice(numScenes, shippingAddress) {
+async function luluFetchPrice(numScenes, shippingAddress, colorStyle) {
   const pageCount = _luluPageCount(numScenes);
   const addr = shippingAddress?.street1 ? shippingAddress : {
     name: 'Preview', street1: '123 Main St',
@@ -71,6 +93,9 @@ async function luluFetchPrice(numScenes, shippingAddress) {
     const { data: { session } } = await _supabase.auth.getSession();
     if (!session?.access_token) throw new Error('Not authenticated');
 
+    const podPackage = _luluPodPackage(numScenes, colorStyle);
+    console.log('[Lulu] requesting price for package:', podPackage, 'pages:', pageCount);
+
     const res = await fetch(`${SUPABASE_URL}/functions/v1/lulu-price`, {
       method:  'POST',
       headers: {
@@ -80,8 +105,8 @@ async function luluFetchPrice(numScenes, shippingAddress) {
       body: JSON.stringify({
         pageCount,
         shippingAddress: addr,
-        podPackage:      LULU_POD_PACKAGE,
-        shippingOption:  'GROUND',
+        podPackage,
+        shippingOption:  'MAIL',
       }),
     });
 
@@ -99,7 +124,7 @@ async function luluFetchPrice(numScenes, shippingAddress) {
   }
 
   // Formula fallback
-  const printCost = _luluEstimate(pageCount);
+  const printCost = _luluEstimate(pageCount, numScenes, colorStyle);
   return { printCost, shipping: null, pageCount, source: 'estimate' };
 }
 
@@ -111,9 +136,9 @@ async function luluCalculateCost(pageCount, shippingAddress) {
     method:  'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      line_items: [{ page_count: pageCount, pod_package_id: LULU_POD_PACKAGE, quantity: 1 }],
+      line_items: [{ page_count: pageCount, pod_package_id: _luluPodPackage(_physicalOpts._numScenes || 4, _physicalOpts._colorStyle), quantity: 1 }],
       shipping_address: shippingAddress,
-      shipping_level:  'GROUND',
+      shipping_level:  'MAIL',
     }),
   });
   if (!res.ok) throw new Error(`Lulu cost calc failed (${res.status})`);
@@ -131,18 +156,19 @@ async function luluCreatePrintJob({ title, coverUrl, interiorUrl, pageCount, shi
         title,
         cover:          { source_file: coverUrl    },
         interior:       { source_file: interiorUrl },
-        pod_package_id: LULU_POD_PACKAGE,
+        pod_package_id: _luluPodPackage(_physicalOpts._numScenes || 4, _physicalOpts._colorStyle),
         quantity: 1,
       }],
       shipping_address: shippingAddress,
-      shipping_level:  'GROUND',
+      shipping_level:  'MAIL',
     }),
   });
   if (!res.ok) throw new Error(`Lulu print job failed (${res.status}): ${await res.text()}`);
   const job = await res.json();
 
   // Record the physical order
-  const printCost = _luluEstimate(pageCount || _luluPageCount(_physicalOpts._numScenes || 4));
+  const _ns = _physicalOpts._numScenes || 4;
+  const printCost = _luluEstimate(pageCount || _luluPageCount(_ns), _ns, _physicalOpts._colorStyle);
   await saveOrder({
     orderType:       'physical',
     storyId:         storyId || _physicalOpts._storyId || null,
@@ -169,7 +195,7 @@ async function _getShippingProfile() {
   if (!user) return null;
   const { data } = await _supabase
     .from('users')
-    .select('first_name, last_name, address_line1, address_line2, city, postal_code, country')
+    .select('first_name, last_name, address_line1, address_line2, city, state, postal_code, country')
     .eq('id', user.id)
     .single();
   return data || null;
@@ -186,8 +212,10 @@ function _populateShippingForm(p) {
   s('ps-addr1',     p.address_line1);
   s('ps-addr2',     p.address_line2 || '');
   s('ps-city',      p.city);
+  s('ps-state',     p.state || '');
   s('ps-postal',    p.postal_code);
-  s('ps-country',   p.country);
+  _populateCountrySelect('ps-country', p.country);
+  _toggleStateField('ps-country', 'ps-state');
 }
 
 function _saveShippingToStorage() {
@@ -196,7 +224,7 @@ function _saveShippingToStorage() {
     `${v('ps-firstname')} ${v('ps-lastname')}`.trim(),
     v('ps-addr1'),
     v('ps-addr2'),
-    v('ps-city'),
+    `${v('ps-city')}${v('ps-state') ? ' ' + v('ps-state').toUpperCase() : ''}`,
     v('ps-postal'),
     v('ps-country'),
   ].filter(Boolean);
@@ -205,23 +233,41 @@ function _saveShippingToStorage() {
 
 function _getShippingFromForm() {
   const v = id => document.getElementById(id)?.value.trim() || '';
+  const state      = v('ps-state').toUpperCase().slice(0, 3) || undefined;
+  const countryCode = v('ps-country').toUpperCase().slice(0, 2);
   return {
     name:         `${v('ps-firstname')} ${v('ps-lastname')}`.trim(),
     street1:      v('ps-addr1'),
     street2:      v('ps-addr2') || undefined,
     city:         v('ps-city'),
+    state_code:   state,
     postcode:     v('ps-postal'),
-    country_code: v('ps-country').toUpperCase().slice(0, 2),
+    country_code: countryCode,
     phone_number: '0000000000',
   };
 }
 
 async function openPhysicalOrder(opts = {}) {
   const data      = window._lastMangaData;
-  const grad      = opts.grad     || window._lastGrad || 'linear-gradient(135deg,#1a0505,#c0392b)';
-  const title     = opts.title    || data?.titre || 'Your Manga';
+  const grad      = opts.grad      || window._lastGrad || 'linear-gradient(135deg,#1a0505,#c0392b)';
+  const title     = opts.title     || data?.titre || 'Your Manga';
   const numScenes = opts.numScenes != null ? opts.numScenes : (data?.chapters?.length || 4);
-  const thumbUrl  = opts.thumbUrl || null;
+  const thumbUrl  = opts.thumbUrl  || null;
+
+  // Determine color style: fetch chapters from DB so any color chapter marks the whole book FC.
+  // Fall back to opts / _lastMangaData if no storyId or DB unavailable.
+  let colorStyle = opts.colorStyle || data?.colorStyle || 'bw';
+  const storyIdForColor = opts.storyId || window._currentStoryId || window._lastStoryId;
+  if (storyIdForColor && _supabase) {
+    try {
+      const [{ data: story }, { data: chapters }] = await Promise.all([
+        _supabase.from('manga_stories').select('color_style').eq('id', storyIdForColor).single(),
+        _supabase.from('manga_chapters').select('color_style').eq('story_id', storyIdForColor),
+      ]);
+      const styles = [story?.color_style, ...(chapters || []).map(c => c.color_style)];
+      colorStyle = styles.some(s => s === 'color') ? 'color' : 'bw';
+    } catch (_) {}
+  }
 
   if (!opts.title && !data) { alert('Please generate a manga first.'); return; }
 
@@ -238,17 +284,19 @@ async function openPhysicalOrder(opts = {}) {
   }
 
   // Pre-fill shipping form and persist address to localStorage (survives Stripe redirect)
+  _populateCountrySelect('ps-country', profile.country);
   _populateShippingForm(profile);
   _saveShippingToStorage();
-  ['ps-firstname','ps-lastname','ps-addr1','ps-addr2','ps-city','ps-postal','ps-country']
+  ['ps-firstname','ps-lastname','ps-addr1','ps-addr2','ps-city','ps-state','ps-postal','ps-country']
     .forEach(id => { const el = document.getElementById(id); if (el) el.oninput = _saveShippingToStorage; });
 
   _physicalOpts = {
     ...opts,
-    _storyId:   opts.storyId || window._currentStoryId || window._lastStoryId || null,
-    _title:     title,
-    _grad:      grad,
-    _numScenes: numScenes,
+    _storyId:    opts.storyId || window._currentStoryId || window._lastStoryId || null,
+    _title:      title,
+    _grad:       grad,
+    _numScenes:  numScenes,
+    _colorStyle: colorStyle,
   };
 
   document.getElementById('physical-modal-title').textContent = title;
@@ -269,9 +317,17 @@ async function openPhysicalOrder(opts = {}) {
     previewGrad.style.display    = 'flex';
   }
 
-  // Page count spec
-  const pageCount = _luluPageCount(numScenes);
-  document.getElementById('physical-spec-pages').textContent = `${pageCount} pages`;
+  // Spec rows
+  const pageCount  = _luluPageCount(numScenes);
+  const isColor    = _isColorStyle(colorStyle);
+  const rawPages   = numScenes + 2;
+  const pagesLabel = rawPages < 32
+    ? `${pageCount} pages (padded to 32-page min)`
+    : `${pageCount} pages`;
+  document.getElementById('physical-spec-format').textContent   = '6″ × 9″ Paperback';
+  document.getElementById('physical-spec-binding').textContent  = 'Perfect bound, glossy';
+  document.getElementById('physical-spec-interior').textContent = isColor ? 'Full color' : 'Black & white';
+  document.getElementById('physical-spec-pages').textContent    = pagesLabel;
 
   // Store storyId + order type so markMangaPurchased fires correctly after Stripe redirect
   if (_physicalOpts._storyId) localStorage.setItem('_pendingPurchaseStoryId', _physicalOpts._storyId);
@@ -285,11 +341,11 @@ async function openPhysicalOrder(opts = {}) {
 
   // Fetch Lulu price using the pre-filled shipping address
   try {
-    const result = await luluFetchPrice(numScenes, _getShippingFromForm());
+    const result = await luluFetchPrice(numScenes, _getShippingFromForm(), colorStyle);
     _renderPrice(result);
   } catch (err) {
     console.warn('[Lulu] price fetch failed:', err);
-    _renderPrice({ printCost: _luluEstimate(pageCount), shipping: null, pageCount, source: 'estimate' });
+    _renderPrice({ printCost: _luluEstimate(pageCount, colorStyle), shipping: null, pageCount, source: 'estimate' });
   }
 }
 
@@ -308,8 +364,9 @@ function _renderPrice({ printCost, shipping, pageCount, source }) {
   if (valueEl) valueEl.textContent = `$${printCost.toFixed(2)}`;
 
   if (shippingEl) {
+    const country = document.getElementById('ps-country')?.value || '';
     shippingEl.textContent = shipping != null
-      ? `+ $${shipping.toFixed(2)} shipping (US)`
+      ? `+ $${shipping.toFixed(2)} shipping${country ? ' (' + country + ')' : ''}`
       : '+ shipping (calculated at checkout)';
   }
 
@@ -331,30 +388,76 @@ function handlePhysicalOverlayClick(e) {
   if (e.target === document.getElementById('physical-modal')) closePhysicalModal();
 }
 
-async function downloadCover() {
-  const data      = window._lastMangaData;
-  const aiContent = window._lastAIContent;
+// Load cached cover data (image + blurb) from manga_images, then build the PDF.
+async function _buildCoverPdfFromCache(storyId) {
+  const [{ data: story }, { data: coverRow }] = await Promise.all([
+    _supabase.from('manga_stories').select('title,genre,tagline,synopsis,cover_gradient').eq('id', storyId).single(),
+    _supabase.from('manga_images').select('image_url,prompt_used').eq('story_id', storyId).eq('image_type', 'cover').maybeSingle(),
+  ]);
+  if (!story) return null;
 
-  const title    = data?.titre        || _physicalOpts._title || 'Manga';
-  const grad     = window._lastGrad   || _physicalOpts._grad  || 'linear-gradient(135deg,#1a0505,#c0392b)';
-  const profile  = genreProfiles[data?.genre] || genreProfiles.shonen;
+  const title      = story.title    || 'Manga';
+  const grad       = story.cover_gradient || 'linear-gradient(135deg,#1a0505,#c0392b)';
+  const tagline    = story.tagline  || '';
+  const synopsis   = story.synopsis || '';
+  const profile    = genreProfiles[story.genre] || genreProfiles.shonen;
+  const genre      = profile.label  || story.genre || '';
+  const backSummary = coverRow?.prompt_used || null;
 
-  // Try to get first scene image for the front cover
   let firstImageB64 = null;
-  const thumbUrl = _physicalOpts.thumbUrl || null;
-  if (thumbUrl) {
-    try { firstImageB64 = await _fetchImageBase64(thumbUrl); } catch (_) {}
+  if (coverRow?.image_url) {
+    try { firstImageB64 = await _fetchImageBase64(coverRow.image_url); } catch (_) {}
   }
 
-  generateCoverPDF({
-    title,
-    tagline:  aiContent?.tagline  || '',
-    genre:    profile.label       || data?.genre || '',
-    heroName: data?.heros         || '',
-    synopsis: aiContent?.synopsis || '',
-    grad,
-    firstImageB64,
-    download: true,
+  return generateCoverPDF({ title, tagline, genre, heroName: '', synopsis, backSummary, grad, firstImageB64, download: false });
+}
+
+async function viewCover(storyId) {
+  if (!_supabase || !storyId) { alert('Cover not ready yet — generate a scene image to trigger cover creation.'); return; }
+  try {
+    const doc = await _buildCoverPdfFromCache(storyId);
+    if (doc) window.open(doc.output('bloburl'), '_blank');
+    else alert('Cover not ready yet — generate a scene image to trigger cover creation.');
+  } catch (err) {
+    console.error('[Cover] viewCover error:', err);
+    alert('Could not open cover: ' + err.message);
+  }
+}
+
+async function downloadCover() {
+  const data    = window._lastMangaData;
+  const storyId = _physicalOpts._storyId;
+  const title   = data?.titre || _physicalOpts._title || 'Manga';
+  const safe    = title.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'cover';
+
+  if (storyId && _supabase) {
+    try {
+      const doc = await _buildCoverPdfFromCache(storyId);
+      if (doc) { doc.save(`${safe}-cover.pdf`); return; }
+    } catch (_) {}
+  }
+
+  // Fallback: generate fully on the fly (no cache)
+  const aiContent = window._lastAIContent;
+  const grad      = window._lastGrad || _physicalOpts._grad || 'linear-gradient(135deg,#1a0505,#c0392b)';
+  const profile   = genreProfiles[data?.genre] || genreProfiles.shonen;
+  const genre     = profile.label || data?.genre || '';
+  let firstImageB64 = null;
+  let backSummary   = null;
+  const thumbUrl = _physicalOpts.thumbUrl || null;
+  if (thumbUrl) { try { firstImageB64 = await _fetchImageBase64(thumbUrl); } catch (_) {} }
+  if (storyId && _supabase) {
+    try {
+      const { data: chapters } = await _supabase
+        .from('manga_chapters').select('chapter_num,title,description')
+        .eq('story_id', storyId).order('chapter_num', { ascending: true });
+      if (chapters?.length) backSummary = await generateBackCoverSummary(chapters, title, genre);
+    } catch (_) {}
+  }
+  await generateCoverPDF({
+    title, tagline: aiContent?.tagline || '', genre,
+    heroName: data?.heros || '', synopsis: aiContent?.synopsis || '',
+    backSummary, grad, firstImageB64, download: true,
   });
 }
 
@@ -375,10 +478,12 @@ async function previewFullPDF(btn) {
   btn.textContent = '⏳ Building preview…';
 
   try {
-    // Fetch story metadata + images
-    const [{ data: story }, { data: images, error: imgErr }] = await Promise.all([
+    // Fetch story metadata + images + cached cover row (for pre-generated blurb)
+    const [{ data: story }, { data: images, error: imgErr }, { data: chapters }, { data: coverRow }] = await Promise.all([
       _supabase.from('manga_stories').select('title,genre,tagline,synopsis').eq('id', storyId).single(),
       _supabase.from('manga_images').select('image_url,image_type,chapter_num').eq('story_id', storyId),
+      _supabase.from('manga_chapters').select('chapter_num,title,description').eq('story_id', storyId).order('chapter_num', { ascending: true }),
+      _supabase.from('manga_images').select('prompt_used').eq('story_id', storyId).eq('image_type', 'cover').maybeSingle(),
     ]);
     if (imgErr) throw imgErr;
 
@@ -393,13 +498,17 @@ async function previewFullPDF(btn) {
       .filter(i => i.image_type === 'chapter')
       .sort((a, b) => (a.chapter_num || 0) - (b.chapter_num || 0));
 
-    const W = 152.4, H = 228.6;
+    const { W, H } = _luluTrimMM(_physicalOpts._numScenes || sceneImages.length || 4);
     const doc = new jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: [W, H], compress: true });
 
-    // Fetch first scene image for the front cover
+    // Use pre-generated cover photo (manga_images type='cover'), fallback to first scene
     let firstImageB64 = null;
-    if (sceneImages.length > 0) {
-      btn.textContent = '⏳ Loading cover image…';
+    const coverImgRow = (images || []).find(i => i.image_type === 'cover');
+    btn.textContent = '⏳ Loading cover image…';
+    if (coverImgRow?.image_url) {
+      try { firstImageB64 = await _fetchImageBase64(coverImgRow.image_url); } catch (_) {}
+    }
+    if (!firstImageB64 && sceneImages.length > 0) {
       try { firstImageB64 = await _fetchImageBase64(sceneImages[0].image_url); } catch (_) {}
     }
 
@@ -428,10 +537,15 @@ async function previewFullPDF(btn) {
       doc.text(`Scene ${sceneImages[i].chapter_num || i + 1}`, W / 2, H - 4, { align: 'center' });
     }
 
-    // Last page — back cover
-    btn.textContent = '⏳ Building back cover…';
+    // Last page — back cover (use cached blurb if available, else generate)
+    const cachedBlurb = coverRow?.prompt_used || null;
+    let backSummary = cachedBlurb;
+    if (!backSummary) {
+      btn.textContent = '⏳ Generating back cover summary…';
+      backSummary = await generateBackCoverSummary(chapters || [], finalTitle, story?.genre || '');
+    }
     doc.addPage([W, H]);
-    _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis });
+    _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis, backSummary });
 
     // Open in new tab
     const url = doc.output('bloburl');
@@ -475,3 +589,15 @@ function _injectPhysicalStripe() {
       publishable-key="${pubKey}"
     ></stripe-buy-button>`;
 }
+
+// ── Debug helper ──────────────────────────────────────
+// Run in browser console: _luluListPackages('SS')  or  _luluListPackages()
+window._luluListPackages = async function(filter = '') {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (!session?.access_token) { console.error('Not authenticated'); return; }
+  const url = `${SUPABASE_URL}/functions/v1/lulu-price${filter ? '?filter=' + encodeURIComponent(filter) : ''}`;
+  const res  = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
+  const data = await res.json();
+  console.table(Array.isArray(data) ? data.map(p => ({ id: p.id, title: p.title || p.name })) : data);
+  return data;
+};

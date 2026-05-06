@@ -1,6 +1,8 @@
 // ── OpenAI: callOpenAI, generateImages ───────────────────
 
 async function callOpenAI(apiKey, data, _attempt = 1) {
+  const medium      = data.medium || 'manga';
+  const mediumLabel = medium === 'cartoon' ? 'cartoon' : 'manga';
   const genreLabel  = genreProfiles[data.genre]?.label  || data.genre;
   const styleLabel  = styleLabels[data.style]           || data.style;
 
@@ -10,17 +12,27 @@ async function callOpenAI(apiKey, data, _attempt = 1) {
       ).join('\n')
     : '';
 
+  const char2Name = data.char2Name || null;
+
   const faceNote = _heroImageBase64
-    ? '\n\nA reference photo of the hero\'s face is attached. Examine it closely and fill the "hero_face_desc" field with a precise physical description suitable for an illustrator: face shape, skin tone, eye color and shape, eyebrow style, nose shape, lip shape, hair color, hair texture and style, any distinctive features (scars, freckles, jawline, cheekbones, etc.). Be as specific as possible so an artist can reproduce this exact face.'
+    ? '\n\nA reference photo of the hero\'s face is attached. Examine it closely and fill the "hero_face_desc" field with a precise physical description.'
+    : '';
+
+  const char2FaceNote = (_char2ImageBase64 && char2Name)
+    ? `\n\nA reference photo of the supporting character "${char2Name}" is also attached (second image). Examine it and fill the "char2_face_desc" field with a precise physical description.`
     : '';
 
   const faceField = _heroImageBase64
-    ? '\n  "hero_face_desc": "Precise physical description of the hero\'s face extracted from the reference photo: face shape, skin tone, eye color/shape, eyebrow style, nose, lips, hair color/texture/style, distinctive features. Enough detail for consistent illustration across all panels.",'
+    ? '\n  "hero_face_desc": "Precise physical description of the hero\'s face: face shape, skin tone, eye color/shape, eyebrow style, nose, lips, hair color/texture/style, distinctive features.",'
+    : '';
+
+  const char2FaceField = (_char2ImageBase64 && char2Name)
+    ? `\n  "char2_face_desc": "Precise physical description of ${char2Name}'s face: same detail level as hero_face_desc.",`
     : '';
 
   const numScenes = (data.chapters && data.chapters.length > 0) ? data.chapters.length : 1;
   const sceneDialogueFields = Array.from({ length: numScenes }, (_, i) =>
-    `["punchy line 1 for scene ${i + 1} (≤8 words)", "punchy line 2 for scene ${i + 1} (≤8 words)"]`
+    `["line 1 scene ${i + 1}: max 4 SHORT common words, correct English", "line 2 scene ${i + 1}: max 4 SHORT common words, correct English"]`
   ).join(', ');
 
   const userPrompt = `Create a complete narrative sheet for this manga:
@@ -30,10 +42,11 @@ Genre: ${genreLabel}
 Art style: ${styleLabel}
 ${data.heros    ? `Hero / Heroine: ${data.heros}`         : ''}
 ${data.heroDesc ? `Hero description: ${data.heroDesc}`    : ''}
-${data.univers  ? `Universe / Setting: ${data.univers}`   : ''}${chaptersText}${faceNote}
+${char2Name     ? `Supporting character: ${char2Name}`    : ''}
+${data.univers  ? `Universe / Setting: ${data.univers}`   : ''}${chaptersText}${faceNote}${char2FaceNote}
 
 Reply ONLY with a valid JSON object containing these fields:
-{${faceField}
+{${faceField}${char2FaceField}
   "synopsis": "Compelling 4–6 sentence synopsis in English. Present the world, the hero, the inciting incident, the stakes. Editorial style, vivid and gripping.",
   "tagline": "Hard-hitting single sentence (15 words max) — manga cover style.",
   "hero_description": "2–3 sentence description of the main character: personality, special power or strength, what makes them unique.",
@@ -55,14 +68,15 @@ Reply ONLY with a valid JSON object containing these fields:
       messages: [
         {
           role: 'system',
-          content: 'You are a talented and passionate manga editor. You create narrative sheets in English for original manga. Your style is vivid, evocative and gripping. You reply ONLY with valid JSON, no surrounding text.',
+          content: `You are a talented and passionate ${mediumLabel} editor. You create narrative sheets in English for original ${mediumLabel} stories. Your style is vivid, evocative and gripping. You reply ONLY with valid JSON, no surrounding text.`,
         },
         {
           role: 'user',
-          content: _heroImageBase64
+          content: (_heroImageBase64 || (_char2ImageBase64 && char2Name))
             ? [
                 { type: 'text', text: userPrompt },
-                { type: 'image_url', image_url: { url: `data:${_heroImageMime};base64,${_heroImageBase64}`, detail: 'low' } },
+                ...(_heroImageBase64 ? [{ type: 'image_url', image_url: { url: `data:${_heroImageMime};base64,${_heroImageBase64}`, detail: 'low' } }] : []),
+                ...(_char2ImageBase64 && char2Name ? [{ type: 'image_url', image_url: { url: `data:${_char2ImageMime};base64,${_char2ImageBase64}`, detail: 'low' } }] : []),
               ]
             : userPrompt,
         },
@@ -100,62 +114,174 @@ Reply ONLY with a valid JSON object containing these fields:
 
 function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   const hero       = data.heros     || 'the protagonist';
-  const heroDesc   = aiContent?.hero_description || data.heroDesc || '';
-  const setting    = data.univers   || 'an unknown world';
-  const synopsis   = aiContent?.synopsis ? aiContent.synopsis.split('.').slice(0, 2).join('.') + '.' : '';
-  const isColor    = data.colorStyle === 'color';
+  const heroDesc   = (aiContent?.hero_description || data.heroDesc || '').slice(0, 200);
   const hasBubbles = data.bubbles !== false;
+  const char2Name  = data.char2Name || null;
+  const char2Desc  = (aiContent?.char2_face_desc || '').slice(0, 200);
 
-  const faceRef = _heroImageBase64 && aiContent?.hero_face_desc
-    ? ` CRITICAL — reproduce this hero's exact face in every single panel: ${aiContent.hero_face_desc}.`
+  // Hero face consistency (shared across all scenes)
+  const rawFaceDesc = (aiContent?.hero_face_desc || '').slice(0, 250);
+  const faceRef = _heroImageBase64 && rawFaceDesc
+    ? `Hero face reference (reproduce exactly): ${rawFaceDesc}.`
     : _heroImageBase64
-      ? ' A reference photo was provided — reproduce the hero\'s exact facial features consistently in every panel.'
+      ? 'Reference photo provided — reproduce hero\'s exact face consistently.'
       : '';
+  const characterRule = `CHARACTER CONSISTENCY: ${hero} must have identical face, hairstyle, body proportions, and costume in every panel.${faceRef ? ' ' + faceRef : ''}`;
 
-  const scenes = data.chapters || [];
-  const sceneArc = scenes.length
-    ? 'Story arc: ' + scenes.map(ch =>
-        `Sc.${ch.num}${ch.title ? ' "' + ch.title + '"' : ''}${ch.description ? ' (' + ch.description + ')' : ''}`
-      ).join(' → ') + '.'
-    : '';
+  const _cap = (str, max = 3900) => str.length <= max ? str : str.slice(0, max - 1);
 
-  const storyCtx = [synopsis && `Story: ${synopsis}`, sceneArc].filter(Boolean).join(' ');
+  function _panelLayout(descLen) {
+    const n = descLen <= 0  ? 4
+            : descLen <= 80 ? 5
+            : descLen <= 160 ? 6
+            : descLen <= 240 ? 7
+            : 8;
+    const grids = {
+      4: '2-column × 2-row grid = exactly 4 panels (1–2 top row, 3–4 bottom row)',
+      5: '2-column × 2-row grid + 1 wide panel at bottom = exactly 5 panels (1–2 top row, 3–4 middle row, 5 full-width bottom)',
+      6: '2-column × 3-row grid = exactly 6 panels (1–2 top row, 3–4 middle row, 5–6 bottom row)',
+      7: '2-column × 3-row grid + 1 wide panel at bottom = exactly 7 panels (1–2 top row, 3–4 second row, 5–6 third row, 7 full-width bottom)',
+      8: '2-column × 4-row grid = exactly 8 panels (1–2 top row, 3–4 second row, 5–6 third row, 7–8 bottom row)',
+    };
+    const flows = {
+      4: `panels 1–2 establish the situation; panels 3–4 deliver the key conflict and resolution`,
+      5: `panels 1–2 establish the situation; panels 3–4 show the conflict at peak intensity; panel 5 delivers the emotional climax`,
+      6: `panels 1–2 establish the situation; panels 3–4 show the key conflict; panels 5–6 show the resolution and emotional impact`,
+      7: `panels 1–2 establish the situation; panels 3–4 show the conflict at peak intensity; panels 5–6 show ${hero}'s reaction and resolve; panel 7 delivers the climax`,
+      8: `panels 1–2 show ${hero} entering the situation; panels 3–4 show the key conflict at peak intensity; panels 5–6 show ${hero}'s reaction and inner resolve; panels 7–8 deliver the turning point and climax`,
+    };
+    return { n, grid: grids[n], flow: flows[n] };
+  }
 
-  const visualStyle = isColor
-    ? `Full-color professional anime/manga art. Vibrant saturated colors, smooth cel-shading with highlights and shadows, crisp clean linework, richly detailed and fully rendered backgrounds with dramatic lighting. Character designs consistent and polished like a published manga volume.`
-    : `Professional black-and-white manga art. Precise clean ink linework with varied line weights, detailed screentone shading and cross-hatching for depth and texture, bold dynamic compositions. Fully rendered backgrounds in every panel. Published manga volume quality.`;
-
-  const textStyle = hasBubbles
-    ? `Include story-relevant dialogue and narration as manga text: rounded white speech bubbles with black text for dialogue, rectangular white caption boxes for narration. Text in English, max 8 words per bubble, clearly legible. Integrate text naturally into panel compositions.`
-    : `No text, no speech bubbles, no captions, no lettering anywhere. Pure visual storytelling only.`;
-
-  const characterRule = `MANDATORY: ${hero} must have the exact same face, hairstyle, body proportions, and costume in every single panel — perfect character consistency throughout.${faceRef}`;
-
-  const base = `A professional manga/anime story page. PORTRAIT orientation — taller than wide, vertical page. Strict 2-column × 4-row grid layout with exactly 8 panels (panels 1–2 top row, 3–4 second row, 5–6 third row, 7–8 bottom row), each panel numbered 1–8 in a small circle at its top-left corner, thin white gutters between panels. No title banner — use all space for story panels. ${visualStyle} Genre: ${genreLabel}. Art style: ${styleLabel}. Hero: ${hero}${heroDesc ? ' — ' + heroDesc : ''}. Setting: ${setting}. ${storyCtx} ${characterRule} Every panel must have a fully detailed background — no empty or plain backgrounds. Highly expressive anime faces conveying strong emotion. Dynamic action poses with speed lines. ${textStyle}`;
-
-  const dialogueHint = (lines) => {
-    if (!hasBubbles || !lines || !lines.length) return '';
-    const clean = lines.filter(Boolean);
-    return clean.length ? `\nDialogue/caption text to include across panels: ${clean.map(l => `"${l}"`).join(' | ')}` : '';
-  };
+  const textStyle = `No text, no speech bubbles, no captions, no lettering anywhere in the image. Clean panels only.`;
 
   const results = [];
+  const scenes = data.chapters || [];
+  const sceneList = scenes.length > 0 ? scenes : [{ num: 1, title: '', description: '', medium: data.medium || 'manga' }];
 
-  // One image per scene
-  const sceneList = scenes.length > 0 ? scenes : [{ num: 1, title: '', description: '' }];
   sceneList.forEach((ch, i) => {
-    const num      = ch.num || i + 1;
-    const sceneDesc = ch.title
-      ? `"${ch.title}"${ch.description ? ': ' + ch.description : ''}`
-      : `Scene ${num}${ch.description ? ': ' + ch.description : ''}`;
+    const num = ch.num || i + 1;
+    const sceneTitle = ch.title ? `"${ch.title}"` : `Scene ${num}`;
+    const sceneDetail = ch.description ? ` — ${ch.description}` : '';
+
+    // Per-scene medium and color
+    const sceneMedium = ch.medium     || data.medium     || 'manga';
+    const sceneColor  = ch.colorStyle || data.colorStyle || 'bw';
+    const isCartoon   = sceneMedium === 'cartoon';
+    const isColor     = sceneColor === 'color';
+    const artForm     = isCartoon ? 'western cartoon/comic' : 'manga/anime';
+    const visualStyle = isCartoon
+      ? (isColor
+          ? `Art style: Vibrant full-color western cartoon. Bold outlines, flat cel-shaded bright colors, expressive exaggerated faces, animated TV-show quality.`
+          : `Art style: Black-and-white cartoon/comic. Bold ink outlines, hatching for shading, expressive cartoon faces. Published comic strip quality.`)
+      : (isColor
+          ? `Art style: Full-color professional anime/manga. Vibrant saturated colors, smooth cel-shading, crisp linework, richly detailed backgrounds with dramatic lighting.`
+          : `Art style: Black-and-white manga. Clean ink linework, screentone shading, bold dynamic compositions, fully rendered backgrounds.`);
+
+    // Panel count based on description length
+    const { n: panelCount, grid: panelGrid, flow: panelFlow } = _panelLayout((ch.description || '').length);
+    const layoutStr = `PAGE LAYOUT: PORTRAIT orientation (taller than wide). ${panelGrid}. Each panel numbered 1–${panelCount} (small circle top-left). Thin white gutters. No title banner. Every panel has a fully detailed background.`;
+
+    // Decide which character photos to send
+    const sceneText    = ((ch.title || '') + ' ' + (ch.description || '')).toLowerCase();
+    const heroMentioned  = !!(hero && sceneText.includes(hero.toLowerCase()));
+    const includeChar2   = !!(char2Name && sceneText.includes(char2Name.toLowerCase()));
+    // Skip hero photo only when char2 is explicitly mentioned and hero is not
+    const includeHero  = !(includeChar2 && !heroMentioned);
+    const char2Rule   = includeChar2
+      ? `SECOND CHARACTER "${char2Name}" appears in this scene.${char2Desc ? ' Their appearance: ' + char2Desc : ''} Keep their face and appearance consistent.`
+      : '';
+
+    const styleNotes = (data.style || '').trim().replace(/\n+/g, ', ');
+
+    const prompt = [
+      `Professional ${artForm} story page.`,
+      `SCENE ${num}: ${sceneTitle}${sceneDetail}`,
+      `Panel flow: ${panelFlow}.`,
+      `HERO: ${hero}${heroDesc ? ' — ' + heroDesc : ''}.`,
+      characterRule,
+      char2Rule,
+      visualStyle,
+      styleNotes ? `Visual style keywords: ${styleNotes}.` : '',
+      textStyle,
+      layoutStr,
+      `Highly expressive ${isCartoon ? 'cartoon' : 'anime'} faces conveying strong emotion. Dynamic action poses with speed lines.`,
+    ].filter(Boolean).join(' ');
+
+    const sceneDialogue = hasBubbles
+      ? (aiContent?.panel_lines?.scenes?.[i] || []).filter(Boolean)
+      : [];
     results.push({
       type: 'chapter', chapterNum: num, storageKey: `chapter-${num}`,
-      prompt: `${base}
-Scene flow across 8 panels — SCENE ${num} ${sceneDesc}: panels 1–2 show ${hero} entering the situation; panels 3–4 depict the key conflict or dramatic moment at its peak intensity; panels 5–6 show ${hero}'s reaction, struggle, and inner resolve; panels 7–8 deliver the turning point or emotional climax, leaving a strong impression.${dialogueHint(aiContent?.panel_lines?.scenes?.[i])}`,
+      prompt: _cap(prompt), includeChar2, includeHero,
+      hasBubbles,
+      dialogueLines: sceneDialogue,
+      panelCount,
     });
   });
 
   return results;
+}
+
+// Generates one image and returns b64 string.
+// When a hero reference photo is loaded (_heroImageBase64), uses the Responses API
+// so the actual image is passed to gpt-image-1 — not just a text description.
+function _b64ToBlob(b64, mime) {
+  const binary = atob(b64);
+  const bytes  = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime || 'image/jpeg' });
+}
+
+async function _generateSingleImage(apiKey, prompt, quality, model, includeChar2 = false, includeHero = true, attempt = 1) {
+  const _sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  const sendHero  = includeHero  && !!_heroImageBase64;
+  const sendChar2 = includeChar2 && !!_char2ImageBase64;
+
+  let res;
+  if (model === 'dall-e-3') {
+    res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json' }),
+    });
+  } else if (sendHero || sendChar2) {
+    // Images edits API: pass only the relevant reference photos
+    const form = new FormData();
+    form.append('model',   'gpt-image-1');
+    if (sendHero)  form.append('image[]', _b64ToBlob(_heroImageBase64,  _heroImageMime),  'hero.jpg');
+    if (sendChar2) form.append('image[]', _b64ToBlob(_char2ImageBase64, _char2ImageMime), 'char2.jpg');
+    form.append('prompt',  prompt);
+    form.append('size',    '1024x1536');
+    form.append('quality', quality);
+    form.append('n',       '1');
+    res = await fetch('https://api.openai.com/v1/images/edits', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}` },
+      body: form,
+    });
+  } else {
+    res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality }),
+    });
+  }
+
+  if (res.status === 429 && attempt < 3) {
+    const wait = attempt * 12000;
+    console.warn(`[IMG] 429 — retrying in ${wait / 1000}s (attempt ${attempt})`);
+    await _sleep(wait);
+    return _generateSingleImage(apiKey, prompt, quality, model, includeChar2, includeHero, attempt + 1);
+  }
+  if (!res.ok) {
+    const errJson = await res.json().catch(() => ({}));
+    throw new Error(errJson.error?.message || `HTTP ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data[0].b64_json;
 }
 
 async function _uploadBase64ToStorage(b64, storyId, imageType) {
@@ -187,38 +313,15 @@ async function _uploadBase64ToStorage(b64, storyId, imageType) {
 async function generateImages(apiKey, prompts, storyId, quality = 'medium', model = 'gpt-image-1') {
   const _sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  const _fetchImage = async (prompt, attempt = 1) => {
-    let reqBody;
-    if (model === 'dall-e-3') {
-      reqBody = { model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json' };
-    } else {
-      reqBody = { model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality };
-    }
-    const res = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify(reqBody),
-    });
-    if (res.status === 429 && attempt < 3) {
-      const wait = attempt * 12000;
-      console.warn(`[IMG] 429 rate limit — retrying in ${wait / 1000}s (attempt ${attempt})`);
-      await _sleep(wait);
-      return _fetchImage(prompt, attempt + 1);
-    }
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.error?.message || `HTTP ${res.status}`);
-    }
-    return res.json();
-  };
-
   // Generate sequentially to stay within gpt-image-1 rate limits
   for (let idx = 0; idx < prompts.length; idx++) {
     const promptObj = prompts[idx];
 
     try {
-      const json         = await _fetchImage(promptObj.prompt);
-      const b64          = json.data[0].b64_json;
+      let b64 = await _generateSingleImage(apiKey, promptObj.prompt, quality, model, promptObj.includeChar2 || false, promptObj.includeHero !== false);
+      if (promptObj.hasBubbles && promptObj.dialogueLines?.length) {
+        b64 = await overlayBubbles(b64, promptObj.panelCount || 4, promptObj.dialogueLines);
+      }
       const permanentUrl = await _uploadBase64ToStorage(b64, storyId, promptObj.storageKey);
       if (permanentUrl) {
         await saveImageToSupabase(storyId, promptObj.type, promptObj.chapterNum, permanentUrl, promptObj.prompt);
@@ -245,4 +348,29 @@ async function generateImages(apiKey, prompts, storyId, quality = 'medium', mode
 
     if (idx < prompts.length - 1) await _sleep(1500);
   }
+}
+
+// Fetches 2 short dialogue lines for a single scene when panel_lines aren't cached.
+async function fetchDialogueForScene(apiKey, sceneTitle, sceneDesc) {
+  if (!apiKey || apiKey.includes('YOUR_')) return [];
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{
+          role: 'user',
+          content: `Write 2 short speech bubble lines for this manga scene.\nScene: "${sceneTitle}${sceneDesc ? ' — ' + sceneDesc : ''}"\nRules: max 4 words each, correct natural English.\nReturn a JSON object: {"lines":["line1","line2"]}`,
+        }],
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+        max_tokens: 100,
+      }),
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const parsed = JSON.parse(json.choices[0].message.content);
+    return Array.isArray(parsed.lines) ? parsed.lines.filter(Boolean) : [];
+  } catch { return []; }
 }

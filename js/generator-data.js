@@ -107,6 +107,39 @@ const genreProfiles = {
   },
 };
 
+// ── Cartoon genre profiles (merged into genreProfiles for tile badge lookups) ──
+// Merge cartoon genres into genreProfiles so tile badges resolve correctly
+Object.assign(genreProfiles, {
+  action:    { label: 'Action / Adventure', badgeColor: '#e63946' },
+  fantasy:   { label: 'Fantasy',            badgeColor: '#7b2ff7' },
+  superhero: { label: 'Superhero',          badgeColor: '#0077b6' },
+  romance:   { label: 'Romance / Drama',    badgeColor: '#e91e8c' },
+  family:    { label: 'Family / All Ages',  badgeColor: '#06d6a0' },
+  // comedy / sf / horreur already in genreProfiles under different keys
+});
+
+const mangaGenreOptions = [
+  { value: 'shonen',  label: 'Shōnen (Action / Adventure)' },
+  { value: 'shojo',   label: 'Shōjo (Romance / Emotions)'  },
+  { value: 'seinen',  label: 'Seinen (Adult / Complex)'    },
+  { value: 'isekai',  label: 'Isekai (Another world)'      },
+  { value: 'horreur', label: 'Horror (Thrills)'            },
+  { value: 'sf',      label: 'Science-Fiction'             },
+  { value: 'comedie', label: 'Comedy'                      },
+  { value: 'sport',   label: 'Sport'                       },
+];
+
+const cartoonGenreOptions = [
+  { value: 'action',    label: 'Action / Adventure' },
+  { value: 'comedy',    label: 'Comedy'             },
+  { value: 'fantasy',   label: 'Fantasy'            },
+  { value: 'sf',        label: 'Science-Fiction'    },
+  { value: 'horreur',   label: 'Horror'             },
+  { value: 'superhero', label: 'Superhero'          },
+  { value: 'romance',   label: 'Romance / Drama'    },
+  { value: 'family',    label: 'Family / All Ages'  },
+];
+
 const styleLabels = {
   dynamique: 'Dynamic & Explosive',
   elegant: 'Elegant & Detailed',
@@ -117,14 +150,23 @@ const styleLabels = {
 };
 
 const coverGrads = {
-  shonen:  'linear-gradient(155deg, #1a0505 0%, #7a0f0f 55%, #c0392b 100%)',
-  shojo:   'linear-gradient(155deg, #2b0a1e 0%, #8b1a5e 55%, #e91e8c 100%)',
-  seinen:  'linear-gradient(155deg, #111 0%, #2a2a2a 55%, #444 100%)',
-  isekai:  'linear-gradient(155deg, #0a0a2e 0%, #2a1060 55%, #7b2ff7 100%)',
-  horreur: 'linear-gradient(155deg, #0a0a0a 0%, #1a0a0a 55%, #330000 100%)',
-  sf:      'linear-gradient(155deg, #050f1a 0%, #0a2a3d 55%, #118ab2 100%)',
-  comedie: 'linear-gradient(155deg, #1a0f00 0%, #5a2f00 55%, #fb8500 100%)',
-  sport:   'linear-gradient(155deg, #001a0f 0%, #005c30 55%, #06d6a0 100%)',
+  // manga
+  shonen:    'linear-gradient(155deg, #1a0505 0%, #7a0f0f 55%, #c0392b 100%)',
+  shojo:     'linear-gradient(155deg, #2b0a1e 0%, #8b1a5e 55%, #e91e8c 100%)',
+  seinen:    'linear-gradient(155deg, #111 0%, #2a2a2a 55%, #444 100%)',
+  isekai:    'linear-gradient(155deg, #0a0a2e 0%, #2a1060 55%, #7b2ff7 100%)',
+  comedie:   'linear-gradient(155deg, #1a0f00 0%, #5a2f00 55%, #fb8500 100%)',
+  sport:     'linear-gradient(155deg, #001a0f 0%, #005c30 55%, #06d6a0 100%)',
+  // shared
+  horreur:   'linear-gradient(155deg, #0a0a0a 0%, #1a0a0a 55%, #330000 100%)',
+  sf:        'linear-gradient(155deg, #050f1a 0%, #0a2a3d 55%, #118ab2 100%)',
+  // cartoon-only
+  action:    'linear-gradient(155deg, #1a0505 0%, #7a0f0f 55%, #c0392b 100%)',
+  fantasy:   'linear-gradient(155deg, #0a0a2e 0%, #2a1060 55%, #7b2ff7 100%)',
+  superhero: 'linear-gradient(155deg, #001830 0%, #003060 55%, #0077b6 100%)',
+  romance:   'linear-gradient(155deg, #2b0a1e 0%, #8b1a5e 55%, #e91e8c 100%)',
+  family:    'linear-gradient(155deg, #001a0f 0%, #005c30 55%, #06d6a0 100%)',
+  comedy:    'linear-gradient(155deg, #1a0f00 0%, #5a2f00 55%, #fb8500 100%)',
 };
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }

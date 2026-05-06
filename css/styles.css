@@ -875,6 +875,12 @@ footer {
   color: var(--light);
 }
 
+.manga-tile-pages {
+  font-size: .65rem;
+  color: var(--light);
+  margin-left: auto;
+}
+
 .manga-tile-email {
   font-size: .7rem;
   color: var(--muted);
@@ -3392,26 +3398,60 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   background: rgba(255,255,255,.12);
 }
 
-#login-wall .lw-google-btn {
+#login-wall .lw-social-btns {
+  display: flex;
+  gap: .75rem;
+  width: 100%;
+}
+
+#login-wall .lw-google-btn,
+#login-wall .lw-apple-btn {
   display: inline-flex;
   align-items: center;
   gap: .65rem;
-  padding: .75rem 1.5rem;
-  border: 2px solid var(--border);
+  padding: .75rem 1.25rem;
   border-radius: 100px;
-  background: #fff;
   font-size: .85rem;
   font-weight: 700;
   letter-spacing: .05em;
-  color: var(--black);
   cursor: pointer;
   transition: box-shadow .2s, border-color .2s, transform .15s;
-  width: 100%;
+  flex: 1;
   justify-content: center;
+}
+
+#login-wall .lw-google-btn {
+  border: 2px solid var(--border);
+  background: #fff;
+  color: var(--black);
 }
 #login-wall .lw-google-btn:hover {
   border-color: #4285F4;
   box-shadow: 0 4px 20px rgba(66,133,244,.25);
+  transform: translateY(-1px);
+}
+
+#login-wall .lw-facebook-btn {
+  border: 2px solid #1877F2;
+  background: #1877F2;
+  color: #fff;
+}
+#login-wall .lw-facebook-btn:hover {
+  background: #1464d8;
+  border-color: #1464d8;
+  box-shadow: 0 4px 20px rgba(24,119,242,.35);
+  transform: translateY(-1px);
+}
+
+#login-wall .lw-apple-btn {
+  border: 2px solid #000;
+  background: #000;
+  color: #fff;
+}
+#login-wall .lw-apple-btn:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  box-shadow: 0 4px 20px rgba(0,0,0,.35);
   transform: translateY(-1px);
 }
 
@@ -3633,8 +3673,11 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   max-height: 95vh;
   display: flex;
   flex-direction: column;
-  gap: .75rem;
+  gap: 0;
   animation: cardIn .3s cubic-bezier(.22,1,.36,1);
+}
+.viewer-header {
+  margin-bottom: .75rem;
 }
 .viewer-header {
   display: flex;
@@ -3669,7 +3712,7 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   aspect-ratio: 1 / 1;
   max-height: calc(95vh - 4rem);
   background: #111;
-  border-radius: 12px;
+  border-radius: 12px 12px 0 0;
   overflow: hidden;
 }
 .viewer-track { width: 100%; height: 100%; position: relative; }
@@ -3712,19 +3755,18 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 .viewer-prev { left: .75rem; }
 .viewer-next { right: .75rem; }
 .viewer-dots {
-  position: absolute;
-  bottom: .75rem;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
+  justify-content: center;
   gap: .4rem;
-  z-index: 2;
+  padding: .55rem 0;
+  background: #111;
+  border-radius: 0 0 12px 12px;
 }
 .viewer-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,.4);
+  background: rgba(255,255,255,.3);
   cursor: pointer;
   padding: 0;
   transition: background .2s, transform .2s;
@@ -3815,6 +3857,15 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 .profile-input:focus {
   border-color: var(--red);
   box-shadow: 0 0 0 3px rgba(192,57,43,.1);
+}
+.profile-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .75rem center;
+  padding-right: 2rem;
+  cursor: pointer;
 }
 
 .profile-actions {
@@ -4090,4 +4141,13 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 .physical-shipping-input:focus {
   border-color: var(--red);
   box-shadow: 0 0 0 3px rgba(192,57,43,.1);
+}
+.physical-shipping-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .65rem center;
+  padding-right: 1.75rem;
+  cursor: pointer;
 }

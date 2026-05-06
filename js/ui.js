@@ -56,6 +56,7 @@ function initNavShadow() {
 // ── Hero face upload ──────────────────────────────────
 let _heroImageBase64 = null;
 let _heroImageMime   = 'image/jpeg';
+let _heroImageDirty  = false; // true only when user just attached/changed the photo
 
 function triggerHeroUpload() {
   document.getElementById('f-hero-img').click();
@@ -64,7 +65,8 @@ function triggerHeroUpload() {
 function handleHeroImage(event) {
   const file = event.target.files[0];
   if (!file) return;
-  _heroImageMime = file.type || 'image/jpeg';
+  _heroImageMime  = file.type || 'image/jpeg';
+  _heroImageDirty = true;
   const reader = new FileReader();
   reader.onload = (e) => {
     const dataUrl = e.target.result;
@@ -81,12 +83,65 @@ function clearHeroImage(event) {
   event.preventDefault();
   event.stopPropagation();
   _heroImageBase64 = null;
+  _heroImageDirty  = false;
   document.getElementById('f-hero-img').value = '';
   document.getElementById('hero-upload-preview').style.display = 'none';
   document.getElementById('hero-upload-label').style.display  = '';
 }
 
+// ── Second character face upload ──────────────────────
+let _char2ImageBase64 = null;
+let _char2ImageMime   = 'image/jpeg';
+let _char2ImageDirty  = false; // true only when user just attached/changed the photo
+
+function triggerChar2Upload() {
+  document.getElementById('f-char2-img').click();
+}
+
+function handleChar2Image(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  _char2ImageMime  = file.type || 'image/jpeg';
+  _char2ImageDirty = true;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    _char2ImageBase64 = dataUrl.split(',')[1];
+    document.getElementById('char2-upload-thumb').src = dataUrl;
+    document.getElementById('char2-upload-name').textContent = file.name;
+    document.getElementById('char2-upload-preview').style.display = 'flex';
+    document.getElementById('char2-upload-label').style.display   = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearChar2Image(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  _char2ImageBase64 = null;
+  _char2ImageDirty  = false;
+  document.getElementById('f-char2-img').value = '';
+  document.getElementById('char2-upload-preview').style.display = 'none';
+  document.getElementById('char2-upload-label').style.display   = '';
+}
+
 // ── Image model selector ──────────────────────────────
+
+function getMedium() {
+  return document.querySelector('input[name="f-medium"]:checked')?.value || 'manga';
+}
+
+function onMediumChange(medium) {
+  const sel     = document.getElementById('f-genre');
+  if (!sel) return;
+  const options = medium === 'cartoon' ? cartoonGenreOptions : mangaGenreOptions;
+  const current = sel.value;
+  sel.innerHTML = options.map(o =>
+    `<option value="${o.value}"${o.value === current ? ' selected' : ''}>${o.label}</option>`
+  ).join('');
+  // If old selection doesn't exist in new list, reset to first
+  if (!options.find(o => o.value === current)) sel.value = options[0].value;
+}
 
 function getImgModel() {
   return document.querySelector('input[name="img-model"]:checked')?.value || 'gpt-image-1';
