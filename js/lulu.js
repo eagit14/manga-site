@@ -246,7 +246,8 @@ async function openPhysicalOrder(opts = {}) {
   const pageCount = _luluPageCount(numScenes);
   document.getElementById('physical-spec-pages').textContent = `${pageCount} pages`;
 
-  // Tag pending order type so markMangaPurchased knows this was physical
+  // Store storyId + order type so markMangaPurchased fires correctly after Stripe redirect
+  if (_physicalOpts._storyId) localStorage.setItem('_pendingPurchaseStoryId', _physicalOpts._storyId);
   localStorage.setItem('_pendingOrderType', 'physical');
 
   // Show modal with loading price
