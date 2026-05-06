@@ -8,16 +8,10 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ENDPOINTS: Record<string, string> = {
-  'chat':            `${OPENAI_API}/v1/chat/completions`,
-  'image-generate':  `${OPENAI_API}/v1/images/generations`,
-  'image-edit':      `${OPENAI_API}/v1/images/edits`,
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
-  // Require Supabase auth so only logged-in users can consume the API key
+  // Require Supabase auth
   const authHeader = req.headers.get('Authorization') ?? '';
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -33,34 +27,54 @@ serve(async (req) => {
 
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiKey) {
-    return new Response(JSON.stringify({ error: 'OPENAI_API_KEY secret not configured' }), {
+    return new Response(JSON.stringify({ error: 'OPENAI_API_KEY secret is not configured in this Edge Function' }), {
       status: 500, headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   }
 
   const url      = new URL(req.url);
   const endpoint = url.searchParams.get('endpoint') ?? '';
-  const openaiUrl = ENDPOINTS[endpoint];
-  if (!openaiUrl) {
-    return new Response(JSON.stringify({ error: `Unknown endpoint: ${endpoint}` }), {
-      status: 400, headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
-  }
 
   try {
-    // Forward body and Content-Type as-is (handles both JSON and multipart/form-data)
-    const contentType = req.headers.get('Content-Type') ?? '';
-    const body = await req.arrayBuffer();
+    let openaiRes: Response;
 
-    const openaiRes = await fetch(openaiUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        ...(contentType ? { 'Content-Type': contentType } : {}),
-      },
-      body,
-    });
+    if (endpoint === 'chat') {
+      const body = await req.json();
+      openaiRes = await fetch(`${OPENAI_API}/v1/chat/completions`, {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
 
+    } else if (endpoint === 'image-generate') {
+      const body = await req.json();
+      openaiRes = await fetch(`${OPENAI_API}/v1/images/generations`, {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
+
+    } else if (endpoint === 'image-edit') {
+      // Parse the incoming multipart FormData and rebuild it for OpenAI.
+      // Forwarding the raw body risks boundary corruption through the Supabase gateway.
+      const incoming = await req.formData();
+      const outgoing = new FormData();
+      for (const [key, value] of incoming.entries()) {
+        outgoing.append(key, value);
+      }
+      openaiRes = await fetch(`${OPENAI_API}/v1/images/edits`, {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${openaiKey}` }, // let Deno set Content-Type + boundary
+        body:    outgoing,
+      });
+
+    } else {
+      return new Response(JSON.stringify({ error: `Unknown endpoint: "${endpoint}"` }), {
+        status: 400, headers: { ...CORS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Surface the full OpenAI response (including error bodies) to the client
     const resBody = await openaiRes.arrayBuffer();
     return new Response(resBody, {
       status: openaiRes.status,
@@ -69,8 +83,11 @@ serve(async (req) => {
         'Content-Type': openaiRes.headers.get('Content-Type') ?? 'application/json',
       },
     });
+
   } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
+    const msg = (err as Error).message ?? String(err);
+    console.error('[openai-proxy] error:', msg);
+    return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   }

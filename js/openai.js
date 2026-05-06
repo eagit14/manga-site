@@ -275,7 +275,9 @@ async function _generateSingleImage(prompt, quality, model, includeChar2 = false
   }
   if (!res.ok) {
     const errJson = await res.json().catch(() => ({}));
-    throw new Error(errJson.error?.message || `HTTP ${res.status}`);
+    // errJson.error can be a string (proxy errors) or an object (OpenAI errors)
+    const msg = errJson.error?.message || errJson.error || `HTTP ${res.status}`;
+    throw new Error(msg);
   }
 
   const json = await res.json();
