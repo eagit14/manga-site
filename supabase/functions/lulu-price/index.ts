@@ -33,17 +33,17 @@ serve(async (req) => {
   }
 
   try {
-    const { pageCount, shippingAddress, podPackage, shippingLevel } = await req.json();
+    const { pageCount, shippingAddress, podPackage, shippingOption } = await req.json();
 
     const token = await getLuluToken();
 
-    const luluRes = await fetch(`${LULU_API}/print-jobs/v1/costs/`, {
+    const luluRes = await fetch(`${LULU_API}/print-job-cost-calculations/`, {
       method:  'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        line_items: [{ page_count: pageCount, pod_package_id: podPackage, quantity: 1 }],
+        line_items:       [{ page_count: pageCount, pod_package_id: podPackage, quantity: 1 }],
         shipping_address: shippingAddress,
-        shipping_level:   shippingLevel ?? 'GROUND',
+        shipping_option:  shippingOption ?? 'GROUND',
       }),
     });
 

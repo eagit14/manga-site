@@ -81,15 +81,16 @@ async function luluFetchPrice(numScenes, shippingAddress) {
         pageCount,
         shippingAddress: addr,
         podPackage:      LULU_POD_PACKAGE,
-        shippingLevel:   'GROUND',
+        shippingOption:  'GROUND',
       }),
     });
 
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
 
-    const line      = data.line_items?.[0];
-    const printCost = parseFloat(line?.cost_excl_discounts || line?.unit_tier_price || 0);
+    // Response shape: { line_item_costs, shipping_cost, total_cost_excl_tax, ... }
+    const lineItem  = data.line_item_costs?.[0];
+    const printCost = parseFloat(lineItem?.total_cost_excl_tax || lineItem?.cost_excl_discounts || 0);
     const shipping  = parseFloat(data.shipping_cost?.total_cost_excl_tax || 0);
     if (printCost > 0) return { printCost, shipping, pageCount, source: 'api' };
     throw new Error('Zero print cost returned');
