@@ -47,7 +47,8 @@ async function luluGetToken() {
 // ── Price helpers ──────────────────────────────────────
 
 function _luluPageCount(numScenes) {
-  const pages = Math.max(LULU_MIN_PAGES, numScenes);
+  // +2 for front cover and back cover pages
+  const pages = Math.max(LULU_MIN_PAGES, numScenes + 2);
   return pages % 2 === 0 ? pages : pages + 1; // must be even
 }
 
@@ -55,11 +56,11 @@ function _luluEstimate(pageCount) {
   return LULU_BASE_COST + pageCount * LULU_PER_PAGE;
 }
 
-// Calls the local Node proxy (/api/lulu/price) which forwards to Lulu server-side.
-// Falls back to the published pricing formula if the proxy is unavailable.
+// Calls the Lulu API directly for a real price quote.
+// Falls back to the published pricing formula if the API call fails (e.g. CORS, auth).
 async function luluFetchPrice(numScenes, shippingAddress) {
   const pageCount = _luluPageCount(numScenes);
-  const addr = shippingAddress || {
+  const addr = (shippingAddress?.street1) ? shippingAddress : {
     name: 'Preview', street1: '123 Main St',
     city: 'New York', state_code: 'NY',
     postcode: '10001', country_code: 'US',
@@ -67,25 +68,29 @@ async function luluFetchPrice(numScenes, shippingAddress) {
   };
 
   try {
-    const res = await fetch('/api/lulu/price', {
+    const token = await luluGetToken();
+    const res = await fetch(`${LULU_API}/print-jobs/v1/costs/`, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         line_items: [{ page_count: pageCount, pod_package_id: LULU_POD_PACKAGE, quantity: 1 }],
         shipping_address: addr,
-        shipping_level: 'GROUND',
+        shipping_level:  'GROUND',
       }),
     });
 
     if (res.ok) {
       const data      = await res.json();
-      if (data.error) throw new Error(data.error);
       const line      = data.line_items?.[0];
       const printCost = parseFloat(line?.cost_excl_discounts || line?.unit_tier_price || 0);
       const shipping  = parseFloat(data.shipping_cost?.total_cost_excl_tax || 0);
       if (printCost > 0) return { printCost, shipping, pageCount, source: 'api' };
+    } else {
+      console.warn('[Lulu] costs API error:', res.status, await res.text());
     }
-  } catch (_) { /* proxy not running or credentials missing — fall through */ }
+  } catch (err) {
+    console.warn('[Lulu] price fetch failed:', err.message);
+  }
 
   // Formula fallback
   const printCost = _luluEstimate(pageCount);
@@ -200,7 +205,7 @@ function _getShippingFromForm() {
     street2:      v('ps-addr2') || undefined,
     city:         v('ps-city'),
     postcode:     v('ps-postal'),
-    country_code: v('ps-country'),
+    country_code: v('ps-country').toUpperCase().slice(0, 2),
     phone_number: '0000000000',
   };
 }
