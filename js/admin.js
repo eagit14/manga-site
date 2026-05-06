@@ -75,7 +75,7 @@ async function loadAllMangas() {
   // Fetch cover images
   const ids = stories.map(s => s.id);
   const { data: images } = ids.length
-    ? await _supabase.from('manga_images').select('story_id, image_url, image_type').in('story_id', ids)
+    ? await _supabase.from('manga_images').select('story_id, image_url, image_type, chapter_num').in('story_id', ids)
     : { data: [] };
   const imgMap = {};
   (images || []).forEach(img => {
