@@ -57,8 +57,14 @@ function _luluEstimate(pageCount) {
 
 // Calls the local Node proxy (/api/lulu/price) which forwards to Lulu server-side.
 // Falls back to the published pricing formula if the proxy is unavailable.
-async function luluFetchPrice(numScenes) {
+async function luluFetchPrice(numScenes, shippingAddress) {
   const pageCount = _luluPageCount(numScenes);
+  const addr = shippingAddress || {
+    name: 'Preview', street1: '123 Main St',
+    city: 'New York', state_code: 'NY',
+    postcode: '10001', country_code: 'US',
+    phone_number: '5555550100',
+  };
 
   try {
     const res = await fetch('/api/lulu/price', {
@@ -66,12 +72,7 @@ async function luluFetchPrice(numScenes) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         line_items: [{ page_count: pageCount, pod_package_id: LULU_POD_PACKAGE, quantity: 1 }],
-        shipping_address: {
-          name: 'Preview', street1: '123 Main St',
-          city: 'New York', state_code: 'NY',
-          postcode: '10001', country_code: 'US',
-          phone_number: '5555550100',
-        },
+        shipping_address: addr,
         shipping_level: 'GROUND',
       }),
     });
@@ -157,7 +158,7 @@ async function _getShippingProfile() {
   if (!user) return null;
   const { data } = await _supabase
     .from('users')
-    .select('first_name, last_name, address_line1, city, postal_code, country')
+    .select('first_name, last_name, address_line1, address_line2, city, postal_code, country')
     .eq('id', user.id)
     .single();
   return data || null;
@@ -165,6 +166,30 @@ async function _getShippingProfile() {
 
 function _isShippingComplete(p) {
   return !!(p && p.first_name && p.last_name && p.address_line1 && p.city && p.postal_code && p.country);
+}
+
+function _populateShippingForm(p) {
+  const s = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+  s('ps-firstname', p.first_name);
+  s('ps-lastname',  p.last_name);
+  s('ps-addr1',     p.address_line1);
+  s('ps-addr2',     p.address_line2 || '');
+  s('ps-city',      p.city);
+  s('ps-postal',    p.postal_code);
+  s('ps-country',   p.country);
+}
+
+function _getShippingFromForm() {
+  const v = id => document.getElementById(id)?.value.trim() || '';
+  return {
+    name:         `${v('ps-firstname')} ${v('ps-lastname')}`.trim(),
+    street1:      v('ps-addr1'),
+    street2:      v('ps-addr2') || undefined,
+    city:         v('ps-city'),
+    postcode:     v('ps-postal'),
+    country_code: v('ps-country'),
+    phone_number: '0000000000',
+  };
 }
 
 async function openPhysicalOrder(opts = {}) {
@@ -187,6 +212,9 @@ async function openPhysicalOrder(opts = {}) {
     }
     return;
   }
+
+  // Pre-fill shipping form with profile data (user can still edit)
+  _populateShippingForm(profile);
 
   _physicalOpts = {
     ...opts,
@@ -227,9 +255,9 @@ async function openPhysicalOrder(opts = {}) {
   document.getElementById('physical-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
-  // Fetch Lulu price in background
+  // Fetch Lulu price using the pre-filled shipping address
   try {
-    const result = await luluFetchPrice(numScenes);
+    const result = await luluFetchPrice(numScenes, _getShippingFromForm());
     _renderPrice(result);
   } catch (err) {
     console.warn('[Lulu] price fetch failed:', err);

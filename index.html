@@ -6,7 +6,7 @@
   <link rel="icon" href="data:,">
   <title>Manga World — The Art That Changed Everything!</title>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=33" />
+  <link rel="stylesheet" href="css/styles.css?v=34" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -1272,8 +1272,25 @@ dramatic composition</textarea>
         </div>
       </div>
 
-      <!-- RIGHT: Stripe -->
+      <!-- RIGHT: Shipping + Stripe -->
       <div class="payment-stripe">
+
+        <!-- Shipping address -->
+        <div class="physical-shipping-section">
+          <p class="physical-section-title">📦 Shipping address</p>
+          <div class="physical-shipping-row">
+            <input class="physical-shipping-input" id="ps-firstname" type="text" placeholder="First name"   autocomplete="given-name">
+            <input class="physical-shipping-input" id="ps-lastname"  type="text" placeholder="Last name"    autocomplete="family-name">
+          </div>
+          <input class="physical-shipping-input" id="ps-addr1" type="text" placeholder="Address line 1" autocomplete="address-line1">
+          <input class="physical-shipping-input" id="ps-addr2" type="text" placeholder="Address line 2 (optional)" autocomplete="address-line2">
+          <div class="physical-shipping-row">
+            <input class="physical-shipping-input" id="ps-city"   type="text" placeholder="City"        autocomplete="address-level2">
+            <input class="physical-shipping-input" id="ps-postal" type="text" placeholder="Postal code" autocomplete="postal-code">
+          </div>
+          <input class="physical-shipping-input" id="ps-country" type="text" placeholder="Country" autocomplete="country-name">
+        </div>
+
         <div id="physical-stripe-container"></div>
 
         <p class="payment-header-label" style="text-align:center;margin-top:.75rem">⚡ Powered by Stripe</p>
@@ -1316,7 +1333,7 @@ dramatic composition</textarea>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="js/export.js?v=8"></script>
 <script src="js/cover-generator.js?v=4"></script>
-<script src="js/lulu.js?v=12"></script>
+<script src="js/lulu.js?v=13"></script>
 <script src="js/profile.js"></script>
 <script src="js/admin.js?v=4"></script>
 <script src="js/support.js?v=1"></script>

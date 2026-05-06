@@ -1156,6 +1156,13 @@ footer {
   margin-top: 1rem;
 }
 
+.save-credits-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: .4rem;
+}
+.credits-badge-save { font-size: .78rem; }
+
 .save-draft-btn {
   width: auto;
   padding: .45rem 1.2rem;
@@ -2544,64 +2551,99 @@ footer {
 }
 .hero-upload-area {
   border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  padding: .6rem .5rem;
+  border-radius: 8px;
+  padding: .52rem .8rem;
   cursor: pointer;
   transition: border-color .2s, background .2s;
   user-select: none;
-  text-align: center;
-  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  min-height: 0;
 }
 .hero-upload-area:hover { border-color: var(--red); background: #fff8f8; }
 .hero-upload-label {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .3rem;
-  font-size: .72rem;
-  color: var(--muted);
-  line-height: 1.3;
-}
-.hero-upload-label .upload-icon { font-size: 1.6rem; }
-.hero-upload-preview {
-  display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: .4rem;
+  font-size: .8rem;
+  color: var(--muted);
+  line-height: 1;
+}
+.hero-upload-label .upload-icon { font-size: 1rem; }
+.hero-upload-preview {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
 }
 .hero-upload-thumb {
-  width: 52px;
-  height: 52px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2.5px solid var(--border);
+  border: 2px solid var(--border);
   flex-shrink: 0;
 }
-.hero-upload-info { width: 100%; text-align: center; }
+.hero-upload-info { flex: 1; min-width: 0; text-align: left; }
 .hero-upload-name {
-  font-size: .68rem;
+  font-size: .75rem;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: .2rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100px;
+  flex: 1;
+  min-width: 0;
 }
 .hero-upload-clear {
   background: none;
   border: 1.5px solid var(--border);
   border-radius: 6px;
-  padding: .2rem .6rem;
-  font-size: .72rem;
+  padding: .15rem .45rem;
+  font-size: .68rem;
   font-weight: 600;
   cursor: pointer;
   color: var(--muted);
+  flex-shrink: 0;
   transition: background .15s, color .15s, border-color .15s;
 }
 .hero-upload-clear:hover { background: #ffe4e4; color: var(--red); border-color: var(--red); }
 
 /* ── Image model radios ──────────────────────────────── */
+/* ── Medium toggle (Manga / Cartoon) ─────────────────── */
+.medium-toggle {
+  display: flex;
+  gap: .6rem;
+}
+.medium-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.medium-option input[type="radio"] { display: none; }
+.medium-option span {
+  padding: .45rem 1.4rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--bg2);
+  transition: background .15s, color .15s, border-color .15s;
+  cursor: pointer;
+  user-select: none;
+}
+.medium-option input[type="radio"]:checked + span {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+.medium-option span:hover { border-color: var(--red); color: var(--red); }
+
 .img-model-radios {
   display: flex;
   gap: 1rem;
@@ -2984,6 +3026,15 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 .scene-gen-img-btn:hover    { background: #c44f00; transform: translateY(-1px); }
 .scene-gen-img-btn:disabled { opacity: .55; cursor: wait; transform: none; }
 
+.scene-gen-msg {
+  font-size: .72rem;
+  color: #e05c00;
+  font-style: italic;
+  margin-top: .25rem;
+  display: block;
+  min-height: 1em;
+}
+
 .scene-attach-btn {
   flex-shrink: 0;
   background: #2d6a9f;
@@ -3001,6 +3052,33 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 }
 .scene-attach-btn:hover    { background: #1e4d75; transform: translateY(-1px); }
 .scene-attach-btn:disabled { opacity: .55; cursor: wait; transform: none; }
+
+/* ── Per-scene medium toggle ─────────────────────────── */
+.scene-medium-toggle {
+  display: flex;
+  flex-shrink: 0;
+  background: #f0f0f0;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+.scene-medium-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+}
+.scene-medium-btn:hover { background: #e0e0e0; color: #333; }
+.scene-medium-btn.active { background: #fff; color: #e05c00; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
 
 /* ── Per-scene thumbnail + hover popup ──────────────── */
 .scene-thumb {
@@ -3026,7 +3104,7 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   bottom: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
-  width: 280px;
+  width: 380px;
   aspect-ratio: 2 / 3;
   border-radius: 10px;
   overflow: hidden;
@@ -3967,4 +4045,49 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   text-align: center;
   line-height: 1.5;
   margin: 0;
+}
+
+/* ── Physical order — shipping address section ── */
+.physical-shipping-section {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+  padding: .9rem;
+  background: #fafafa;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: .85rem;
+}
+
+.physical-section-title {
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #555;
+  margin: 0 0 .2rem;
+}
+
+.physical-shipping-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .45rem;
+}
+
+.physical-shipping-input {
+  width: 100%;
+  padding: .45rem .65rem;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-size: .82rem;
+  font-family: inherit;
+  color: var(--black);
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s;
+  outline: none;
+}
+.physical-shipping-input:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(192,57,43,.1);
 }
