@@ -68,11 +68,14 @@ async function luluFetchPrice(numScenes, shippingAddress) {
   };
 
   try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Not authenticated');
+
     const res = await fetch(`${SUPABASE_URL}/functions/v1/lulu-price`, {
       method:  'POST',
       headers: {
         'Content-Type':  'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
         pageCount,
