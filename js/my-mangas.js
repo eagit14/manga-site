@@ -295,9 +295,6 @@ async function _doDeleteManga(storyId, title) {
     const { error: chapErr } = await _supabase.from('manga_chapters').delete().eq('story_id', storyId);
     if (chapErr) throw new Error('Chapters: ' + chapErr.message);
 
-    const { error: ordErr } = await _supabase.from('orders').delete().eq('story_id', storyId);
-    if (ordErr) throw new Error('Orders: ' + ordErr.message);
-
     const { error: storyErr } = await _supabase.from('manga_stories').delete().eq('id', storyId);
     if (storyErr) throw new Error('Story: ' + storyErr.message);
 
