@@ -15,12 +15,14 @@ function handleAdminSettingsOverlayClick(e) {
 
 function loadSettingsForm() {
   if (!window._isAdmin) return;
-  const physToggle = document.getElementById('setting-physical-enabled');
-  const credInput  = document.getElementById('setting-default-credits');
-  const styleArea  = document.getElementById('setting-art-style');
-  if (physToggle) physToggle.checked = window._appSettings?.physical_order_enabled !== false;
-  if (credInput)  credInput.value    = window._appSettings?.default_credits ?? 50;
-  if (styleArea)  styleArea.value    = window._appSettings?.default_art_style ?? '';
+  const physToggle  = document.getElementById('setting-physical-enabled');
+  const credInput   = document.getElementById('setting-default-credits');
+  const scenesInput = document.getElementById('setting-max-scenes');
+  const styleArea   = document.getElementById('setting-art-style');
+  if (physToggle)  physToggle.checked = window._appSettings?.physical_order_enabled !== false;
+  if (credInput)   credInput.value    = window._appSettings?.default_credits ?? 50;
+  if (scenesInput) scenesInput.value  = window._appSettings?.max_scenes ?? 24;
+  if (styleArea)   styleArea.value    = window._appSettings?.default_art_style ?? '';
 }
 
 async function saveAppSettings() {
@@ -33,6 +35,7 @@ async function saveAppSettings() {
   const updates = {
     physical_order_enabled: document.getElementById('setting-physical-enabled')?.checked ?? true,
     default_credits:        parseInt(document.getElementById('setting-default-credits')?.value) || 50,
+    max_scenes:             parseInt(document.getElementById('setting-max-scenes')?.value) || 24,
     default_art_style:      document.getElementById('setting-art-style')?.value ?? '',
   };
 

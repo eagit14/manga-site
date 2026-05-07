@@ -3,6 +3,7 @@
 window._appSettings = {
   physical_order_enabled: true,
   default_credits:        50,
+  max_scenes:             24,
   default_art_style: [
     'manga',
     'screen tones',

@@ -4,7 +4,8 @@ let _chapterIdCounter = 0;
 
 function addChapter() {
   const entries = document.querySelectorAll('.chapter-entry');
-  if (entries.length >= 20) return;
+  const maxScenes = window._appSettings?.max_scenes ?? 24;
+  if (entries.length >= maxScenes) return;
   _chapterIdCounter++;
   const cid = _chapterIdCounter;
   const num = entries.length + 1;
@@ -232,9 +233,10 @@ function renumberChapters() {
 
 function updateChapterUI() {
   const count = document.querySelectorAll('.chapter-entry').length;
-  document.getElementById('chapter-count').textContent = `(${count} / 20)`;
+  const maxScenes = window._appSettings?.max_scenes ?? 24;
+  document.getElementById('chapter-count').textContent = `(${count} / ${maxScenes})`;
   const btn = document.getElementById('add-chapter-btn');
-  btn.disabled = count >= 20;
+  btn.disabled = count >= maxScenes;
 }
 
 function _setSceneMedium(cid, medium) {
