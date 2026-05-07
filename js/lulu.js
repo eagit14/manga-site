@@ -441,7 +441,19 @@ function _addBlankPage(doc, W, H) {
   doc.rect(0, 0, W, H, 'F');
 }
 
-async function viewCover(storyId, callerBtn) {
+function _addDraftWatermark(doc, W, H) {
+  try {
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.22 }));
+  } catch (_) {}
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(56);
+  doc.setTextColor(255, 255, 255);
+  doc.text('DRAFT', W / 2, H / 2, { align: 'center', angle: 45 });
+  try { doc.restoreGraphicsState(); } catch (_) {}
+}
+
+async function viewCover(storyId, callerBtn, purchased) {
   if (!_supabase || !storyId) { alert('No manga selected.'); return; }
   if (typeof jspdf === 'undefined') { alert('PDF library not loaded — please refresh.'); return; }
 
@@ -560,6 +572,7 @@ async function viewCover(storyId, callerBtn) {
       doc.setFontSize(6.5);
       doc.setTextColor(80, 80, 80);
       doc.text(`Scene ${sceneImages[i].chapter_num || i + 1}`, W / 2, H - 4, { align: 'center' });
+      if (!purchased) _addDraftWatermark(doc, W, H);
     }
 
     // ── Blank padding to reach Lulu minimum ─────────────
