@@ -442,15 +442,14 @@ function _addBlankPage(doc, W, H) {
 }
 
 function _addDraftWatermark(doc, W, H) {
-  try {
-    doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.22 }));
-  } catch (_) {}
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(56);
-  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(64);
+  // Shadow pass — slightly offset dark stroke for visibility on any background
+  doc.setTextColor(80, 20, 10);
+  doc.text('DRAFT', W / 2 + 1, H / 2 + 1, { align: 'center', angle: 45 });
+  // Main pass — dark red matching the on-screen watermark style
+  doc.setTextColor(192, 57, 43);
   doc.text('DRAFT', W / 2, H / 2, { align: 'center', angle: 45 });
-  try { doc.restoreGraphicsState(); } catch (_) {}
 }
 
 async function viewCover(storyId, callerBtn, purchased) {
