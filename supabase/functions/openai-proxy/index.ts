@@ -68,6 +68,15 @@ serve(async (req) => {
         body:    outgoing,
       });
 
+    } else if (endpoint === 'image-response') {
+      // Responses API — gpt-4o with image generation tool + reference images
+      const body = await req.json();
+      openaiRes = await fetch(`${OPENAI_API}/v1/responses`, {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
+
     } else {
       return new Response(JSON.stringify({ error: `Unknown endpoint: "${endpoint}"` }), {
         status: 400, headers: { ...CORS, 'Content-Type': 'application/json' },

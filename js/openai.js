@@ -252,15 +252,16 @@ async function _generateSingleImage(prompt, quality, model, includeChar2 = false
       model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json',
     });
   } else if (sendHero || sendChar2) {
-    const form = new FormData();
-    form.append('model',  'gpt-image-1');
-    if (sendHero)  form.append('image[]', _b64ToBlob(_heroImageBase64,  _heroImageMime),  'hero.jpg');
-    if (sendChar2) form.append('image[]', _b64ToBlob(_char2ImageBase64, _char2ImageMime), 'char2.jpg');
-    form.append('prompt',  prompt);
-    form.append('size',    '1024x1536');
-    form.append('quality', quality);
-    form.append('n',       '1');
-    res = await _openaiProxy('image-edit', form, true);
+    // Responses API — gpt-4o sees the reference photo and generates consistently
+    const content = [];
+    if (sendHero)  content.push({ type: 'input_image', image_url: `data:${_heroImageMime};base64,${_heroImageBase64}` });
+    if (sendChar2) content.push({ type: 'input_image', image_url: `data:${_char2ImageMime};base64,${_char2ImageBase64}` });
+    content.push({ type: 'input_text', text: prompt });
+    res = await _openaiProxy('image-response', {
+      model: 'gpt-4o',
+      input: [{ role: 'user', content }],
+      tools: [{ type: 'image_generation', quality, size: '1024x1536' }],
+    });
   } else {
     res = await _openaiProxy('image-generate', {
       model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality,
@@ -281,6 +282,13 @@ async function _generateSingleImage(prompt, quality, model, includeChar2 = false
   }
 
   const json = await res.json();
+  // Responses API returns output array with image_generation_call items
+  if (json.output) {
+    const imgOutput = json.output.find(o => o.type === 'image_generation_call');
+    if (imgOutput?.result) return imgOutput.result;
+    throw new Error('No image in Responses API output');
+  }
+  // Standard images API
   return json.data[0].b64_json;
 }
 
