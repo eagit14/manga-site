@@ -84,7 +84,6 @@ async function loadMyMangas() {
     window._tileImageUrls[story.id] = allUrls.slice();
 
     const expectedScenes = chapterCountMap[story.id] || 0;
-    const allImagesReady = expectedScenes > 0 && allUrls.length >= expectedScenes;
 
     const thumbUrl = sceneUrls[0] || '';
     const visual = thumbUrl
@@ -93,15 +92,13 @@ async function loadMyMangas() {
          <div class="manga-tile-cover" style="background:${grad};display:none">${story.title}</div>`
       : `<div class="manga-tile-cover" style="background:${grad}">${story.title}</div>`;
 
-    const gradSafe     = grad.replace(/'/g, "\\'");
-    const thumbSafe    = (sceneUrls[0] || '').replace(/'/g, "\\'");
+    const gradSafe       = grad.replace(/'/g, "\\'");
+    const thumbSafe      = (sceneUrls[0] || '').replace(/'/g, "\\'");
     const colorStyleSafe = (story.color_style || 'bw').replace(/'/g, "\\'");
-    const physicalCall = `openPhysicalOrder({storyId:'${storyIdSafe}',title:'${titleSafe}',grad:'${gradSafe}',numScenes:${allUrls.length},thumbUrl:'${thumbSafe}',colorStyle:'${colorStyleSafe}'})`;
+    const physicalCall   = `openPhysicalOrder({storyId:'${storyIdSafe}',title:'${titleSafe}',grad:'${gradSafe}',numScenes:${allUrls.length},thumbUrl:'${thumbSafe}',colorStyle:'${colorStyleSafe}'})`;
 
     let actionBtn;
-    if (!allImagesReady) {
-      actionBtn = `<div class="manga-tile-no-images">${t('tile_generate_unlock')}</div>`;
-    } else if (isPurchased) {
+    if (isPurchased) {
       actionBtn = `
         <div class="manga-tile-purchased-actions">
           <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', true)">${t('tile_view')}</button>
@@ -111,10 +108,13 @@ async function loadMyMangas() {
       const physBtn = window._appSettings?.physical_order_enabled !== false
         ? `<button class="manga-tile-physical-btn" onclick="${physicalCall}">${t('tile_order_physical')}</button>`
         : '';
+      const viewBtn = allUrls.length > 0
+        ? `<button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">${t('tile_view')}</button>
+           <button class="manga-tile-view-btn" onclick="viewCover('${storyIdSafe}', this, ${isPurchased})">${t('tile_view_cover')}</button>`
+        : '';
       actionBtn = `
         <div class="manga-tile-purchased-actions">
-          <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">${t('tile_view')}</button>
-          <button class="manga-tile-view-btn" onclick="viewCover('${storyIdSafe}', this, ${isPurchased})">${t('tile_view_cover')}</button>
+          ${viewBtn}
           <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">${t('tile_order_digital')}</button>
           ${physBtn}
         </div>`;

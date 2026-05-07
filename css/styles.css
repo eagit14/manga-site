@@ -827,13 +827,6 @@ footer {
 .manga-tile-edit-btn:disabled   { opacity: .3; cursor: not-allowed; }
 .manga-tile-edit-btn:disabled:hover { background: transparent; }
 
-.manga-tile-no-images {
-  font-size: .75rem;
-  color: var(--muted);
-  text-align: center;
-  padding: .5rem .25rem;
-  line-height: 1.4;
-}
 
 .manga-tile-img {
   width: 100%;
