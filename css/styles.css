@@ -2956,6 +2956,8 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   cursor: pointer;
   transition: background .15s, transform .1s;
   white-space: nowrap;
+  display: block;
+  margin-top: .75rem;
 }
 .add-chapter-btn:hover:not(:disabled) { background: var(--yellow-dk); transform: translateY(-1px); }
 .add-chapter-btn:disabled { opacity: .5; cursor: not-allowed; }
