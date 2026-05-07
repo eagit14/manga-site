@@ -281,23 +281,29 @@ async function _doDeleteManga(storyId, title) {
   const tile = document.getElementById(`manga-tile-${storyId}`);
   if (tile) { tile.style.opacity = '.4'; tile.style.pointerEvents = 'none'; }
 
-  let ok = false;
   try {
+    // Remove storage files (ignore error if folder doesn't exist)
     const { data: files } = await _supabase.storage.from('manga-images').list(storyId);
     if (files && files.length > 0) {
       await _supabase.storage.from('manga-images').remove(files.map(f => `${storyId}/${f.name}`));
     }
-    await _supabase.from('manga_images').delete().eq('story_id', storyId);
-    await _supabase.from('manga_chapters').delete().eq('story_id', storyId);
-    const { error } = await _supabase.from('manga_stories').delete().eq('id', storyId);
-    if (!error) ok = true;
-    else console.error('[Delete]', error.message);
-  } catch (err) {
-    console.error('[Delete] unexpected error:', err);
-  }
 
-  if (ok) loadMyMangas();
-  else if (tile) { tile.style.opacity = ''; tile.style.pointerEvents = ''; }
+    // Delete child rows first
+    const { error: imgErr } = await _supabase.from('manga_images').delete().eq('story_id', storyId);
+    if (imgErr) throw new Error('Images: ' + imgErr.message);
+
+    const { error: chapErr } = await _supabase.from('manga_chapters').delete().eq('story_id', storyId);
+    if (chapErr) throw new Error('Chapters: ' + chapErr.message);
+
+    const { error: storyErr } = await _supabase.from('manga_stories').delete().eq('id', storyId);
+    if (storyErr) throw new Error('Story: ' + storyErr.message);
+
+    loadMyMangas();
+  } catch (err) {
+    console.error('[Delete]', err);
+    if (tile) { tile.style.opacity = ''; tile.style.pointerEvents = ''; }
+    alert('Could not delete "' + title + '":\n' + err.message);
+  }
 }
 
 function openMangaViewerFromTile(storyId, title, purchased) {
