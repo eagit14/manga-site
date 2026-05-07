@@ -412,6 +412,35 @@ async function _buildCoverPdfFromCache(storyId) {
   return generateCoverPDF({ title, tagline, genre, heroName: '', synopsis, backSummary, grad, firstImageB64, download: false });
 }
 
+function _toGreyscale(b64) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < data.data.length; i += 4) {
+        const g = Math.round(0.299 * data.data[i] + 0.587 * data.data[i + 1] + 0.114 * data.data[i + 2]);
+        data.data[i] = data.data[i + 1] = data.data[i + 2] = g;
+      }
+      ctx.putImageData(data, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = reject;
+    img.src = b64;
+  });
+}
+
+function _addBlankPage(doc, W, H) {
+  doc.addPage([W, H]);
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, W, H, 'F');
+}
+
 async function viewCover(storyId, callerBtn) {
   if (!_supabase || !storyId) { alert('No manga selected.'); return; }
   if (typeof jspdf === 'undefined') { alert('PDF library not loaded — please refresh.'); return; }
@@ -445,51 +474,74 @@ async function viewCover(storyId, callerBtn) {
       return;
     }
 
-    // 6"×9" Lulu standard
-    const W = 152.4, H = 228.6;
+    const W = 152.4, H = 228.6; // 6"×9" Lulu standard
     const doc = new jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: [W, H], compress: true });
 
-    // Page 1 — Front cover
+    // ── Page 1 — Front cover ─────────────────────────────
     if (btn) btn.textContent = '⏳ Loading cover…';
-    let firstImageB64 = null;
+    let heroB64 = null;
     const coverImgRow = (images || []).find(i => i.image_type === 'cover');
     if (coverImgRow?.image_url) {
-      try { firstImageB64 = await _fetchImageBase64(coverImgRow.image_url); } catch (_) {}
+      try { heroB64 = await _fetchImageBase64(coverImgRow.image_url); } catch (_) {}
     }
-    if (!firstImageB64 && sceneImages.length > 0) {
-      try { firstImageB64 = await _fetchImageBase64(sceneImages[0].image_url); } catch (_) {}
+    if (!heroB64 && sceneImages.length > 0) {
+      try { heroB64 = await _fetchImageBase64(sceneImages[0].image_url); } catch (_) {}
     }
-    _drawFrontCover(doc, W, H, cols, { title: finalTitle, genre, tagline, heroName: '', firstImageB64 });
+    _drawFrontCover(doc, W, H, cols, { title: finalTitle, genre, tagline, heroName: '', firstImageB64: heroB64 });
 
-    // Page 2 — Contents page (white background)
-    doc.addPage([W, H]);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, W, H, 'F');
+    // ── Page 2 — Title page ──────────────────────────────
+    _addBlankPage(doc, W, H);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(28);
+    doc.setTextColor(20, 20, 20);
+    doc.text(finalTitle, W / 2, H / 2 - 12, { align: 'center' });
+    if (tagline) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(80, 80, 80);
+      const lines = doc.splitTextToSize(tagline, W - 40);
+      doc.text(lines, W / 2, H / 2 + 8, { align: 'center' });
+    }
 
-    // Contents title
+    // ── Page 3 — Blank ───────────────────────────────────
+    _addBlankPage(doc, W, H);
+
+    // ── Page 4 — Hero photo (black & white) ─────────────
+    if (btn) btn.textContent = '⏳ Loading hero image…';
+    _addBlankPage(doc, W, H);
+    if (heroB64) {
+      try {
+        const bwB64 = await _toGreyscale(heroB64);
+        const margin = 12;
+        doc.addImage(bwB64, 'JPEG', margin, margin, W - margin * 2, H - margin * 2, undefined, 'NONE');
+      } catch (_) {}
+    }
+
+    // ── Page 5 — Blank ───────────────────────────────────
+    _addBlankPage(doc, W, H);
+
+    // ── Page 6 — Contents ────────────────────────────────
+    _addBlankPage(doc, W, H);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
     doc.setTextColor(20, 20, 20);
     doc.text('Contents', W / 2, 28, { align: 'center' });
-
-    // Decorative rule
     doc.setDrawColor(180, 30, 30);
     doc.setLineWidth(0.6);
     doc.line(20, 34, W - 20, 34);
-
-    // Scene list
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     let yPos = 48;
-    const lineH = 9;
     (chapters || []).forEach((ch, idx) => {
-      const label = ch.title || `Scene ${ch.chapter_num || idx + 1}`;
       doc.setTextColor(30, 30, 30);
-      doc.text(`${idx + 1}.  ${label}`, 24, yPos);
-      yPos += lineH;
+      doc.text(`${idx + 1}.  ${ch.title || `Scene ${ch.chapter_num || idx + 1}`}`, 24, yPos);
+      yPos += 9;
     });
 
-    // Scene image pages
+    // ── Page 7 — Blank ───────────────────────────────────
+    _addBlankPage(doc, W, H);
+
+    // ── Pages 8+ — Scene images ──────────────────────────
     for (let i = 0; i < sceneImages.length; i++) {
       if (btn) btn.textContent = `⏳ Scene ${i + 1} / ${sceneImages.length}…`;
       doc.addPage([W, H]);
@@ -510,22 +562,17 @@ async function viewCover(storyId, callerBtn) {
       doc.text(`Scene ${sceneImages[i].chapter_num || i + 1}`, W / 2, H - 4, { align: 'center' });
     }
 
-    // Blank padding pages to reach Lulu minimum (32 pages total, even)
-    // Current pages: 1 (cover) + 1 (contents) + sceneImages.length + 1 (back cover) = sceneImages.length + 3
-    const pagesBeforeBack = 2 + sceneImages.length; // cover + contents + scenes
-    const totalWithBack   = pagesBeforeBack + 1;
-    const minPages = 32;
+    // ── Blank padding to reach Lulu minimum ─────────────
+    // Fixed pages: cover(1) + title(2) + blank(3) + hero(4) + blank(5) + contents(6) + blank(7) + back cover(last) = 8
+    const fixedPages  = 8;
+    const totalWithBack = fixedPages + sceneImages.length;
+    const minPages    = 32;
     const targetTotal = Math.max(minPages, totalWithBack);
     const paddedTotal = targetTotal % 2 === 0 ? targetTotal : targetTotal + 1;
     const blankCount  = paddedTotal - totalWithBack;
+    for (let p = 0; p < blankCount; p++) _addBlankPage(doc, W, H);
 
-    for (let p = 0; p < blankCount; p++) {
-      doc.addPage([W, H]);
-      doc.setFillColor(255, 255, 255);
-      doc.rect(0, 0, W, H, 'F');
-    }
-
-    // Last page — Back cover
+    // ── Last page — Back cover ───────────────────────────
     if (btn) btn.textContent = '⏳ Building back cover…';
     const cachedBlurb = coverRow?.prompt_used || null;
     let backSummary = cachedBlurb;
