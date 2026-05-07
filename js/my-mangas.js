@@ -152,6 +152,7 @@ async function loadMyMangas() {
             <span class="manga-tile-date">${date}</span>
           </div>
           ${story.tagline ? `<p style="font-size:.78rem;color:var(--muted);line-height:1.5;margin-top:.25rem">${story.tagline}</p>` : ''}
+          ${isPurchased ? `<div class="manga-tile-ordered-badge">✅ Ordered · ${new Date(story.purchased_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>` : ''}
           <div class="manga-tile-order">${actionBtn}</div>
         </div>
       </div>`;

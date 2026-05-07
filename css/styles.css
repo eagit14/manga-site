@@ -889,6 +889,17 @@ footer {
   font-size: .65rem;
   color: var(--light);
 }
+.manga-tile-ordered-badge {
+  display: inline-block;
+  margin-top: .4rem;
+  font-size: .72rem;
+  font-weight: 600;
+  color: #2e7d32;
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  border-radius: 20px;
+  padding: .15rem .65rem;
+}
 
 .manga-tile-pages {
   font-size: .65rem;
