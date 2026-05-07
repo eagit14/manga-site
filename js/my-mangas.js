@@ -302,7 +302,7 @@ async function _doDeleteManga(storyId, title) {
   } catch (err) {
     console.error('[Delete]', err);
     if (tile) { tile.style.opacity = ''; tile.style.pointerEvents = ''; }
-    alert('Could not delete "' + title + '":\n' + err.message);
+    alert('Could not delete "' + title + '". Please try again.');
   }
 }
 
