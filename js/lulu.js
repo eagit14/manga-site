@@ -535,8 +535,7 @@ async function viewCover(storyId, callerBtn) {
     doc.addPage([W, H]);
     _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis, backSummary });
 
-    const safeName = finalTitle.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'manga';
-    doc.save(`${safeName}-print.pdf`);
+    window.open(doc.output('bloburl'), '_blank');
 
   } catch (err) {
     console.error('[ViewManga] error:', err);
