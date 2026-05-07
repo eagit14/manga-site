@@ -121,6 +121,11 @@ function initAuth() {
   _supabase.auth.onAuthStateChange((event, session) => {
     if (loadingEl) loadingEl.style.display = 'none';
     updateAuthUI(session);
+    // Remove OAuth tokens from the URL hash so a later page reload
+    // doesn't try to re-use expired tokens (causes "session expires in -Xs" warning).
+    if (window.location.hash.includes('access_token')) {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    }
     if (event === 'SIGNED_IN') {
       upsertUser(session.user);
       trackConnection(session.user.id);

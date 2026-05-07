@@ -1190,13 +1190,22 @@ footer {
   margin-bottom: .4rem;
 }
 .credits-badge-save { font-size: .78rem; }
-.autosave-status {
-  font-size: .78rem;
-  color: var(--muted);
-  min-width: 5rem;
-  text-align: right;
-  transition: opacity .2s;
+#autosave-toast {
+  position: fixed;
+  background: #1e7a1e;
+  color: #fff;
+  font-size: .71rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s;
+  z-index: 9999;
+  white-space: nowrap;
 }
+#autosave-toast.visible { opacity: 1; }
+#autosave-toast.error   { background: #c0392b; }
 
 .save-draft-btn {
   width: auto;
@@ -2529,6 +2538,33 @@ footer {
   .creator-form-card { padding: 1.5rem 1.25rem; }
   .payment-body { grid-template-columns: 1fr; }
   .modal-carousel { height: 260px; border-right: none; border-bottom: 1px solid var(--border); }
+
+  /* Scene entry header: title on its own full-width second row */
+  .chapter-entry-hdr { flex-wrap: wrap; }
+  .chapter-title-input { order: 10 !important; flex: 1 1 100% !important; width: 100%; min-width: 0; }
+  .scene-gen-msg      { order: 12; flex: 1 1 100%; }
+
+  /* Disable hover popup on mobile — replaced by tap lightbox */
+  .scene-thumb:hover .scene-thumb-popup { display: none; }
+
+  /* Full-screen lightbox for scene image preview */
+  #scene-img-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.88);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+  }
+  #scene-img-lightbox.open { display: flex; }
+  #scene-img-lightbox img {
+    max-width: 92vw;
+    max-height: 88vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.6);
+  }
 }
 
 /* ── FIELD VALIDATION ───────────────────────────────── */
@@ -2999,7 +3035,31 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   display: flex;
   flex-direction: column;
   gap: .5rem;
+  position: relative;
 }
+.scene-add-after-btn {
+  position: absolute;
+  bottom: -13px;
+  right: 14px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  border: 2px solid var(--bg);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  box-shadow: 0 1px 5px rgba(0,0,0,.22);
+  transition: transform .15s, background .15s;
+  padding: 0;
+}
+.scene-add-after-btn:hover { transform: scale(1.18); background: #c0392b; }
 .chapter-entry-hdr { display: flex; align-items: center; gap: .5rem; }
 
 .chapter-drag-handle {

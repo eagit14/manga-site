@@ -221,9 +221,23 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
     const sceneDialogue = hasBubbles
       ? (aiContent?.panel_lines?.scenes?.[i] || []).filter(Boolean)
       : [];
+
+    const artStyle   = isCartoon
+      ? (isColor ? 'full-color cartoon' : 'black-and-white cartoon')
+      : (isColor ? 'full-color manga' : 'black-and-white manga');
+    const noTextLine = hasBubbles ? '' : 'No speech bubbles, no text, no captions.\n';
+    const faceLine   = _heroImageBase64
+      ? 'I am sending you a photo of the hero. The face in EVERY panel must be as close as possible to the face in the photo — same face shape, skin tone, eyes, nose, lips, and hair. This is the top priority.\n\n'
+      : '';
+    const simplePrompt =
+      faceLine +
+      `Create a ${panelCount}-panel ${artStyle} page.\n` +
+      `Scene: ${sceneTitle}${sceneDetail}.\n` +
+      noTextLine;
+
     results.push({
       type: 'chapter', chapterNum: num, storageKey: `chapter-${num}`,
-      prompt: _cap(prompt), includeChar2, includeHero,
+      prompt: _cap(prompt), simplePrompt, includeChar2, includeHero,
       hasBubbles,
       dialogueLines: sceneDialogue,
       panelCount,
@@ -233,6 +247,46 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   return results;
 }
 
+// ── Character portrait cache (manga-style reference, generated once per hero image) ──
+let _heroMangaPortrait    = null;
+let _heroMangaPortraitKey = null; // first 60 chars of heroBase64 — detects hero changes
+
+async function _ensureCharacterPortrait() {
+  if (!_heroImageBase64) return;
+  const key = _heroImageBase64.slice(0, 60);
+  if (_heroMangaPortrait && _heroMangaPortraitKey === key) { console.log('[IMG] Character portrait: using cached ✓'); return; }
+
+  console.log('[IMG] Generating manga character portrait (image-edit)…');
+  try {
+    const form = new FormData();
+    form.append('model',   'gpt-image-1');
+    form.append('image[]', _b64ToBlob(_heroImageBase64, _heroImageMime), 'hero.jpg');
+    form.append('prompt',
+      'This photo shows the main character. Create a manga/anime character reference portrait.\n' +
+      'CRITICAL: Their face must look EXACTLY like the photo — same face shape, skin tone, eye color and shape, eyebrow style, nose, lips, hair color and style.\n' +
+      'Bust portrait (head and shoulders), front-facing or slight 3/4 angle, plain white background.\n' +
+      'Manga/anime art style. No text, no speech bubbles.'
+    );
+    form.append('size',    '1024x1024');
+    form.append('quality', 'medium');
+    form.append('n',       '1');
+
+    const res = await _openaiProxy('image-edit', form, true);
+    if (!res.ok) { console.warn('[IMG] Portrait API error:', res.status); return; }
+    const json = await res.json();
+    const b64  = json.data?.[0]?.b64_json;
+    if (b64) {
+      _heroMangaPortrait    = b64;
+      _heroMangaPortraitKey = key;
+      console.log('[IMG] Manga character portrait ready ✓');
+    } else {
+      console.warn('[IMG] Portrait: no image returned — scenes will use original photo only');
+    }
+  } catch (e) {
+    console.warn('[IMG] Portrait generation skipped:', e.message);
+  }
+}
+
 function _b64ToBlob(b64, mime) {
   const binary = atob(b64);
   const bytes  = new Uint8Array(binary.length);
@@ -240,11 +294,12 @@ function _b64ToBlob(b64, mime) {
   return new Blob([bytes], { type: mime || 'image/jpeg' });
 }
 
-async function _generateSingleImage(prompt, quality, model, includeChar2 = false, includeHero = true, attempt = 1) {
+async function _generateSingleImage(prompt, quality, model, includeChar2 = false, includeHero = true, attempt = 1, simplePrompt = null) {
   const _sleep = ms => new Promise(r => setTimeout(r, ms));
 
   const sendHero  = includeHero  && !!_heroImageBase64;
   const sendChar2 = includeChar2 && !!_char2ImageBase64;
+  console.log(`[IMG] sendHero=${sendHero} sendChar2=${sendChar2} heroLoaded=${!!_heroImageBase64} char2Loaded=${!!_char2ImageBase64}`);
 
   let res;
   if (model === 'dall-e-3') {
@@ -252,11 +307,13 @@ async function _generateSingleImage(prompt, quality, model, includeChar2 = false
       model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json',
     });
   } else if (sendHero || sendChar2) {
+    const editPrompt = simplePrompt || prompt;
+    console.log('[IMG] using image-edit, prompt:', editPrompt.slice(0, 140));
     const form = new FormData();
-    form.append('model',  'gpt-image-1');
-    if (sendHero)  form.append('image[]', _b64ToBlob(_heroImageBase64,  _heroImageMime),  'hero.jpg');
+    form.append('model', 'gpt-image-1');
+    if (sendHero)  form.append('image[]', _b64ToBlob(_heroImageBase64,  _heroImageMime),  'hero_photo.jpg');
     if (sendChar2) form.append('image[]', _b64ToBlob(_char2ImageBase64, _char2ImageMime), 'char2.jpg');
-    form.append('prompt',  prompt);
+    form.append('prompt',  editPrompt);
     form.append('size',    '1024x1536');
     form.append('quality', quality);
     form.append('n',       '1');
@@ -271,7 +328,7 @@ async function _generateSingleImage(prompt, quality, model, includeChar2 = false
     const wait = attempt * 12000;
     console.warn(`[IMG] 429 — retrying in ${wait / 1000}s (attempt ${attempt})`);
     await _sleep(wait);
-    return _generateSingleImage(prompt, quality, model, includeChar2, includeHero, attempt + 1);
+    return _generateSingleImage(prompt, quality, model, includeChar2, includeHero, attempt + 1, simplePrompt);
   }
   if (!res.ok) {
     const errJson = await res.json().catch(() => ({}));
@@ -281,13 +338,25 @@ async function _generateSingleImage(prompt, quality, model, includeChar2 = false
   }
 
   const json = await res.json();
-  // Responses API returns output array with image_generation_call items
+  // Responses API — extract image from output array
   if (json.output) {
+    console.log('[IMG] Responses API output types:', json.output.map(o => o.type).join(', '));
     const imgOutput = json.output.find(o => o.type === 'image_generation_call');
-    if (imgOutput?.result) return imgOutput.result;
-    throw new Error('No image in Responses API output');
+    if (imgOutput) {
+      const b64 = imgOutput.result ?? imgOutput.b64_json;
+      if (b64) return b64;
+    }
+    // gpt-4o responded with text instead of calling the tool — fall back to gpt-image-1
+    const textOut = json.output.find(o => o.type === 'message');
+    console.warn('[IMG] Responses API returned no image, falling back to gpt-image-1. Text:', textOut?.content?.[0]?.text?.slice(0, 200));
+    const fallback = await _openaiProxy('image-generate', {
+      model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality,
+    });
+    if (!fallback.ok) throw new Error(`Fallback failed: HTTP ${fallback.status}`);
+    const fb = await fallback.json();
+    return fb.data[0].b64_json;
   }
-  // Standard images API
+  // Standard images API (gpt-image-1 / dall-e-3)
   return json.data[0].b64_json;
 }
 
@@ -323,13 +392,13 @@ async function generateImages(prompts, storyId, quality = 'medium', model = 'gpt
     const promptObj = prompts[idx];
 
     try {
-      let b64 = await _generateSingleImage(promptObj.prompt, quality, model, promptObj.includeChar2 || false, promptObj.includeHero !== false);
+      let b64 = await _generateSingleImage(promptObj.prompt, quality, model, promptObj.includeChar2 || false, promptObj.includeHero !== false, 1, promptObj.simplePrompt);
       if (promptObj.hasBubbles && promptObj.dialogueLines?.length) {
         b64 = await overlayBubbles(b64, promptObj.panelCount || 4, promptObj.dialogueLines);
       }
       const permanentUrl = await _uploadBase64ToStorage(b64, storyId, promptObj.storageKey);
       if (permanentUrl) {
-        await saveImageToSupabase(storyId, promptObj.type, promptObj.chapterNum, permanentUrl, promptObj.prompt);
+        await saveImageToSupabase(storyId, promptObj.type, promptObj.chapterNum, permanentUrl, promptObj.simplePrompt || promptObj.prompt);
         if (idx === 0) {
           const tile = document.getElementById(`manga-tile-${storyId}`);
           if (tile) {

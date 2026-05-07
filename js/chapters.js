@@ -1,16 +1,31 @@
+// ── Mobile scene-image lightbox ───────────────────────
+const _sceneLightbox = (() => {
+  const el = document.createElement('div');
+  el.id = 'scene-img-lightbox';
+  const img = document.createElement('img');
+  img.alt = 'Scene preview';
+  el.appendChild(img);
+  el.addEventListener('click', () => el.classList.remove('open'));
+  document.body.appendChild(el);
+  return el;
+})();
+
+document.addEventListener('click', e => {
+  if (window.innerWidth > 640) return;
+  const thumb = e.target.closest('.scene-thumb');
+  if (!thumb) return;
+  const src = thumb.querySelector('[id^="scene-popup-img-"]')?.src;
+  if (!src) return;
+  _sceneLightbox.querySelector('img').src = src;
+  _sceneLightbox.classList.add('open');
+});
+
 // ── Chapter management ────────────────────────────────
 
 let _chapterIdCounter = 0;
 
-function addChapter() {
-  const entries = document.querySelectorAll('.chapter-entry');
-  const maxScenes = window._appSettings?.max_scenes ?? 24;
-  if (entries.length >= maxScenes) return;
-  _chapterIdCounter++;
-  const cid = _chapterIdCounter;
-  const num = entries.length + 1;
-  const list = document.getElementById('chapters-list');
-  const div  = document.createElement('div');
+function _buildChapterElement(cid) {
+  const div = document.createElement('div');
   div.className = 'chapter-entry';
   div.id = `chapter-entry-${cid}`;
   div.innerHTML = `
@@ -22,7 +37,7 @@ function addChapter() {
           <circle cx="2" cy="12" r="1.5"/><circle cx="8" cy="12" r="1.5"/>
         </svg>
       </span>
-      <span class="chapter-entry-num">Sc. ${num}</span>
+      <span class="chapter-entry-num">Sc. 1</span>
       <div class="scene-medium-toggle" id="scene-medium-toggle-${cid}">
         <button type="button" class="scene-medium-btn active" id="scene-medium-manga-${cid}" onclick="_setSceneMedium(${cid},'manga')" title="Manga style">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -78,9 +93,34 @@ function addChapter() {
     <div class="scene-credits-error" id="scene-credits-err-${cid}" style="display:none">
       ⚠ No image credits remaining.
       <a href="#" onclick="openCreditsModal();return false;">Refill credits →</a>
-    </div>`;
-  list.appendChild(div);
+    </div>
+    <button type="button" class="scene-add-after-btn" onclick="addChapterAfter(${cid})" title="Add scene after this one">+</button>`;
+  return div;
+}
+
+function addChapter() {
+  const entries = document.querySelectorAll('.chapter-entry');
+  const maxScenes = window._appSettings?.max_scenes ?? 24;
+  if (entries.length >= maxScenes) return;
+  _chapterIdCounter++;
+  const div  = _buildChapterElement(_chapterIdCounter);
+  document.getElementById('chapters-list').appendChild(div);
   updateChapterUI();
+  renumberChapters();
+  _initChapterDrag();
+  div.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function addChapterAfter(cid) {
+  const entries = document.querySelectorAll('.chapter-entry');
+  const maxScenes = window._appSettings?.max_scenes ?? 24;
+  if (entries.length >= maxScenes) return;
+  _chapterIdCounter++;
+  const div      = _buildChapterElement(_chapterIdCounter);
+  const refEntry = document.getElementById(`chapter-entry-${cid}`);
+  document.getElementById('chapters-list').insertBefore(div, refEntry.nextSibling);
+  updateChapterUI();
+  renumberChapters();
   _initChapterDrag();
   div.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -317,6 +357,15 @@ async function generateSceneImage(cid) {
     return;
   }
 
+  // Scene title required
+  const sceneTitleInput = document.getElementById(`ch-title-${cid}`);
+  if (!sceneTitleInput?.value.trim()) {
+    sceneTitleInput?.classList.add('field-error');
+    sceneTitleInput?.focus();
+    return;
+  }
+  sceneTitleInput?.classList.remove('field-error');
+
   // Hero photo required
   if (!_heroImageBase64) {
     const heroPhotoErr = document.getElementById('err-hero-photo');
@@ -366,6 +415,7 @@ async function generateSceneImage(cid) {
   btn.disabled     = true;
   btn.textContent  = '⏳';
   if (msgEl) msgEl.textContent = 'Generating…';
+  console.log(`[SceneGen] Scene ${sceneNum}: "${sceneTitleInput?.value.trim()}"`);
 
   // Clear old thumbnail immediately so stale image doesn't linger
   const _oldThumb    = document.getElementById(`scene-thumb-${cid}`);
@@ -383,7 +433,7 @@ async function generateSceneImage(cid) {
     }
 
     // ── Call OpenAI image API (passes hero photo when available) ──────
-    let b64 = await _generateSingleImage(promptObj.prompt, quality, imgModel, promptObj.includeChar2 || false, promptObj.includeHero !== false);
+    let b64 = await _generateSingleImage(promptObj.prompt, quality, imgModel, promptObj.includeChar2 || false, promptObj.includeHero !== false, 1, promptObj.simplePrompt);
     if (promptObj.hasBubbles && promptObj.dialogueLines?.length) {
       b64 = await overlayBubbles(b64, promptObj.panelCount || 4, promptObj.dialogueLines);
     }
@@ -404,7 +454,7 @@ async function generateSceneImage(cid) {
         .eq('image_type', 'chapter')
         .eq('chapter_num', sceneNum);
 
-      await saveImageToSupabase(storyId, 'chapter', sceneNum, permanentUrl, promptObj.prompt);
+      await saveImageToSupabase(storyId, 'chapter', sceneNum, permanentUrl, promptObj.simplePrompt || promptObj.prompt);
 
       // Regenerate cached cover PDF in the background
       if (typeof _triggerCoverPreGeneration === 'function') {

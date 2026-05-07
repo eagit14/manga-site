@@ -72,12 +72,18 @@ async function handleGenerate() {
   let storyId;
   if (window._editingStoryId) {
     storyId = await updateStoryInSupabase(window._editingStoryId, data, aiContent, grad);
-    cancelEdit();
   } else {
     storyId = await saveStoryToSupabase(data, aiContent, grad);
   }
-  window._lastStoryId  = storyId || null;
+  window._lastStoryId   = storyId || null;
   window._lastMangaData = data;
+  // Keep _editingStoryId pointing at the story so that subsequent scene-image
+  // generation calls saveMangaDraft() → update (not insert) the same row.
+  if (storyId) {
+    window._editingStoryId = storyId;
+    document.getElementById('edit-mode-title').textContent = data.titre;
+    document.getElementById('edit-mode-banner').style.display = 'flex';
+  }
 
   // Save hero face image (only when the user just attached/changed it)
   if (_heroImageBase64 && storyId && _heroImageDirty) {
@@ -99,9 +105,32 @@ async function handleGenerate() {
   document.getElementById('my-mangas').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+let _autosaveTarget = null;
+
+const _autosaveToast = (() => {
+  const el = document.createElement('div');
+  el.id = 'autosave-toast';
+  document.body.appendChild(el);
+  return el;
+})();
+
 function _setAutosaveStatus(text) {
-  const el = document.getElementById('autosave-status');
-  if (el) el.textContent = text;
+  if (!text) {
+    _autosaveToast.classList.remove('visible', 'error');
+    return;
+  }
+  const target = _autosaveTarget;
+  if (target) {
+    const rect = target.getBoundingClientRect();
+    let left = rect.right + 10;
+    let top  = rect.top + (rect.height / 2) - 11;
+    if (left + 90 > window.innerWidth - 8) left = Math.max(4, rect.left - 100);
+    _autosaveToast.style.left = left + 'px';
+    _autosaveToast.style.top  = Math.max(4, top) + 'px';
+  }
+  _autosaveToast.textContent = text;
+  _autosaveToast.classList.toggle('error', text.startsWith('⚠'));
+  _autosaveToast.classList.add('visible');
 }
 
 async function saveMangaDraft() {
@@ -164,10 +193,12 @@ document.addEventListener('focusout', e => {
   if (!form || !form.contains(e.target)) return;
   if (!e.target.matches('input, textarea, select')) return;
   clearTimeout(_autosaveTimer);
+  _autosaveTarget = e.target;
   _autosaveTimer = setTimeout(() => {
-    if (window._editingStoryId || document.getElementById('f-titre')?.value.trim()) {
-      saveMangaDraft();
-    }
+    const hasContext = window._editingStoryId
+      || document.getElementById('f-titre')?.value.trim()
+      || document.getElementById('f-heros')?.value.trim();
+    if (hasContext) saveMangaDraft();
   }, 300);
 });
 
@@ -188,6 +219,10 @@ async function openEditForm(storyId) {
   if (!_supabase || !storyId) return;
 
   const card = document.getElementById('creator-form-card');
+
+  // Clear hero/char2 state so a story with no uploaded photo never inherits a previous story's image
+  clearHeroImage({ preventDefault: () => {}, stopPropagation: () => {} });
+  clearChar2Image({ preventDefault: () => {}, stopPropagation: () => {} });
 
   // Scroll to form and show loading state
   document.getElementById('creer').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -212,7 +247,7 @@ async function openEditForm(storyId) {
     document.getElementById('f-genre').value       = story.genre       || 'shonen';
     const _oldStyleValues = new Set(['dynamique','elegant','sombre','doux','retro','moderne']);
     const _defaultStyle = `manga\nscreen tones\ninked line art\ndynamic panel layout\nspeed lines / radial lines\nhigh contrast lighting`;
-    document.getElementById('f-style').value = (_oldStyleValues.has(story.art_style) || !story.art_style) ? _defaultStyle : story.art_style;
+    document.getElementById('f-style').value = (_oldStyleValues.has(story.art_style) || story.art_style == null) ? _defaultStyle : story.art_style;
     document.getElementById('f-color-style').value = story.color_style || 'bw';
     document.getElementById('f-bubbles').value     = story.show_bubbles === false ? 'no' : 'yes';
     document.getElementById('f-heros').value       = story.hero_name   || '';
@@ -284,7 +319,8 @@ async function openEditForm(storyId) {
           const reader = new FileReader();
           reader.onload = e => {
             const dataUrl = e.target.result;
-            _heroImageBase64 = dataUrl.split(',')[1];
+            _heroImageBase64   = dataUrl.split(',')[1];
+            _heroMangaPortrait = null; // invalidate cached portrait when hero photo changes
             document.getElementById('hero-upload-thumb').src        = dataUrl;
             document.getElementById('hero-upload-name').textContent = 'Saved hero image';
             document.getElementById('hero-upload-preview').style.display = 'flex';

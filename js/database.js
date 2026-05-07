@@ -222,6 +222,7 @@ async function saveImageToSupabase(storyId, imageType, chapterNum, imageUrl, pro
       chapter_num: chapterNum ?? null,
       image_url:   imageUrl,
       prompt_used: promptUsed || null,
+      updated_at:  new Date().toISOString(),
     });
     if (error) console.error('[DB] manga_images insert error:', error.code, error.message);
     else console.log('[DB] Image inserted ✓ type:', imageType);
