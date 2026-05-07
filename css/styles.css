@@ -775,6 +775,28 @@ footer {
   transform: translateY(-6px) rotate(-.5deg);
   box-shadow: var(--shadow-hover);
 }
+.manga-tile[onclick]::after {
+  content: 'Open';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(.85);
+  background: rgba(0,0,0,.72);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: .3rem .85rem;
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s, transform .18s;
+  z-index: 5;
+}
+.manga-tile[onclick]:hover::after {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
 .manga-tile-actions {
   position: absolute;
   top: .5rem;
