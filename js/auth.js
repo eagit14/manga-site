@@ -86,8 +86,10 @@ async function checkAdminStatus(userId) {
   const ticketsLink  = document.getElementById('nav-tickets-link');
   const adminSection = document.getElementById('all-mangas');
   const surpriseBar  = document.getElementById('surprise-bar');
+  const settingsLink = document.getElementById('nav-settings-link');
   if (adminLink)    adminLink.style.display    = window._isAdmin ? '' : 'none';
   if (ticketsLink)  ticketsLink.style.display  = window._isAdmin ? '' : 'none';
+  if (settingsLink) settingsLink.style.display = window._isAdmin ? '' : 'none';
   const supportLink2 = document.getElementById('nav-support-link');
   if (supportLink2) supportLink2.style.display = window._isAdmin ? 'none' : '';
   if (adminSection) adminSection.style.display = window._isAdmin ? '' : 'none';
@@ -139,11 +141,13 @@ function initAuth() {
       window._isAdmin = false;
       const adminLink    = document.getElementById('nav-admin-link');
       const ticketsLink  = document.getElementById('nav-tickets-link');
+      const settingsLink = document.getElementById('nav-settings-link');
       const supportLink  = document.getElementById('nav-support-link');
       const adminSection = document.getElementById('all-mangas');
       const surpriseBar  = document.getElementById('surprise-bar');
       if (adminLink)    adminLink.style.display    = 'none';
       if (ticketsLink)  ticketsLink.style.display  = 'none';
+      if (settingsLink) settingsLink.style.display = 'none';
       if (supportLink)  supportLink.style.display  = 'none';
       if (adminSection) adminSection.style.display = 'none';
       if (surpriseBar)  surpriseBar.style.display  = 'none';

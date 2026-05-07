@@ -93,6 +93,7 @@
     <li><a href="#my-mangas" class="nav-my-mangas">📚 My Picture Books</a></li>
     <li id="nav-admin-link" style="display:none"><a href="#all-mangas" class="nav-admin">🛡️ All Mangas</a></li>
     <li id="nav-tickets-link" style="display:none"><a href="#" class="nav-admin" onclick="openAdminTickets();return false;">🎫 Tickets</a></li>
+    <li id="nav-settings-link" style="display:none"><a href="#" class="nav-admin" onclick="openAdminSettings();return false;">⚙️ Settings</a></li>
     <li id="nav-support-link" style="display:none"><a href="#" onclick="openContactSupport();return false;">💬 Contact Support</a></li>
   </ul>
   <div class="nav-auth-area">
@@ -988,45 +989,6 @@ high contrast lighting</textarea>
     <h2 class="section-title">All <span class="red">Mangas</span></h2>
     <p class="section-desc">Every manga story generated across all users.</p>
 
-    <!-- Admin Settings -->
-    <div class="admin-settings-panel" id="admin-settings-panel">
-      <h3 class="admin-settings-title">⚙️ App Settings</h3>
-      <div class="admin-settings-form">
-
-        <div class="admin-setting-row">
-          <div class="admin-setting-label">
-            <span>🖨️ Physical orders enabled</span>
-            <small>Show / hide the "Order Physical" button on all story tiles</small>
-          </div>
-          <label class="admin-toggle">
-            <input type="checkbox" id="setting-physical-enabled" checked>
-            <span class="admin-toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="admin-setting-row">
-          <div class="admin-setting-label">
-            <span>🎨 Default credits for new users</span>
-            <small>Credits assigned when a new account is first created</small>
-          </div>
-          <input type="number" id="setting-default-credits" class="admin-setting-input" min="0" max="9999" value="50">
-        </div>
-
-        <div class="admin-setting-row admin-setting-row-full">
-          <div class="admin-setting-label">
-            <span>🖼️ Default art style</span>
-            <small>Pre-filled in the creator form for every new story</small>
-          </div>
-          <textarea id="setting-art-style" class="admin-setting-textarea" rows="7"></textarea>
-        </div>
-
-        <div class="admin-settings-actions">
-          <span class="admin-settings-msg" id="admin-settings-msg"></span>
-          <button class="action-btn primary" id="admin-settings-save-btn" onclick="saveAppSettings()">💾 Save Settings</button>
-        </div>
-      </div>
-    </div>
-
     <div id="all-mangas-grid" class="my-mangas-grid"></div>
   </div>
 </section>
@@ -1087,6 +1049,53 @@ high contrast lighting</textarea>
     <div id="my-tickets-section" class="my-tickets-section" style="display:none">
       <h3 class="my-tickets-title">My Tickets</h3>
       <div id="my-tickets-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN SETTINGS MODAL -->
+<div id="admin-settings-modal" class="payment-overlay" style="display:none" onclick="handleAdminSettingsOverlayClick(event)">
+  <div class="admin-tickets-box" style="max-width:560px">
+    <div class="admin-tickets-header">
+      <h2 class="support-modal-title">⚙️ App Settings</h2>
+      <button class="modal-close-btn" onclick="closeAdminSettings()">✕</button>
+    </div>
+    <div style="padding:1.25rem 1.75rem 1.75rem">
+      <div class="admin-settings-form">
+
+        <div class="admin-setting-row">
+          <div class="admin-setting-label">
+            <span>🖨️ Physical orders enabled</span>
+            <small>Show / hide the "Order Physical" button on all story tiles</small>
+          </div>
+          <label class="admin-toggle">
+            <input type="checkbox" id="setting-physical-enabled" checked>
+            <span class="admin-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="admin-setting-row">
+          <div class="admin-setting-label">
+            <span>🎨 Default credits for new users</span>
+            <small>Credits assigned when a new account is first created</small>
+          </div>
+          <input type="number" id="setting-default-credits" class="admin-setting-input" min="0" max="9999" value="50">
+        </div>
+
+        <div class="admin-setting-row admin-setting-row-full">
+          <div class="admin-setting-label">
+            <span>🖼️ Default art style</span>
+            <small>Pre-filled in the creator form for every new story</small>
+          </div>
+          <textarea id="setting-art-style" class="admin-setting-textarea" rows="7"></textarea>
+        </div>
+
+        <div class="admin-settings-actions">
+          <span class="admin-settings-msg" id="admin-settings-msg"></span>
+          <button class="action-btn primary" id="admin-settings-save-btn" onclick="saveAppSettings()">💾 Save Settings</button>
+        </div>
+
+      </div>
     </div>
   </div>
 </div>

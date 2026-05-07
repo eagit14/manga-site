@@ -1,5 +1,18 @@
 // ── Admin: loadAllMangas, settings ───────────────────────
 
+function openAdminSettings() {
+  loadSettingsForm();
+  document.getElementById('admin-settings-modal').style.display = 'flex';
+}
+
+function closeAdminSettings() {
+  document.getElementById('admin-settings-modal').style.display = 'none';
+}
+
+function handleAdminSettingsOverlayClick(e) {
+  if (e.target === document.getElementById('admin-settings-modal')) closeAdminSettings();
+}
+
 function loadSettingsForm() {
   if (!window._isAdmin) return;
   const physToggle = document.getElementById('setting-physical-enabled');
