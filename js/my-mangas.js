@@ -363,4 +363,25 @@ function _onTileClick(e, storyId) {
   openEditForm(storyId);
 }
 
+// ── "Open" tooltip that follows the cursor over clickable tiles ──
+(function () {
+  const tip = document.createElement('div');
+  tip.id = 'tile-open-tooltip';
+  tip.textContent = 'Open';
+  document.body.appendChild(tip);
+
+  document.addEventListener('mousemove', e => {
+    const tile = e.target.closest('.manga-tile[onclick]');
+    if (tile && !e.target.closest('button, a')) {
+      tip.style.left = e.clientX + 'px';
+      tip.style.top  = e.clientY + 'px';
+      tip.style.opacity = '1';
+    } else {
+      tip.style.opacity = '0';
+    }
+  });
+
+  document.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+})();
+
 // openPaymentFromTile is defined in stripe.js — do not redefine here

@@ -775,27 +775,21 @@ footer {
   transform: translateY(-6px) rotate(-.5deg);
   box-shadow: var(--shadow-hover);
 }
-.manga-tile[onclick]::after {
-  content: 'Open';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(.85);
-  background: rgba(0,0,0,.72);
+#tile-open-tooltip {
+  position: fixed;
+  background: rgba(0,0,0,.75);
   color: #fff;
-  font-size: .8rem;
+  font-size: .78rem;
   font-weight: 700;
-  letter-spacing: .08em;
-  padding: .3rem .85rem;
+  letter-spacing: .06em;
+  padding: .25rem .7rem;
   border-radius: 20px;
   pointer-events: none;
   opacity: 0;
-  transition: opacity .18s, transform .18s;
-  z-index: 5;
-}
-.manga-tile[onclick]:hover::after {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transition: opacity .12s;
+  z-index: 9999;
+  white-space: nowrap;
+  transform: translate(12px, -50%);
 }
 .manga-tile-actions {
   position: absolute;
