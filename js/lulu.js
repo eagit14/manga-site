@@ -541,12 +541,12 @@ async function viewCover(storyId, callerBtn, purchased) {
     doc.setLineWidth(0.6);
     doc.line(20, 34, W - 20, 34);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    let yPos = 48;
+    doc.setFontSize(9.5);
+    let yPos = 46;
     (chapters || []).forEach((ch, idx) => {
       doc.setTextColor(30, 30, 30);
       doc.text(`${idx + 1}.  ${ch.title || `Scene ${ch.chapter_num || idx + 1}`}`, 24, yPos);
-      yPos += 9;
+      yPos += 6.5;
     });
 
     // ── Page 7 — Blank ───────────────────────────────────
