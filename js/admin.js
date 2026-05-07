@@ -56,9 +56,10 @@ async function saveAppSettings() {
 
 
 // Cached admin data — populated by loadAllMangas, consumed by _renderAdminGrid
-let _adminStories  = [];
-let _adminEmailMap = {};
-let _adminImgMap   = {};
+let _adminStories      = [];
+let _adminEmailMap     = {};
+let _adminImgMap       = {};
+let _adminChapterCount = {};
 
 async function loadAllMangas() {
   const grid = document.getElementById('all-mangas-grid');
@@ -90,11 +91,17 @@ async function loadAllMangas() {
   const emailMap = {};
   (users || []).forEach(u => { emailMap[u.id] = u.email; });
 
-  // Fetch images
+  // Fetch images and chapter counts in parallel
   const ids = stories.map(s => s.id);
-  const { data: images } = ids.length
-    ? await _supabase.from('manga_images').select('story_id, image_url, image_type, chapter_num').in('story_id', ids)
-    : { data: [] };
+  const [{ data: images }, { data: chapters }] = await Promise.all([
+    ids.length
+      ? _supabase.from('manga_images').select('story_id, image_url, image_type, chapter_num').in('story_id', ids)
+      : Promise.resolve({ data: [] }),
+    ids.length
+      ? _supabase.from('manga_chapters').select('story_id').in('story_id', ids)
+      : Promise.resolve({ data: [] }),
+  ]);
+
   const imgMap = {};
   (images || []).forEach(img => {
     if (!imgMap[img.story_id]) imgMap[img.story_id] = { chapters: {} };
@@ -105,9 +112,15 @@ async function loadAllMangas() {
     }
   });
 
-  _adminStories  = stories;
-  _adminEmailMap = emailMap;
-  _adminImgMap   = imgMap;
+  const chapterCount = {};
+  (chapters || []).forEach(ch => {
+    chapterCount[ch.story_id] = (chapterCount[ch.story_id] || 0) + 1;
+  });
+
+  _adminStories      = stories;
+  _adminEmailMap     = emailMap;
+  _adminImgMap       = imgMap;
+  _adminChapterCount = chapterCount;
 
   _renderAdminGrid('');
 }
@@ -145,6 +158,7 @@ function _renderAdminGrid(query) {
     const titleSafe      = (story.title || 'Untitled').replace(/'/g, "\\'");
     const isPurchased    = !!story.purchased_at;
     const thumbUrl       = sceneUrls[0] || '';
+    const pageCount      = _adminChapterCount[story.id] || 0;
 
     const visual = thumbUrl
       ? `<img class="manga-tile-img" src="${thumbUrl}" alt="${story.title}" loading="lazy"
@@ -170,6 +184,7 @@ function _renderAdminGrid(query) {
           <div class="manga-tile-title">${story.title || 'Untitled'}</div>
           <div class="manga-tile-meta">
             <span class="manga-tile-genre" style="background:${genreColor}">${genreLabel}</span>
+            ${pageCount ? `<span class="manga-tile-pages">${pageCount} pages</span>` : ''}
             <span class="manga-tile-date">${date}</span>
           </div>
           <div class="manga-tile-email" title="${email}">👤 ${email}</div>
