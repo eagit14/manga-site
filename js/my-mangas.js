@@ -4,7 +4,7 @@ async function loadMyMangas() {
   const grid = document.getElementById('my-mangas-grid');
   if (!grid || !_supabase) return;
 
-  grid.innerHTML = '<div class="my-mangas-loading">Loading your mangas…</div>';
+  grid.innerHTML = `<div class="my-mangas-loading">${t('tile_loading')}</div>`;
 
   const { data: { user } } = await _supabase.auth.getUser();
   if (!user) {
@@ -100,23 +100,23 @@ async function loadMyMangas() {
 
     let actionBtn;
     if (!allImagesReady) {
-      actionBtn = `<div class="manga-tile-no-images">🎨 Generate all scene images to unlock</div>`;
+      actionBtn = `<div class="manga-tile-no-images">${t('tile_generate_unlock')}</div>`;
     } else if (isPurchased) {
       actionBtn = `
         <div class="manga-tile-purchased-actions">
-          <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', true)">👁 View</button>
-          <button class="manga-tile-export-btn" onclick="exportMangaPDF('${storyIdSafe}', '${titleSafe}', this)">📄 Export PDF</button>
-          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="viewCover('${storyIdSafe}')">📖 View Cover</button>
+          <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', true)">${t('tile_view')}</button>
+          <button class="manga-tile-export-btn" onclick="exportMangaPDF('${storyIdSafe}', '${titleSafe}', this)">${t('tile_export_pdf')}</button>
+          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="viewCover('${storyIdSafe}')">${t('tile_view_cover')}</button>
         </div>`;
     } else {
       const physBtn = window._appSettings?.physical_order_enabled !== false
-        ? `<button class="manga-tile-physical-btn" onclick="${physicalCall}">🖨️ Order Physical</button>`
+        ? `<button class="manga-tile-physical-btn" onclick="${physicalCall}">${t('tile_order_physical')}</button>`
         : '';
       actionBtn = `
         <div class="manga-tile-purchased-actions">
-          <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">👁 View</button>
-          <button class="manga-tile-view-btn" onclick="viewCover('${storyIdSafe}')">📖 View Cover</button>
-          <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">🛒 Order Digital</button>
+          <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">${t('tile_view')}</button>
+          <button class="manga-tile-view-btn" onclick="viewCover('${storyIdSafe}')">${t('tile_view_cover')}</button>
+          <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">${t('tile_order_digital')}</button>
           ${physBtn}
         </div>`;
     }
@@ -131,7 +131,7 @@ async function loadMyMangas() {
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
           </button>
-          <button class="manga-tile-edit-btn" ${isPurchased ? 'disabled title="Cannot edit — already ordered"' : 'onclick="openEditForm(\'' + storyIdSafe + '\')" title="Edit manga"'}>
+          <button class="manga-tile-edit-btn" ${isPurchased ? `disabled title="${t('tile_cannot_edit')}"` : `onclick="openEditForm('${storyIdSafe}')" title="Edit manga"`}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>

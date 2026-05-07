@@ -65,7 +65,7 @@ async function loadAllMangas() {
   const grid = document.getElementById('all-mangas-grid');
   if (!grid || !_supabase || !window._isAdmin) return;
 
-  grid.innerHTML = '<div class="my-mangas-loading">Loading all mangas…</div>';
+  grid.innerHTML = `<div class="my-mangas-loading">${t('tile_loading')}</div>`;
 
   const { data: stories, error } = await _supabase
     .from('manga_stories')
@@ -167,13 +167,13 @@ function _renderAdminGrid(query) {
       : `<div class="manga-tile-cover" style="background:${grad}">${story.title}</div>`;
 
     const statusBadge = isPurchased
-      ? `<span class="manga-tile-status status-ordered">✅ Ordered</span>`
-      : `<span class="manga-tile-status status-generated">⚡ Generated</span>`;
+      ? `<span class="manga-tile-status status-ordered">${t('tile_status_ordered')}</span>`
+      : `<span class="manga-tile-status status-generated">${t('tile_status_generated')}</span>`;
 
     const viewBtn = allUrls.length
       ? `<div class="manga-tile-order">
            <button class="manga-tile-view-btn" style="width:100%"
-             onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), true)">👁 View</button>
+             onclick="openMangaViewer('${titleSafe}', decodeURIComponent('${imgUrlsEncoded}'), true)">${t('tile_view')}</button>
          </div>`
       : '';
 

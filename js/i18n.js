@@ -155,6 +155,18 @@ const TRANSLATIONS = {
     delete_cancel: 'Cancel',
     delete_btn: 'Delete',
 
+    // Manga tile buttons & badges
+    tile_view:             '👁 View',
+    tile_view_cover:       '📖 View Cover',
+    tile_order_digital:    '🛒 Order Digital',
+    tile_order_physical:   '🖨️ Order Physical',
+    tile_export_pdf:       '📄 Export PDF',
+    tile_generate_unlock:  '🎨 Generate all scene images to unlock',
+    tile_status_ordered:   '✅ Ordered',
+    tile_status_generated: '⚡ Generated',
+    tile_cannot_edit:      'Cannot edit — already ordered',
+    tile_loading:          'Loading your stories…',
+
     // Login wall — tabs & buttons
     lw_tab_signin: 'Sign In',
     lw_tab_signup: 'Sign Up',
@@ -384,6 +396,18 @@ const TRANSLATIONS = {
     delete_cancel: 'Annuler',
     delete_btn: 'Supprimer',
 
+    // Manga tile buttons & badges
+    tile_view:             '👁 Voir',
+    tile_view_cover:       '📖 Voir la couverture',
+    tile_order_digital:    '🛒 Commander numérique',
+    tile_order_physical:   '🖨️ Commander physique',
+    tile_export_pdf:       '📄 Exporter PDF',
+    tile_generate_unlock:  '🎨 Générez toutes les images pour débloquer',
+    tile_status_ordered:   '✅ Commandé',
+    tile_status_generated: '⚡ Généré',
+    tile_cannot_edit:      'Modification impossible — déjà commandé',
+    tile_loading:          'Chargement de vos histoires…',
+
     // Login wall — tabs & buttons
     lw_tab_signin: 'Se connecter',
     lw_tab_signup: 'S\'inscrire',
@@ -612,6 +636,18 @@ const TRANSLATIONS = {
     delete_msg: 'Esto eliminará permanentemente la historia y todas sus imágenes.',
     delete_cancel: 'Cancelar',
     delete_btn: 'Eliminar',
+
+    // Manga tile buttons & badges
+    tile_view:             '👁 Ver',
+    tile_view_cover:       '📖 Ver portada',
+    tile_order_digital:    '🛒 Pedir digital',
+    tile_order_physical:   '🖨️ Pedir físico',
+    tile_export_pdf:       '📄 Exportar PDF',
+    tile_generate_unlock:  '🎨 Genera todas las imágenes para desbloquear',
+    tile_status_ordered:   '✅ Pedido',
+    tile_status_generated: '⚡ Generado',
+    tile_cannot_edit:      'No se puede editar — ya pedido',
+    tile_loading:          'Cargando tus historias…',
 
     // Login wall — tabs & buttons
     lw_tab_signin: 'Iniciar sesión',
