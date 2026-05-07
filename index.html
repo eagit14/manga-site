@@ -989,6 +989,12 @@ high contrast lighting</textarea>
     <h2 class="section-title">All <span class="red">Mangas</span></h2>
     <p class="section-desc">Every manga story generated across all users.</p>
 
+    <div class="admin-search-bar">
+      <input class="data-search" id="admin-search" type="text"
+             placeholder="🔍 Search by title or email…"
+             oninput="_renderAdminGrid(this.value)" />
+    </div>
+
     <div id="all-mangas-grid" class="my-mangas-grid"></div>
   </div>
 </section>

@@ -4152,6 +4152,10 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   cursor: pointer;
 }
 
+/* ── Admin search bar ─────────────────────────────── */
+.admin-search-bar { margin: 1rem 0 1.5rem; }
+.admin-search-bar .data-search { width: 100%; max-width: 420px; }
+
 /* ── Admin Settings Panel ──────────────────────────── */
 .admin-settings-panel {
   background: #fff;

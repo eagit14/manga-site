@@ -55,6 +55,11 @@ async function saveAppSettings() {
 
 
 
+// Cached admin data — populated by loadAllMangas, consumed by _renderAdminGrid
+let _adminStories  = [];
+let _adminEmailMap = {};
+let _adminImgMap   = {};
+
 async function loadAllMangas() {
   const grid = document.getElementById('all-mangas-grid');
   if (!grid || !_supabase || !window._isAdmin) return;
@@ -85,7 +90,7 @@ async function loadAllMangas() {
   const emailMap = {};
   (users || []).forEach(u => { emailMap[u.id] = u.email; });
 
-  // Fetch cover images
+  // Fetch images
   const ids = stories.map(s => s.id);
   const { data: images } = ids.length
     ? await _supabase.from('manga_images').select('story_id, image_url, image_type, chapter_num').in('story_id', ids)
@@ -100,21 +105,46 @@ async function loadAllMangas() {
     }
   });
 
-  grid.innerHTML = stories.map(story => {
+  _adminStories  = stories;
+  _adminEmailMap = emailMap;
+  _adminImgMap   = imgMap;
+
+  _renderAdminGrid('');
+}
+
+function _renderAdminGrid(query) {
+  const grid = document.getElementById('all-mangas-grid');
+  if (!grid) return;
+
+  const q = (query || '').toLowerCase().trim();
+  const filtered = q
+    ? _adminStories.filter(s => {
+        const title = (s.title || '').toLowerCase();
+        const email = (_adminEmailMap[s.user_id] || '').toLowerCase();
+        return title.includes(q) || email.includes(q);
+      })
+    : _adminStories;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="my-mangas-empty"><p>No results for "' + query + '".</p></div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(story => {
     const grad       = story.cover_gradient || 'linear-gradient(155deg,#1a0505,#7a0f0f,#c0392b)';
     const genreColor = genreProfiles[story.genre]?.badgeColor || '#888';
     const genreLabel = genreProfiles[story.genre]?.label      || story.genre || '—';
     const date       = new Date(story.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const email      = emailMap[story.user_id] || '—';
-    const storyImgs   = imgMap[story.id] || { chapters: {} };
-    const sceneUrls   = Object.keys(storyImgs.chapters || {})
+    const email      = _adminEmailMap[story.user_id] || '—';
+    const storyImgs  = _adminImgMap[story.id] || { chapters: {} };
+    const sceneUrls  = Object.keys(storyImgs.chapters || {})
       .sort((a, b) => Number(a) - Number(b))
       .map(k => storyImgs.chapters[k]);
     const allUrls        = sceneUrls.filter(Boolean);
     const imgUrlsEncoded = encodeURIComponent(allUrls.join('|'));
-    const titleSafe  = (story.title || 'Untitled').replace(/'/g, "\\'");
-    const isPurchased = !!story.purchased_at;
-    const thumbUrl   = sceneUrls[0] || '';
+    const titleSafe      = (story.title || 'Untitled').replace(/'/g, "\\'");
+    const isPurchased    = !!story.purchased_at;
+    const thumbUrl       = sceneUrls[0] || '';
 
     const visual = thumbUrl
       ? `<img class="manga-tile-img" src="${thumbUrl}" alt="${story.title}" loading="lazy"
