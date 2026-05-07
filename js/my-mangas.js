@@ -105,7 +105,6 @@ async function loadMyMangas() {
       actionBtn = `
         <div class="manga-tile-purchased-actions">
           <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', true)">${t('tile_view')}</button>
-          <button class="manga-tile-export-btn" onclick="exportMangaPDF('${storyIdSafe}', '${titleSafe}', this)">${t('tile_export_pdf')}</button>
           <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="viewCover('${storyIdSafe}', this, ${isPurchased})">${t('tile_view_cover')}</button>
         </div>`;
     } else {
