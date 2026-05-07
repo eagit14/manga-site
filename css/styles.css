@@ -4152,6 +4152,24 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   cursor: pointer;
 }
 
+/* ── Per-scene credits error ──────────────────────── */
+.scene-credits-error {
+  margin-top: .4rem;
+  padding: .45rem .75rem;
+  background: #fff4f4;
+  border: 1px solid #f5c6c6;
+  border-radius: 6px;
+  font-size: .82rem;
+  color: #c0392b;
+  line-height: 1.5;
+}
+.scene-credits-error a {
+  color: var(--red);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.scene-credits-error a:hover { opacity: .75; }
+
 /* ── Admin search bar ─────────────────────────────── */
 .admin-search-bar { margin: 1rem 0 1.5rem; }
 .admin-search-bar .data-search { width: 100%; max-width: 420px; }

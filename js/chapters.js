@@ -73,7 +73,11 @@ function addChapter() {
       </button>
       <button type="button" class="chapter-remove-btn" onclick="removeChapter(${cid})" title="Remove">✕</button>
     </div>
-    <textarea class="form-textarea chapter-desc-input" id="ch-desc-${cid}" rows="2" placeholder="Scene description…"></textarea>`;
+    <textarea class="form-textarea chapter-desc-input" id="ch-desc-${cid}" rows="2" placeholder="Scene description…"></textarea>
+    <div class="scene-credits-error" id="scene-credits-err-${cid}" style="display:none">
+      ⚠ No image credits remaining.
+      <a href="#" onclick="openCreditsModal();return false;">Refill credits →</a>
+    </div>`;
   list.appendChild(div);
   updateChapterUI();
   _initChapterDrag();
@@ -321,14 +325,12 @@ async function generateSceneImage(cid) {
 
   // Credit check
   const currentCredits = getUserCredits();
+  const creditsErrEl = document.getElementById(`scene-credits-err-${cid}`);
   if (currentCredits !== null && currentCredits <= 0) {
-    const msgEl = document.getElementById(`scene-gen-msg-${cid}`);
-    if (msgEl) {
-      msgEl.textContent = 'No image credits remaining. Contact support to get more.';
-      msgEl.style.color = 'var(--red)';
-    }
+    if (creditsErrEl) creditsErrEl.style.display = '';
     return;
   }
+  if (creditsErrEl) creditsErrEl.style.display = 'none';
 
   // Build story context from current form values
   const data = {

@@ -71,6 +71,13 @@ function _updateCreditDisplay() {
     btn.classList.toggle('credits-depleted', _credits <= 0);
   });
 
+  // Hide per-scene credit errors when credits are restored
+  if (_credits > 0) {
+    document.querySelectorAll('.scene-credits-error').forEach(el => {
+      el.style.display = 'none';
+    });
+  }
+
   // Show/hide the persistent refill prompt
   if (_credits === 0) {
     _showRefillPrompt();
