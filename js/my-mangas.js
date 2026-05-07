@@ -121,8 +121,10 @@ async function loadMyMangas() {
         </div>`;
     }
 
+    const tileClick = isPurchased ? '' : `onclick="_onTileClick(event,'${storyIdSafe}')"`;
+
     return `
-      <div class="manga-tile" id="manga-tile-${storyIdSafe}">
+      <div class="manga-tile" id="manga-tile-${storyIdSafe}" ${tileClick} ${isPurchased ? '' : 'style="cursor:pointer"'}>
         ${visual}
         <div class="manga-tile-actions">
           <button class="manga-tile-duplicate-btn" onclick="confirmDuplicateManga('${storyIdSafe}', '${titleSafe}')" title="Duplicate manga">
@@ -348,6 +350,11 @@ function viewerGoTo(idx) {
   slides.forEach((s, i) => s.classList.toggle('active', i === idx));
   dots.forEach((d, i)   => d.classList.toggle('active', i === idx));
   _viewerIdx = idx;
+}
+
+function _onTileClick(e, storyId) {
+  if (e.target.closest('button, a')) return;
+  openEditForm(storyId);
 }
 
 // openPaymentFromTile is defined in stripe.js — do not redefine here
