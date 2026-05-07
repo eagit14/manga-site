@@ -461,15 +461,15 @@ async function viewCover(storyId, callerBtn) {
     }
     _drawFrontCover(doc, W, H, cols, { title: finalTitle, genre, tagline, heroName: '', firstImageB64 });
 
-    // Page 2 — Contents page
+    // Page 2 — Contents page (white background)
     doc.addPage([W, H]);
-    doc.setFillColor(10, 10, 20);
+    doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, W, H, 'F');
 
     // Contents title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
-    doc.setTextColor(220, 220, 220);
+    doc.setTextColor(20, 20, 20);
     doc.text('Contents', W / 2, 28, { align: 'center' });
 
     // Decorative rule
@@ -484,7 +484,7 @@ async function viewCover(storyId, callerBtn) {
     const lineH = 9;
     (chapters || []).forEach((ch, idx) => {
       const label = ch.title || `Scene ${ch.chapter_num || idx + 1}`;
-      doc.setTextColor(200, 200, 200);
+      doc.setTextColor(30, 30, 30);
       doc.text(`${idx + 1}.  ${label}`, 24, yPos);
       yPos += lineH;
     });
@@ -521,7 +521,7 @@ async function viewCover(storyId, callerBtn) {
 
     for (let p = 0; p < blankCount; p++) {
       doc.addPage([W, H]);
-      doc.setFillColor(10, 10, 20);
+      doc.setFillColor(255, 255, 255);
       doc.rect(0, 0, W, H, 'F');
     }
 
