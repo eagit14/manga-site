@@ -412,15 +412,137 @@ async function _buildCoverPdfFromCache(storyId) {
   return generateCoverPDF({ title, tagline, genre, heroName: '', synopsis, backSummary, grad, firstImageB64, download: false });
 }
 
-async function viewCover(storyId) {
-  if (!_supabase || !storyId) { alert('Cover not ready yet — generate a scene image to trigger cover creation.'); return; }
+async function viewCover(storyId, callerBtn) {
+  if (!_supabase || !storyId) { alert('No manga selected.'); return; }
+  if (typeof jspdf === 'undefined') { alert('PDF library not loaded — please refresh.'); return; }
+
+  const btn      = callerBtn || null;
+  const origText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Building PDF…'; }
+
   try {
-    const doc = await _buildCoverPdfFromCache(storyId);
-    if (doc) window.open(doc.output('bloburl'), '_blank');
-    else alert('Cover not ready yet — generate a scene image to trigger cover creation.');
+    const [{ data: story }, { data: images, error: imgErr }, { data: chapters }, { data: coverRow }] = await Promise.all([
+      _supabase.from('manga_stories').select('title,genre,tagline,synopsis,cover_gradient').eq('id', storyId).single(),
+      _supabase.from('manga_images').select('image_url,image_type,chapter_num').eq('story_id', storyId),
+      _supabase.from('manga_chapters').select('chapter_num,title').eq('story_id', storyId).order('chapter_num', { ascending: true }),
+      _supabase.from('manga_images').select('prompt_used').eq('story_id', storyId).eq('image_type', 'cover').maybeSingle(),
+    ]);
+    if (imgErr) throw imgErr;
+
+    const finalTitle = story?.title    || 'Manga';
+    const tagline    = story?.tagline  || '';
+    const synopsis   = story?.synopsis || '';
+    const genre      = genreProfiles[story?.genre]?.label || story?.genre || '';
+    const grad       = story?.cover_gradient || 'linear-gradient(135deg,#1a0505,#c0392b)';
+    const cols       = _parseGradColors(grad);
+
+    const sceneImages = (images || [])
+      .filter(i => i.image_type === 'chapter')
+      .sort((a, b) => (a.chapter_num || 0) - (b.chapter_num || 0));
+
+    if (sceneImages.length === 0) {
+      alert('No scene images found — generate scene images first.');
+      return;
+    }
+
+    // 6"×9" Lulu standard
+    const W = 152.4, H = 228.6;
+    const doc = new jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: [W, H], compress: true });
+
+    // Page 1 — Front cover
+    if (btn) btn.textContent = '⏳ Loading cover…';
+    let firstImageB64 = null;
+    const coverImgRow = (images || []).find(i => i.image_type === 'cover');
+    if (coverImgRow?.image_url) {
+      try { firstImageB64 = await _fetchImageBase64(coverImgRow.image_url); } catch (_) {}
+    }
+    if (!firstImageB64 && sceneImages.length > 0) {
+      try { firstImageB64 = await _fetchImageBase64(sceneImages[0].image_url); } catch (_) {}
+    }
+    _drawFrontCover(doc, W, H, cols, { title: finalTitle, genre, tagline, heroName: '', firstImageB64 });
+
+    // Page 2 — Contents page
+    doc.addPage([W, H]);
+    doc.setFillColor(10, 10, 20);
+    doc.rect(0, 0, W, H, 'F');
+
+    // Contents title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(220, 220, 220);
+    doc.text('Contents', W / 2, 28, { align: 'center' });
+
+    // Decorative rule
+    doc.setDrawColor(180, 30, 30);
+    doc.setLineWidth(0.6);
+    doc.line(20, 34, W - 20, 34);
+
+    // Scene list
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    let yPos = 48;
+    const lineH = 9;
+    (chapters || []).forEach((ch, idx) => {
+      const label = ch.title || `Scene ${ch.chapter_num || idx + 1}`;
+      doc.setTextColor(200, 200, 200);
+      doc.text(`${idx + 1}.  ${label}`, 24, yPos);
+      yPos += lineH;
+    });
+
+    // Scene image pages
+    for (let i = 0; i < sceneImages.length; i++) {
+      if (btn) btn.textContent = `⏳ Scene ${i + 1} / ${sceneImages.length}…`;
+      doc.addPage([W, H]);
+      doc.setFillColor(0, 0, 0);
+      doc.rect(0, 0, W, H, 'F');
+      try {
+        const b64 = await _fetchImageBase64(sceneImages[i].image_url);
+        const fmt = b64.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(b64, fmt, 0, 0, W, H, undefined, 'NONE');
+      } catch (_) {
+        doc.setTextColor(80, 80, 80);
+        doc.setFontSize(9);
+        doc.text(`Scene ${sceneImages[i].chapter_num || i + 1}`, W / 2, H / 2, { align: 'center' });
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Scene ${sceneImages[i].chapter_num || i + 1}`, W / 2, H - 4, { align: 'center' });
+    }
+
+    // Blank padding pages to reach Lulu minimum (32 pages total, even)
+    // Current pages: 1 (cover) + 1 (contents) + sceneImages.length + 1 (back cover) = sceneImages.length + 3
+    const pagesBeforeBack = 2 + sceneImages.length; // cover + contents + scenes
+    const totalWithBack   = pagesBeforeBack + 1;
+    const minPages = 32;
+    const targetTotal = Math.max(minPages, totalWithBack);
+    const paddedTotal = targetTotal % 2 === 0 ? targetTotal : targetTotal + 1;
+    const blankCount  = paddedTotal - totalWithBack;
+
+    for (let p = 0; p < blankCount; p++) {
+      doc.addPage([W, H]);
+      doc.setFillColor(10, 10, 20);
+      doc.rect(0, 0, W, H, 'F');
+    }
+
+    // Last page — Back cover
+    if (btn) btn.textContent = '⏳ Building back cover…';
+    const cachedBlurb = coverRow?.prompt_used || null;
+    let backSummary = cachedBlurb;
+    if (!backSummary) {
+      try { backSummary = await generateBackCoverSummary(chapters || [], finalTitle, story?.genre || ''); } catch (_) {}
+    }
+    doc.addPage([W, H]);
+    _drawBackCover(doc, W, H, cols, { title: finalTitle, synopsis, backSummary });
+
+    const safeName = finalTitle.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'manga';
+    doc.save(`${safeName}-print.pdf`);
+
   } catch (err) {
-    console.error('[Cover] viewCover error:', err);
-    alert('Could not open cover: ' + err.message);
+    console.error('[ViewManga] error:', err);
+    alert('Could not build PDF: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText || '📖 View Manga'; }
   }
 }
 

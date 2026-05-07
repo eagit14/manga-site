@@ -106,7 +106,7 @@ async function loadMyMangas() {
         <div class="manga-tile-purchased-actions">
           <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', true)">${t('tile_view')}</button>
           <button class="manga-tile-export-btn" onclick="exportMangaPDF('${storyIdSafe}', '${titleSafe}', this)">${t('tile_export_pdf')}</button>
-          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="viewCover('${storyIdSafe}')">${t('tile_view_cover')}</button>
+          <button class="manga-tile-view-btn" style="grid-column:1/-1" onclick="viewCover('${storyIdSafe}', this)">${t('tile_view_cover')}</button>
         </div>`;
     } else {
       const physBtn = window._appSettings?.physical_order_enabled !== false
@@ -115,7 +115,7 @@ async function loadMyMangas() {
       actionBtn = `
         <div class="manga-tile-purchased-actions">
           <button class="manga-tile-view-btn" onclick="openMangaViewerFromTile('${storyIdSafe}', '${titleSafe}', false)">${t('tile_view')}</button>
-          <button class="manga-tile-view-btn" onclick="viewCover('${storyIdSafe}')">${t('tile_view_cover')}</button>
+          <button class="manga-tile-view-btn" onclick="viewCover('${storyIdSafe}', this)">${t('tile_view_cover')}</button>
           <button class="manga-tile-order-btn" onclick="openPaymentFromTile('${titleSafe}', '${grad}', decodeURIComponent('${imgUrlsEncoded}'), '${storyIdSafe}')">${t('tile_order_digital')}</button>
           ${physBtn}
         </div>`;

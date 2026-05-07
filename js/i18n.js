@@ -156,8 +156,8 @@ const TRANSLATIONS = {
     delete_btn: 'Delete',
 
     // Manga tile buttons & badges
-    tile_view:             '👁 View',
-    tile_view_cover:       '📖 View Cover',
+    tile_view:             '👁 View Pictures',
+    tile_view_cover:       '📖 View Manga',
     tile_order_digital:    '🛒 Order Digital',
     tile_order_physical:   '🖨️ Order Physical',
     tile_export_pdf:       '📄 Export PDF',
@@ -397,8 +397,8 @@ const TRANSLATIONS = {
     delete_btn: 'Supprimer',
 
     // Manga tile buttons & badges
-    tile_view:             '👁 Voir',
-    tile_view_cover:       '📖 Voir la couverture',
+    tile_view:             '👁 Voir les illustrations',
+    tile_view_cover:       '📖 Voir le manga',
     tile_order_digital:    '🛒 Commander numérique',
     tile_order_physical:   '🖨️ Commander physique',
     tile_export_pdf:       '📄 Exporter PDF',
@@ -638,8 +638,8 @@ const TRANSLATIONS = {
     delete_btn: 'Eliminar',
 
     // Manga tile buttons & badges
-    tile_view:             '👁 Ver',
-    tile_view_cover:       '📖 Ver portada',
+    tile_view:             '👁 Ver ilustraciones',
+    tile_view_cover:       '📖 Ver el manga',
     tile_order_digital:    '🛒 Pedir digital',
     tile_order_physical:   '🖨️ Pedir físico',
     tile_export_pdf:       '📄 Exportar PDF',
