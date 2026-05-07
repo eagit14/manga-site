@@ -322,7 +322,11 @@ async function generateSceneImage(cid) {
   // Credit check
   const currentCredits = getUserCredits();
   if (currentCredits !== null && currentCredits <= 0) {
-    _showCreditMsg('No image credits remaining. Contact support to get more.');
+    const msgEl = document.getElementById(`scene-gen-msg-${cid}`);
+    if (msgEl) {
+      msgEl.textContent = 'No image credits remaining. Contact support to get more.';
+      msgEl.style.color = 'var(--red)';
+    }
     return;
   }
 
