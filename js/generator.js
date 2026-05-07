@@ -99,11 +99,13 @@ async function handleGenerate() {
   document.getElementById('my-mangas').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function _setAutosaveStatus(text) {
+  const el = document.getElementById('autosave-status');
+  if (el) el.textContent = text;
+}
+
 async function saveMangaDraft() {
-  const saveBtn = document.getElementById('save-draft-btn');
-  const origText = saveBtn.textContent;
-  saveBtn.disabled = true;
-  saveBtn.textContent = '⏳ Saving…';
+  _setAutosaveStatus('⏳ Saving…');
 
   const data = {
     titre:      document.getElementById('f-titre').value.trim()     || 'Untitled',
@@ -144,17 +146,30 @@ async function saveMangaDraft() {
     if (char2Url) { await saveImageToSupabase(storyId, 'char2', null, char2Url, null); _char2ImageDirty = false; }
   }
 
-  saveBtn.disabled = false;
   if (storyId) {
-    saveBtn.textContent = '✅ Saved!';
+    _setAutosaveStatus('✓ Saved');
     window._lastStoryId   = storyId;
     window._lastMangaData = data;
     loadMyMangas();
   } else {
-    saveBtn.textContent = '❌ Error';
+    _setAutosaveStatus('⚠ Error');
   }
-  setTimeout(() => { saveBtn.textContent = origText; }, 2500);
+  setTimeout(() => _setAutosaveStatus(''), 2500);
 }
+
+// ── Auto-save on focusout from any form field ─────────
+let _autosaveTimer = null;
+document.addEventListener('focusout', e => {
+  const form = document.getElementById('creator-form-card');
+  if (!form || !form.contains(e.target)) return;
+  if (!e.target.matches('input, textarea, select')) return;
+  clearTimeout(_autosaveTimer);
+  _autosaveTimer = setTimeout(() => {
+    if (window._editingStoryId || document.getElementById('f-titre')?.value.trim()) {
+      saveMangaDraft();
+    }
+  }, 300);
+});
 
 
 function resetForm() {
