@@ -3035,18 +3035,16 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   display: flex;
   flex-direction: column;
   gap: .5rem;
-  position: relative;
 }
 .scene-add-after-btn {
-  position: absolute;
-  bottom: -13px;
-  right: 14px;
+  align-self: flex-end;
+  flex-shrink: 0;
   width: 26px;
   height: 26px;
   border-radius: 50%;
   background: var(--red);
   color: #fff;
-  border: 2px solid var(--bg);
+  border: none;
   font-size: 1.1rem;
   font-weight: 700;
   line-height: 1;
@@ -3054,7 +3052,6 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3;
   box-shadow: 0 1px 5px rgba(0,0,0,.22);
   transition: transform .15s, background .15s;
   padding: 0;
@@ -3150,32 +3147,26 @@ nav .nav-links li:has([href="#mes-mangas"]) { display: none; }
 .scene-attach-btn:hover    { background: #1e4d75; transform: translateY(-1px); }
 .scene-attach-btn:disabled { opacity: .55; cursor: wait; transform: none; }
 
-/* ── Per-scene medium toggle ─────────────────────────── */
-.scene-medium-toggle {
-  display: flex;
+/* ── Per-scene style / color dropdowns ───────────────── */
+.scene-select {
   flex-shrink: 0;
-  background: #f0f0f0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #f4f4f4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E") no-repeat right 7px center;
+  border: 1px solid #ddd;
   border-radius: 6px;
-  padding: 2px;
-  gap: 2px;
-}
-.scene-medium-btn {
-  flex-shrink: 0;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  width: 26px;
-  height: 22px;
-  padding: 0;
+  padding: 0 22px 0 8px;
+  height: 26px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #444;
   cursor: pointer;
-  color: #888;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .15s, color .15s;
+  transition: border-color .15s, background-color .15s;
+  white-space: nowrap;
 }
-.scene-medium-btn:hover { background: #e0e0e0; color: #333; }
-.scene-medium-btn.active { background: #fff; color: #e05c00; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.scene-select:hover  { border-color: #bbb; background-color: #eee; }
+.scene-select:focus  { outline: none; border-color: #e05c00; }
+.scene-select--color { min-width: 98px; }
 
 /* ── Per-scene thumbnail + hover popup ──────────────── */
 .scene-thumb {

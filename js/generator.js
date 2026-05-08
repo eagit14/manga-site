@@ -320,7 +320,8 @@ async function openEditForm(storyId) {
           reader.onload = e => {
             const dataUrl = e.target.result;
             _heroImageBase64   = dataUrl.split(',')[1];
-            _heroMangaPortrait = null; // invalidate cached portrait when hero photo changes
+            _heroMangaPortrait    = null; // invalidate caches when hero photo changes
+            _heroIdentityProfile = null;
             document.getElementById('hero-upload-thumb').src        = dataUrl;
             document.getElementById('hero-upload-name').textContent = 'Saved hero image';
             document.getElementById('hero-upload-preview').style.display = 'flex';

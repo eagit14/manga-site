@@ -381,6 +381,7 @@ function _onTileClick(e, storyId) {
     }
   });
 
+  document.addEventListener('click',      () => { tip.style.opacity = '0'; });
   document.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
 })();
 

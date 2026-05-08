@@ -38,39 +38,14 @@ function _buildChapterElement(cid) {
         </svg>
       </span>
       <span class="chapter-entry-num">Sc. 1</span>
-      <div class="scene-medium-toggle" id="scene-medium-toggle-${cid}">
-        <button type="button" class="scene-medium-btn active" id="scene-medium-manga-${cid}" onclick="_setSceneMedium(${cid},'manga')" title="Manga style">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/>
-            <rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>
-          </svg>
-        </button>
-        <button type="button" class="scene-medium-btn" id="scene-medium-cartoon-${cid}" onclick="_setSceneMedium(${cid},'cartoon')" title="Cartoon style">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-            <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-          </svg>
-        </button>
-      </div>
-      <div class="scene-medium-toggle" id="scene-color-toggle-${cid}">
-        <button type="button" class="scene-medium-btn active" id="scene-color-bw-${cid}" onclick="_setSceneColor(${cid},'bw')" title="Black &amp; White">
-          <svg width="13" height="13" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round">
-            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor"/>
-            <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" stroke="none"/>
-          </svg>
-        </button>
-        <button type="button" class="scene-medium-btn" id="scene-color-color-${cid}" onclick="_setSceneColor(${cid},'color')" title="Full Color">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="8.5" cy="10" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="12" cy="7.5" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="15.5" cy="10" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="15.5" cy="14" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="8.5" cy="14" r="1.5" fill="currentColor" stroke="none"/>
-          </svg>
-        </button>
-      </div>
+      <select class="scene-select" id="scene-medium-select-${cid}" onchange="_setSceneMedium(${cid}, this.value)">
+        <option value="manga">Manga</option>
+        <option value="cartoon">Cartoon</option>
+      </select>
+      <select class="scene-select scene-select--color" id="scene-color-select-${cid}" onchange="_setSceneColor(${cid}, this.value)">
+        <option value="bw">Black &amp; White</option>
+        <option value="color">Full Color</option>
+      </select>
       <input class="form-input chapter-title-input" id="ch-title-${cid}" type="text" placeholder="Scene title…" maxlength="80" />
       <div class="scene-thumb" id="scene-thumb-${cid}" style="display:none" title="Hover to preview">
         <img id="scene-thumb-img-${cid}" alt="" />
@@ -280,23 +255,23 @@ function updateChapterUI() {
 }
 
 function _setSceneMedium(cid, medium) {
-  document.getElementById(`scene-medium-manga-${cid}`)?.classList.toggle('active', medium === 'manga');
-  document.getElementById(`scene-medium-cartoon-${cid}`)?.classList.toggle('active', medium === 'cartoon');
+  const sel = document.getElementById(`scene-medium-select-${cid}`);
+  if (sel) sel.value = medium;
 }
 
 function _getSceneMedium(entry) {
-  const cartoonBtn = entry.querySelector('[id^="scene-medium-cartoon-"]');
-  return cartoonBtn?.classList.contains('active') ? 'cartoon' : 'manga';
+  const sel = entry.querySelector('[id^="scene-medium-select-"]');
+  return sel?.value || 'manga';
 }
 
 function _setSceneColor(cid, colorStyle) {
-  document.getElementById(`scene-color-bw-${cid}`)?.classList.toggle('active', colorStyle === 'bw');
-  document.getElementById(`scene-color-color-${cid}`)?.classList.toggle('active', colorStyle === 'color');
+  const sel = document.getElementById(`scene-color-select-${cid}`);
+  if (sel) sel.value = colorStyle;
 }
 
 function _getSceneColor(entry) {
-  const colorBtn = entry.querySelector('[id^="scene-color-color-"]');
-  return colorBtn?.classList.contains('active') ? 'color' : 'bw';
+  const sel = entry.querySelector('[id^="scene-color-select-"]');
+  return sel?.value || 'bw';
 }
 
 function getChaptersData() {

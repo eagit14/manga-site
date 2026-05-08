@@ -144,12 +144,8 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
 
   const _cap = (str, max = 3900) => str.length <= max ? str : str.slice(0, max - 1);
 
-  function _panelLayout(descLen) {
-    const n = descLen <= 0  ? 4
-            : descLen <= 80 ? 5
-            : descLen <= 160 ? 6
-            : descLen <= 240 ? 7
-            : 8;
+  function _panelLayout(_descLen) {
+    const n = 4; // fixed at 4 panels — fewer panels = more pixels per face = better likeness
     const grids = {
       4: '2-column × 2-row grid = exactly 4 panels (1–2 top row, 3–4 bottom row)',
       5: '2-column × 2-row grid + 1 wide panel at bottom = exactly 5 panels (1–2 top row, 3–4 middle row, 5 full-width bottom)',
@@ -226,12 +222,20 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
       ? (isColor ? 'full-color cartoon' : 'black-and-white cartoon')
       : (isColor ? 'full-color manga' : 'black-and-white manga');
     const noTextLine = hasBubbles ? '' : 'No speech bubbles, no text, no captions.\n';
-    const faceLine   = _heroImageBase64
-      ? 'I am sending you a photo of the hero. The face in EVERY panel must be as close as possible to the face in the photo — same face shape, skin tone, eyes, nose, lips, and hair. This is the top priority.\n\n'
+
+    // Build appearance line — GPT-4o vision reads the photo directly, but the text description
+    // reinforces key traits (skin tone, hair volume) that models tend to generalise.
+    const faceDesc   = (aiContent?.hero_face_desc || '').slice(0, 300);
+    const heroDescTx = (data.heroDesc || '').slice(0, 150);
+    const appearanceParts = [faceDesc, heroDescTx].filter(Boolean);
+    const appearanceLine = appearanceParts.length
+      ? `The character's appearance (match precisely): ${appearanceParts.join('. ')}.\n`
       : '';
+
     const simplePrompt =
-      faceLine +
-      `Create a ${panelCount}-panel ${artStyle} page.\n` +
+      `The attached photo shows the hero. Draw the character's face as close as possible to the photo in every panel.\n` +
+      appearanceLine +
+      `Create a ${panelCount}-panel ${artStyle} manga page.\n` +
       `Scene: ${sceneTitle}${sceneDetail}.\n` +
       noTextLine;
 
@@ -247,43 +251,129 @@ function buildImagePrompts(data, aiContent, styleLabel, genreLabel) {
   return results;
 }
 
-// ── Character portrait cache (manga-style reference, generated once per hero image) ──
+// ── Character identity profile (GPT-4o high-detail face analysis, cached per hero image) ──
+let _heroIdentityProfile    = null;
+let _heroIdentityProfileKey = null;
+
+async function _extractCharacterIdentity() {
+  if (!_heroImageBase64) return;
+  const key = _heroImageBase64.slice(0, 60);
+  if (_heroIdentityProfile && _heroIdentityProfileKey === key) { console.log('[IMG] Identity profile: using cached ✓'); return; }
+
+  console.log('[IMG] Extracting character identity profile (GPT-4o high-detail)…');
+  try {
+    const res = await _openaiProxy('chat', {
+      model: 'gpt-4o',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:${_heroImageMime};base64,${_heroImageBase64}`, detail: 'high' } },
+          { type: 'text', text:
+            'You are a professional manga character designer. Analyze this photo with extreme precision for identity-preserving manga generation.\n' +
+            'Return STRICT JSON with exactly these fields — be highly specific, not generic:\n' +
+            '{\n' +
+            '  "face_shape": "precise geometry: oval/round/square/heart, jaw width, chin shape, cheekbone prominence, face length vs width ratio",\n' +
+            '  "hair": "exact color with undertones, curl/wave pattern, density, volume and silhouette shape, length, how it frames the face — this is a PRIMARY identity anchor",\n' +
+            '  "eyes": "exact shape (almond/round/hooded/upturned), iris color, size relative to face, lid fold, corner angle, spacing between eyes, lash density",\n' +
+            '  "eyebrows": "exact thickness, arch shape and peak position, color, length, distance from eyes, any gaps or fullness",\n' +
+            '  "nose": "bridge width and height, tip shape (rounded/pointed/bulbous), nostril flare, overall length and width",\n' +
+            '  "mouth": "lip thickness top vs bottom, cupid\'s bow shape, mouth width, smile line shape, any dimples or creases, teeth visibility when smiling",\n' +
+            '  "skin_tone": "precise tone (fair/light/medium/tan/deep) with undertone (warm/cool/neutral/olive/golden), any notable texture or markings",\n' +
+            '  "age_appearance": "estimated age range and specific juvenile/adult features that indicate age",\n' +
+            '  "body_type": "build (slim/athletic/stocky), shoulder width, neck length, overall silhouette",\n' +
+            '  "emotional_energy": "dominant expression energy, how eyes communicate emotion, resting face impression",\n' +
+            '  "silhouette_traits": "the 2-3 features instantly recognizable as a small silhouette from far away",\n' +
+            '  "manga_translation_notes": "specific guidance for converting this face to manga/anime style while preserving identity — which features to exaggerate vs preserve",\n' +
+            '  "consistency_anchors": "the 4-5 features that are most distinctive and MUST be identical in every single panel — be very specific",\n' +
+            '  "forbidden_drift": "exhaustive list of exactly what must never change: hair shape, skin tone, face proportions, eye style — be explicit and specific"\n' +
+            '}\n' +
+            'Every field must be precise and specific to THIS person. Never use generic descriptions.'
+          },
+        ],
+      }],
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      max_tokens: 1200,
+    });
+
+    if (!res.ok) { console.warn('[IMG] Identity extraction error:', res.status); return; }
+    const json    = await res.json();
+    const profile = JSON.parse(json.choices[0].message.content);
+    _heroIdentityProfile    = profile;
+    _heroIdentityProfileKey = key;
+    console.log('[IMG] Identity profile ready ✓ anchors:', profile.consistency_anchors);
+  } catch (e) {
+    console.warn('[IMG] Identity extraction skipped:', e.message);
+  }
+}
+
+function _formatIdentityProfile(p) {
+  if (!p) return '';
+  return [
+    '══ CHARACTER IDENTITY PROFILE ══',
+    'The attached photo is the ground truth. Every panel must match this profile exactly.',
+    '',
+    `FACE SHAPE: ${p.face_shape}`,
+    `HAIR (primary anchor): ${p.hair}`,
+    `EYES: ${p.eyes}`,
+    `EYEBROWS: ${p.eyebrows}`,
+    `NOSE: ${p.nose}`,
+    `MOUTH/SMILE: ${p.mouth}`,
+    `SKIN TONE: ${p.skin_tone}`,
+    `AGE: ${p.age_appearance}`,
+    `BUILD: ${p.body_type}`,
+    `EMOTIONAL ENERGY: ${p.emotional_energy}`,
+    `SILHOUETTE: ${p.silhouette_traits}`,
+    `MANGA NOTES: ${p.manga_translation_notes}`,
+    '',
+    `✅ MUST BE IDENTICAL IN EVERY PANEL: ${p.consistency_anchors}`,
+    `🚫 NEVER ALTER THESE: ${p.forbidden_drift}`,
+    '══════════════════════════════',
+  ].join('\n');
+}
+
+// ── Character portrait cache (manga-style reference sheet, generated once per hero image) ──
 let _heroMangaPortrait    = null;
-let _heroMangaPortraitKey = null; // first 60 chars of heroBase64 — detects hero changes
+let _heroMangaPortraitKey = null;
 
 async function _ensureCharacterPortrait() {
   if (!_heroImageBase64) return;
   const key = _heroImageBase64.slice(0, 60);
-  if (_heroMangaPortrait && _heroMangaPortraitKey === key) { console.log('[IMG] Character portrait: using cached ✓'); return; }
+  if (_heroMangaPortrait && _heroMangaPortraitKey === key) { console.log('[IMG] Character sheet: using cached ✓'); return; }
 
-  console.log('[IMG] Generating manga character portrait (image-edit)…');
+  console.log('[IMG] Generating manga character reference sheet (front / 3/4 / side)…');
   try {
     const form = new FormData();
     form.append('model',   'gpt-image-1');
     form.append('image[]', _b64ToBlob(_heroImageBase64, _heroImageMime), 'hero.jpg');
+    const identityHint = _heroIdentityProfile
+      ? `\nKey identity to preserve — ${_heroIdentityProfile.consistency_anchors}. Never alter: ${_heroIdentityProfile.forbidden_drift}.`
+      : '';
     form.append('prompt',
-      'This photo shows the main character. Create a manga/anime character reference portrait.\n' +
-      'CRITICAL: Their face must look EXACTLY like the photo — same face shape, skin tone, eye color and shape, eyebrow style, nose, lips, hair color and style.\n' +
-      'Bust portrait (head and shoulders), front-facing or slight 3/4 angle, plain white background.\n' +
-      'Manga/anime art style. No text, no speech bubbles.'
+      'Create a manga/anime character reference sheet of the person in the attached photo.\n' +
+      'Show THREE views side by side: front view, 3/4 angle, side profile — all the same character.\n' +
+      'CRITICAL: Reproduce EXACT facial features — face shape, skin tone, eye shape/color, eyebrows, nose, lips, hair color/texture/volume.' +
+      identityHint + '\n' +
+      'Bust portrait (head and shoulders) for each view. Plain white background. No text, no labels.\n' +
+      'Manga/anime art style. Face accuracy is the absolute top priority.'
     );
     form.append('size',    '1024x1024');
     form.append('quality', 'medium');
     form.append('n',       '1');
 
     const res = await _openaiProxy('image-edit', form, true);
-    if (!res.ok) { console.warn('[IMG] Portrait API error:', res.status); return; }
+    if (!res.ok) { console.warn('[IMG] Character sheet API error:', res.status); return; }
     const json = await res.json();
     const b64  = json.data?.[0]?.b64_json;
     if (b64) {
       _heroMangaPortrait    = b64;
       _heroMangaPortraitKey = key;
-      console.log('[IMG] Manga character portrait ready ✓');
+      console.log('[IMG] Manga character reference sheet ready ✓');
     } else {
-      console.warn('[IMG] Portrait: no image returned — scenes will use original photo only');
+      console.warn('[IMG] Character sheet: no image returned — scenes will use original photo only');
     }
   } catch (e) {
-    console.warn('[IMG] Portrait generation skipped:', e.message);
+    console.warn('[IMG] Character sheet generation skipped:', e.message);
   }
 }
 
@@ -307,17 +397,30 @@ async function _generateSingleImage(prompt, quality, model, includeChar2 = false
       model: 'dall-e-3', prompt, n: 1, size: '1024x1792', quality, response_format: 'b64_json',
     });
   } else if (sendHero || sendChar2) {
-    const editPrompt = simplePrompt || prompt;
-    console.log('[IMG] using image-edit, prompt:', editPrompt.slice(0, 140));
-    const form = new FormData();
-    form.append('model', 'gpt-image-1');
-    if (sendHero)  form.append('image[]', _b64ToBlob(_heroImageBase64,  _heroImageMime),  'hero_photo.jpg');
-    if (sendChar2) form.append('image[]', _b64ToBlob(_char2ImageBase64, _char2ImageMime), 'char2.jpg');
-    form.append('prompt',  editPrompt);
-    form.append('size',    '1024x1536');
-    form.append('quality', quality);
-    form.append('n',       '1');
-    res = await _openaiProxy('image-edit', form, true);
+    // Step 1 — extract structured identity profile (GPT-4o high-detail vision, cached).
+    if (sendHero) await _extractCharacterIdentity();
+    // Step 2 — generate manga character reference sheet (cached).
+    if (sendHero) await _ensureCharacterPortrait();
+
+    // Step 3 — build prompt: identity profile + scene description.
+    const identityBlock = _heroIdentityProfile ? _formatIdentityProfile(_heroIdentityProfile) + '\n\n' : '';
+    const fullPrompt    = identityBlock + (simplePrompt || prompt);
+
+    // Step 4 — Responses API: GPT-4o processes photo with full vision intelligence
+    // then calls image_generation tool (same pipeline as ChatGPT internally).
+    const content = [];
+    if (sendHero)  content.push({ type: 'input_image', image_url: `data:${_heroImageMime};base64,${_heroImageBase64}`,   detail: 'high' });
+    if (sendChar2) content.push({ type: 'input_image', image_url: `data:${_char2ImageMime};base64,${_char2ImageBase64}`, detail: 'high' });
+    content.push({ type: 'input_text', text: fullPrompt });
+
+    console.log('[IMG] Responses API + identity profile, anchors:', _heroIdentityProfile?.consistency_anchors);
+    console.log('[IMG] prompt preview:', fullPrompt.slice(0, 200));
+    res = await _openaiProxy('image-response', {
+      model: 'gpt-4o',
+      input: [{ role: 'user', content }],
+      tools: [{ type: 'image_generation', size: '1024x1536', quality }],
+      tool_choice: 'required',
+    });
   } else {
     res = await _openaiProxy('image-generate', {
       model: 'gpt-image-1', prompt, n: 1, size: '1024x1536', quality,

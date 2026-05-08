@@ -56,12 +56,22 @@ serve(async (req) => {
 
     } else if (endpoint === 'image-edit') {
       // Parse the incoming multipart FormData and rebuild it for OpenAI.
-      // Forwarding the raw body risks boundary corruption through the Supabase gateway.
+      // We explicitly read each File's bytes so Deno doesn't silently drop blob content
+      // when re-appending between FormData instances.
       const incoming = await req.formData();
       const outgoing = new FormData();
+      let imageCount = 0;
       for (const [key, value] of incoming.entries()) {
-        outgoing.append(key, value);
+        if (value instanceof File) {
+          const bytes = new Uint8Array(await value.arrayBuffer());
+          outgoing.append(key, new Blob([bytes], { type: value.type }), value.name);
+          imageCount++;
+          console.log(`[proxy] image-edit: appended file key="${key}" name="${value.name}" type="${value.type}" size=${bytes.length}`);
+        } else {
+          outgoing.append(key, value);
+        }
       }
+      console.log(`[proxy] image-edit: forwarding ${imageCount} image(s) to OpenAI`);
       openaiRes = await fetch(`${OPENAI_API}/v1/images/edits`, {
         method:  'POST',
         headers: { Authorization: `Bearer ${openaiKey}` }, // let Deno set Content-Type + boundary
